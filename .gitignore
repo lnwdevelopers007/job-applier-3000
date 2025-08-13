@@ -1,0 +1,86 @@
+# If you prefer the allow list template instead of the deny list, see community template:
+# https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
+#
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Code coverage profiles and other test artifacts
+*.out
+coverage.*
+*.coverprofile
+profile.cov
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# env file
+.env
+
+# Svelte, svelte-kit and JavaScript in general.
+# logs and temp
+*.log
+**/*.log
+*.cpuprofile
+**/*.cpuprofile
+temp
+**/temp
+*.tmp
+**/*.tmp
+.eslintcache
+
+# build and dist
+build
+**/build
+dist
+**/dist
+.svelte
+.svelte-kit
+**/.svelte
+**/.svelte-kit
+
+# env and local
+*.local
+**/*.local
+.env
+**/.env
+
+#node_modules and pnpm
+node_modules
+**/node_modules
+# only workspace root has a lock
+**/pnpm-lock.yaml
+.pnpm-store
+**/.pnpm-store
+
+#ide
+.idea
+**/.idea
+.vscode
+**/.vscode
+
+# macos
+.DS_Store
+._.DS_Store
+**/.DS_Store
+**/._.DS_Store
+
+# other
+coverage
+
+# playgrounds
+packages/playground/**/*
+!packages/playground/README.md
+
+# vite plugin inspect
+.vite-inspect
