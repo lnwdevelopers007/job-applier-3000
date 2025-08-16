@@ -12,9 +12,8 @@ KU Dept. of Computer Engineering Students and Alumni.
 1. `go get .`
 1. `cp .env.example .env`
 1. Replace the value with your MongoDB URI.
-(alternatively, just move `mongo.go` somewhere else and skip this step).
 1. `go run .`
-1. Visit `localhost:8080/albums`. There should be json output.
+1. Visit `localhost:8080/`.
 
 Resources:
 [Starter Code](https://go.dev/doc/tutorial/web-service-gin)

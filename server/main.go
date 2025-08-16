@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/controller"
 )
 
 // album represents data about a record album.
@@ -28,7 +29,11 @@ func getAlbums(c *gin.Context) {
 
 func main() {
 	router := gin.Default()
-	router.GET("/albums", getAlbums)
+	router.GET("/", getAlbums)
+	router.GET("/jobs", controller.GetJobs)
+	router.POST("/jobs", controller.PostJobs)
+
+	// router.POST("/movies/aggregations", mongo.AggregateMovies)
 
 	router.Run("localhost:8080")
 }
