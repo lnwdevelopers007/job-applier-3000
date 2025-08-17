@@ -1,5 +1,7 @@
 # Job Applier 3000
 
+[![Run Vitest with Bun](https://github.com/lnwdevelopers007/job-applier-3000/actions/workflows/vitest.yaml/badge.svg)](https://github.com/lnwdevelopers007/job-applier-3000/actions/workflows/vitest.yaml)
+
 Centralised Web Application for finding employments for
 KU Dept. of Computer Engineering Students and Alumni.
 
@@ -25,7 +27,7 @@ Resources:
 
 1. Install [Bun](https://bun.sh)
 1. `cd client`
-1. `bun install` (according to ChatGPT).
+1. `bun install`
 1. `bun run dev --open`
 
 Resources:
