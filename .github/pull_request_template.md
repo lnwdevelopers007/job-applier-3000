@@ -8,10 +8,10 @@
 
 ### Checklist
 
-- [ ] I have performed a self-review of my code.
-- [ ] I have added tests to cover my changes.
-- [ ] I have updated the documentation, if applicable.
-- [ ] My code follows the Coding Guidelines.
+- [ ] Code review
+- [ ] Tests have been added
+- [ ] Documentation
+- [ ] Code guidelines
 
 ### Type of Change
 
