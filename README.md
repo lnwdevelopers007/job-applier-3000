@@ -23,7 +23,7 @@ Resources:
 
 1. Install [Bun](https://bun.sh)
 1. `cd client`
-1. `bun install` (according to ChatGPT).
+1. `bun install`
 1. `bun run dev --open`
 
 Resources:
