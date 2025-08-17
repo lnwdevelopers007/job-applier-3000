@@ -1,7 +1,7 @@
 **Describe the bug (Current situation)**
 - A clear and concise description of what the bug is.
 
-**To Reproduce (How to create the bugs?)**
+**How to Reproduce?**
 Steps to reproduce the behavior:
 1. Go to this ... page
 2. Click on ... button
