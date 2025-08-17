@@ -2,8 +2,10 @@ package main
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/controller"
 )
 
@@ -34,6 +36,11 @@ func main() {
 	router.POST("/jobs", controller.PostJobs)
 
 	// router.POST("/movies/aggregations", mongo.AggregateMovies)
+	_ = godotenv.Load()
+	url := os.Getenv("URL")
+	if url == "" {
+		url = "localhost:8080"
+	}
 
-	router.Run("localhost:8080")
+	router.Run(url)
 }
