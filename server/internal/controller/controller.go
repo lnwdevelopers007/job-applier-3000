@@ -13,7 +13,7 @@ import (
 
 // GetJobs returns all jobs in the database.
 func GetJobs(c *gin.Context) {
-	db := database.GetInstance().Database("ja-3000")
+	db := database.GetDatabase()
 	cursor, err := db.Collection("jobs").Find(context.Background(), bson.D{{}})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -30,7 +30,7 @@ func GetJobs(c *gin.Context) {
 
 // PostJobs save jobs to the database.
 func PostJobs(c *gin.Context) {
-	db := database.GetInstance().Database("ja-3000")
+	db := database.GetDatabase()
 	collection := db.Collection("jobs")
 
 	raw, err := database.ValidateRequestContent[database.JobSchema](c)

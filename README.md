@@ -13,13 +13,15 @@ KU Dept. of Computer Engineering Students and Alumni.
 1. `cd server`
 1. `go get .`
 1. `cp .env.example .env`
-1. Replace the value with your MongoDB URI.
+1. Replace it with your real config.
 1. `go run .`
-1. Visit `localhost:8080/`.
+1. Visit `localhost:8080/jobs`.
+1. To run tests, use `godotenv -f ./.env go test ./... -v`
+(install [godotenv](https://github.com/joho/godotenv?tab=readme-ov-file#installation) as bin command first.)
 
 Resources:
-[Starter Code](https://go.dev/doc/tutorial/web-service-gin)
-[Connecting to Database](https://www.slingacademy.com/article/securely-storing-secrets-with-environment-variables-in-go/)
+- [Starter Code](https://go.dev/doc/tutorial/web-service-gin)
+- [Connecting to Database](https://www.slingacademy.com/article/securely-storing-secrets-with-environment-variables-in-go/)
 
 ### Front-end
 
