@@ -1,0 +1,55 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Go
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mongodb-version: ['6.0', '7.0', '8.0']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Go environment
+      uses: actions/setup-go@v5.5.0
+      with:
+        go-version: 1.22.2
+    
+    - name: Create .env file
+      run: cp ./.env.example .env
+    
+    - name: Load .env file
+      uses: xom9ikk/dotenv@v2.3.0
+      with:
+        path: ./
+        load-mode: strict
+    
+    - name: Extract MongoDB Credentials
+      run: |
+        uri="${{ env.MONGODB_URI }}"
+        username=$(echo "$uri" | sed -E 's|^mongodb://([^:]+):.*|\1|')
+        password=$(echo "$uri" | sed -E 's|^mongodb://[^:]+:([^@]+)@.*|\1|')
+        port=$(echo "$uri" | sed -E 's|.*:([0-9]+)/.*|\1|')
+        echo "USERNAME=$username" >> $GITHUB_ENV
+        echo "PASSWORD=$password" >> $GITHUB_ENV
+        echo "PORT=$port" >> $GITHUB_ENV
+
+    - name: Start MongoDB
+      uses: supercharge/mongodb-github-action@1.12.0
+      with:
+        mongodb-version: ${{ matrix.mongodb-version }}
+        mongodb-port:  ${{ env.PORT }}
+        mongodb-username:  ${{ env.USERNAME }}
+        mongodb-password:  ${{ env.PASSWORD }}
+
+    - name: Test
+      run: go test -v ./...
