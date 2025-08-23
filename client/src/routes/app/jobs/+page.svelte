@@ -23,7 +23,7 @@
       <!--Jobs List -->
       <section class="col-span-1 flex flex-col space-y-4">
         <div class="flex-1 overflow-y-auto w-full space-y-3 p-2">
-          {#each jobs as job}
+          {#each jobs as job (job.id)}
           <button
             on:click={() => (selectedJob = job)}
             class="w-full flex flex-col cursor-pointer bg-white rounded-lg shadow ring-offset-2 hover:ring-2 hover:ring-green-300 {selectedJob.id === job.id ? 'ring-2 ring-green-500' : ''}"
@@ -42,7 +42,7 @@
               </div>
             </div>
             <div class="flex flex-wrap gap-2 mt-2 p-2">
-              {#each job.tags as tag}
+              {#each job.tags as tag, i (i)}
                 <span class="px-2 py-1 bg-gray-100 rounded-full text-sm">{tag}</span>
               {/each}
             </div>
@@ -69,7 +69,7 @@
             <p class="text-sm text-gray-500 my-2">{selectedJob.posted}</p>
           </div>
           <div class="flex gap-2">
-            {#each selectedJob.tags as tag}
+            {#each selectedJob.tags as tag, i (i)}
               <span class="px-2 py-1 bg-gray-100 rounded-full text-sm">{tag}</span>
             {/each}
           </div>
