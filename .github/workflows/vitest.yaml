@@ -28,5 +28,5 @@ jobs:
         run: bun run test:unit -- --run
 
       - name: Check Code Formatting
-        working-directory: server
+        working-directory: client
         run: bun eslint .
