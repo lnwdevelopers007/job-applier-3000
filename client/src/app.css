@@ -1,3 +1,11 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
+
+.nav-link {
+  @apply flex items-center gap-2 px-4 py-2 rounded-lg text-gray-700 border-2 border-transparent;
+}
+
+.nav-link:hover {
+  @apply text-green-800 bg-green-300 border-green-800;
+}
