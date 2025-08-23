@@ -44,7 +44,7 @@
       </nav>
     </aside>
 
-    <main class="p-6">
+    <main class="flex-1 p-1 min-w-0">
       <slot />
     </main>
   </div>
