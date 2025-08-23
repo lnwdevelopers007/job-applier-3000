@@ -1,10 +1,14 @@
 package controller
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
+)
 
+// NewRouter returns new, default router.
 func NewRouter() *gin.Engine {
 	router := gin.Default()
-	router.GET("/jobs", GetJobs)
-	router.POST("/jobs", PostJobs)
+	router.GET("/jobs", GetController[schema.JobSchema]("jobs").RetrieveAll())
+	router.POST("/jobs", GetController[schema.JobSchema]("jobs").Create())
 	return router
 }

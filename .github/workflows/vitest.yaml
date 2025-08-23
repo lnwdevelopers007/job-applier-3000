@@ -26,3 +26,7 @@ jobs:
       - name: Run Vitest
         working-directory: client
         run: bun run test:unit -- --run
+
+      - name: Check Code Formatting
+        working-directory: client
+        run: bun eslint .
