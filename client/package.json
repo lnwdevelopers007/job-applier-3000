@@ -43,5 +43,9 @@
 		"vite": "^7.0.4",
 		"vitest": "^3.2.3",
 		"vitest-browser-svelte": "^0.1.0"
+	},
+	"dependencies": {
+		"daisyui": "^5.0.50",
+		"lucide-svelte": "^0.541.0"
 	}
 }
