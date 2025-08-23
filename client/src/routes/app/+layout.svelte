@@ -44,7 +44,7 @@
       </nav>
     </aside>
 
-    <main class="flex-1 bg-white shadow rounded-lg p-6">
+    <main class="p-6">
       <slot />
     </main>
   </div>
