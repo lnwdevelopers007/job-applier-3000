@@ -10,5 +10,8 @@ func NewRouter() *gin.Engine {
 	router := gin.Default()
 	router.GET("/jobs", GetController[schema.JobSchema]("jobs").RetrieveAll())
 	router.POST("/jobs", GetController[schema.JobSchema]("jobs").Create())
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"ok": true})
+	})
 	return router
 }
