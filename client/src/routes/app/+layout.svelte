@@ -1,12 +1,9 @@
 <div class="min-h-screen bg-gray-100 flex flex-col">
 
   <header class="flex items-center justify-between bg-white shadow px-6 py-4">
-    <div class="flex items-center space-x-3">
-      <img src={database} alt="Logo" class="w-10 h-10 rounded-full" />
-      <div>
-        <h2 class="text-lg font-semibold">Job Applier 3000</h2>
-        <p class="text-sm text-gray-500">KU Computer Engineering</p>
-      </div>
+    <div class="flex items-start space-x-1">
+        <h2 class="text-xl font-bold text-black">Job Applier </h2>
+        <h2 class="text-xl font-bold text-green-600">3000</h2>
     </div>
 
     <div class="flex items-center space-x-3">
