@@ -53,7 +53,10 @@
       </thead>
       <tbody>
         {#each jobs as job, i (i)}
-          <tr class="border-t">
+          <tr 
+          class="border-t cursor-pointer {selectedJob === i ? 'bg-green-200' : ''}" 
+          on:click={() => selectRow(i)}
+          >
             <td class="px-4 py-3 font-medium text-gray-900">{job.title}</td>
             <td class="px-4 py-3">{job.status}</td>
             <td class="px-4 py-3">{job.applicants}</td>
@@ -118,4 +121,9 @@
       ]
     }
   ];
+  let selectedJob = null;
+
+  function selectRow(index) {
+    selectedJob = selectedJob === index ? null : index;
+  }
 </script>
