@@ -14,29 +14,24 @@ import (
 // NewRouter returns new, default router.
 func NewRouter() *gin.Engine {
 	router := gin.Default()
+	cfg := setUpCors()
+	router.Use(cors.New(cfg))
 
 	// --- Auth routes ---
 	// These are handled by browser redirects, not JavaScript.
 	// They DO NOT need CORS middleware.
-	router.GET("/auth/:provider", auth.BeginAuth)
-	router.GET("/auth/:provider/callback", auth.OAuthCallback)
+
+	authGroup := router.Group("/auth")
+	{
+		authGroup.GET("/:provider", auth.Login)
+		authGroup.GET("/:provider/callback", auth.OAuthCallback)
+		authGroup.GET("/:provider/logout", auth.Logout)
+	}
 
 	// --- API routes ---
 	// Create a group for all other API endpoints that WILL be called from your frontend JS.
 	api := router.Group("/api")
 
-	// Apply the CORS middleware ONLY to the /api group.
-	cfg := cors.Config{
-		AllowOrigins: []string{
-			os.Getenv("FRONTEND"),
-		},
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}
-	api.Use(cors.New(cfg))
 	{
 		// Move your API endpoints into this group
 		api.GET("/jobs", GetController[schema.JobSchema]("jobs").RetrieveAll)
@@ -47,4 +42,18 @@ func NewRouter() *gin.Engine {
 	}
 
 	return router
+}
+
+func setUpCors() cors.Config {
+	cfg := cors.Config{
+		AllowOrigins: []string{
+			os.Getenv("FRONTEND"),
+		},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}
+	return cfg
 }

@@ -2,7 +2,6 @@ package auth
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -16,37 +15,21 @@ import (
 // TODO: add OAuth code here
 func init() {
 	// --- Google Provider Setup ---
-	clientID, err := config.LoadEnv("CLIENT_ID")
-	if err != nil {
-		log.Fatalf("Failed to load CLIENT_ID: %v", err)
-	}
-	clientSecret, err := config.LoadEnv("CLIENT_SECRET")
-	if err != nil {
-		log.Fatalf("Failed to load CLIENT_SECRET: %v", err)
-	}
+	clientID, _ := config.LoadEnv("CLIENT_ID")
+	clientSecret, _ := config.LoadEnv("CLIENT_SECRET")
 
 	googleAuth := google.New(
 		clientID,
 		clientSecret,
-		"http://localhost:8080/auth/google/callback", // Ensure this matches your Google Cloud console configuration
+		"http://localhost:8080/auth/google/callback",
 		"email",
 		"profile",
 	)
 	goth.UseProviders(googleAuth)
 
-	// --- Session Store Setup ---
-	// IMPORTANT: These keys should be long, random strings.
-	// 32 or 64 bytes are standard lengths.
-	hashKey, err := config.LoadEnv("SESSION_HASH_KEY")
-	if err != nil {
-		log.Fatalf("Failed to load SESSION_HASH_KEY: %v", err)
-	}
+	hashKey, _ := config.LoadEnv("SESSION_HASH_KEY")
 
-	blockKey, err := config.LoadEnv("SESSION_BLOCK_KEY")
-	if err != nil {
-		log.Fatalf("Failed to load SESSION_BLOCK_KEY: %v", err)
-	}
-
+	blockKey, _ := config.LoadEnv("SESSION_BLOCK_KEY")
 	maxAge := 86400 * 30 // 30 days
 	isProd := false      // Set to true when serving over https
 
@@ -59,16 +42,22 @@ func init() {
 	gothic.Store = store
 }
 
-// callback function
-func OAuthCallback(c *gin.Context) {
+// addProvider adds the OAuth provider to the request from the query params.
+func addProvider(c *gin.Context) {
 	provider := c.Param("provider")
 	if provider == "" {
 		c.String(http.StatusBadRequest, "Provider not specified")
+		return
 	}
 
 	q := c.Request.URL.Query()
 	q.Add("provider", provider)
 	c.Request.URL.RawQuery = q.Encode()
+}
+
+// OAuthCallback is a callback function after user login.
+func OAuthCallback(c *gin.Context) {
+	addProvider(c)
 	user, err := gothic.CompleteUserAuth(c.Writer, c.Request)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
@@ -82,15 +71,16 @@ func OAuthCallback(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-func BeginAuth(c *gin.Context) {
-	provider := c.Param("provider")
-	if provider == "" {
-		c.String(http.StatusBadRequest, "Provider not specified")
-		return
-	}
-
-	q := c.Request.URL.Query()
-	q.Add("provider", "google")
-	c.Request.URL.RawQuery = q.Encode()
+// Login log user in via OAuth.
+func Login(c *gin.Context) {
+	addProvider(c)
 	gothic.BeginAuthHandler(c.Writer, c.Request)
+}
+
+func Logout(c *gin.Context) {
+	addProvider(c)
+	if err := gothic.Logout(c.Writer, c.Request); err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+	}
+	c.JSON(http.StatusOK, "User logged out successfully")
 }
