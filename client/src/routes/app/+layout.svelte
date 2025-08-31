@@ -49,6 +49,5 @@
 
 <script>
   import user from '$lib/assets/user.png';
-  import database from '$lib/assets/database.png';
   import { House, Cog, Mail, ChartColumn, CircleCheck } from 'lucide-svelte';
 </script>

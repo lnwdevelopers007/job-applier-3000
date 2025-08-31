@@ -52,7 +52,7 @@
         </tr>
       </thead>
       <tbody>
-        {#each jobs as job}
+        {#each jobs as job, i (i)}
           <tr class="border-t">
             <td class="px-4 py-3 font-medium text-gray-900">{job.title}</td>
             <td class="px-4 py-3">{job.status}</td>
@@ -61,7 +61,7 @@
             <td class="px-4 py-3">{job.posted}</td>
             <td class="px-4 py-3">{job.expires}</td>
             <td class="px-4 py-3 space-x-2">
-              {#each job.actions as action}
+              {#each job.actions as action, i (i)}
                 <button
                   class="px-3 py-1 text-sm rounded bg-gray-100 text-gray-900 border-gray-500 border-1 disabled:opacity-50 disabled:cursor-not-allowed enabled:hover:bg-gray-300"
                   disabled={action.disabled}

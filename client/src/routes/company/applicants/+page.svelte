@@ -46,7 +46,7 @@
         <button class="px-2 py-1 bg-white border-1 border-gray-200  rounded-full text-xs">Rejected</button>
       </div>
     <div class="mt-3 space-y-3">
-        {#each candidates as candidate}
+        {#each candidates as candidate, i (i)}
           <button
             class="flex items-start gap-3 p-3 border rounded-lg shadow-sm hover:shadow-md transition cursor-pointer w-full
               {selectedCandidate?.name === candidate.name ? 'bg-green-100 border-green-600' : ''}"
@@ -133,7 +133,7 @@
           <h3 class="flex gap-1 font-semibold text-gray-800 text-lg mt-2"><GraduationCap class="mt-0.5" />Education</h3>
           <div class="grid grid-cols-1 gap-2 w-full text-sm mt-3">
             {#if selectedCandidate.education}
-              {#each selectedCandidate.education as edu}
+              {#each selectedCandidate.education as edu, i (i)}
                 <div class="flex flex-col">
                   <span class="font-semibold text-sm">{edu.degree}</span>
                   <span class="text-gray-800 mt-1">{edu.university} {edu.period}</span>
@@ -151,7 +151,7 @@
           </h3>
           <div class="flex flex-wrap gap-2 mt-3">
             {#if selectedCandidate.skills && selectedCandidate.skills.length > 0}
-              {#each selectedCandidate.skills as skill}
+              {#each selectedCandidate.skills as skill, i (i)}
                 <span class="px-2 py-1 text-xs bg-gray-200 text-gray-800 rounded-lg border-1 border-gray-300">{skill}</span>
               {/each}
             {:else}
@@ -165,7 +165,7 @@
           </h3>
           <div class="flex flex-col gap-4 mt-3">
             {#if selectedCandidate.documents && selectedCandidate.documents.length > 0}
-              {#each selectedCandidate.documents as doc}
+              {#each selectedCandidate.documents as doc, i (i)}
                 <a href={doc.name.startsWith('http') ? doc.name : '#'} target="_blank" class="flex items-center gap-4 bg-gray-100 border border-gray-300 rounded p-3 hover:bg-gray-200 transition">
                   {#await Promise.resolve(getDocIcon(doc.name)) then Icon}
                     <Icon class="w-8 h-8 text-gray-600" />
@@ -298,11 +298,13 @@
       documents: []
     }
   ];
-
+  /**
+   * @param {string} doc
+   */
   function getDocIcon(doc) {
     if (doc.toLowerCase().endsWith('.pdf')) return FileText;
     if (doc.toLowerCase().includes('github')) return Github;
-    return Link; // fallback for any other link
+    return Link;
   }
   let selectedCandidate = candidates[0];
 </script>
