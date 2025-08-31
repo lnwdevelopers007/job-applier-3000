@@ -15,14 +15,14 @@
       </div>
 
       <div class="flex gap-2 my-2">      
-      <select class="px-7 py-1 bg-white border border-gray-200 rounded text-sm">
+      <select class="pr-8 pl-3 py-1 bg-white border border-gray-200 rounded text-sm text-left">
         <option>All Jobs</option>
         <option>AI Researcher</option>
         <option>Developer</option>
         <option>Tester</option>
       </select>
 
-      <select class="px-7 py-1 bg-white border border-gray-200 rounded text-sm">
+      <select class="pr-8 pl-3 py-1 bg-white border border-gray-200 rounded text-sm text-left">
         <option>All Statuses</option>
         <option>Accepted</option>
         <option>Pending</option>
