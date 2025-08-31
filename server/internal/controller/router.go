@@ -15,6 +15,7 @@ import (
 func NewRouter() *gin.Engine {
 	router := gin.Default()
 	cfg := setUpCors()
+
 	router.Use(cors.New(cfg))
 
 	// --- Auth routes ---
@@ -36,6 +37,12 @@ func NewRouter() *gin.Engine {
 		// Move your API endpoints into this group
 		api.GET("/jobs", GetController[schema.JobSchema]("jobs").RetrieveAll)
 		api.POST("/jobs", GetController[schema.JobSchema]("jobs").Create)
+
+		// custom query route
+		jobCtrl := NewJobController()
+		router.GET("/jobs/query", jobCtrl.QueryJobs())
+
+		// health check
 		api.GET("/health", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"ok": true})
 		})
