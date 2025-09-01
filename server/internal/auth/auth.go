@@ -67,7 +67,7 @@ func upsertUser(user goth.User) (*mongo.UpdateResult, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	filter := bson.M{"_id": user.UserID}
+	filter := bson.M{"userID": user.UserID}
 
 	update := bson.M{
 		"$set": bson.M{
