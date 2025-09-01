@@ -65,7 +65,7 @@ func (jc JobController) QueryJobs() gin.HandlerFunc {
 			return
 		}
 
-		var jobs []schema.JobSchema
+		var jobs []schema.Job
 		if err := cursor.All(ctx, &jobs); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
