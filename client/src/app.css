@@ -2,6 +2,14 @@
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
 
+@theme {
+  --font-family-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+}
+
+* {
+  font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+}
+
 .nav-link {
   @apply flex items-center gap-2 px-4 py-2 rounded-lg text-gray-700 border-2 border-transparent;
 }
