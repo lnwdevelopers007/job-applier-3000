@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { X, MapPin, Building2, Users, ExternalLink } from 'lucide-svelte';
+  import { X, MapPin, Users, ExternalLink } from 'lucide-svelte';
   import { fade, fly } from 'svelte/transition';
   
   let { 
@@ -38,7 +38,6 @@
     class="fixed right-0 top-0 h-full w-[820px] bg-white shadow-xl z-70 overflow-y-auto"
     transition:fly={{ x: 820, duration: 300, opacity: 1 }}
   >
-    <!-- Header -->
     <div class="sticky top-0 bg-white px-6 py-4 flex items-center justify-between">
       <div>
         <h2 class="text-lg font-semibold text-gray-900">Preview</h2>
@@ -52,7 +51,6 @@
       </button>
     </div>
     
-    <!-- Content -->
     <div class="p-6">
       <!-- Tab Navigation -->
       <div class="flex gap-4 mb-3 pl-6">
@@ -97,7 +95,6 @@
             </div>
           </div>
           
-          <!-- Job Meta Info -->
           <div class="flex items-center gap-4 text-sm text-gray-600 mb-6">
             <span class="text-sm">{formatDate(formData.postingOpenDate) || '1 day ago'}</span>
             <span class="text-gray-400">·</span>
@@ -106,7 +103,6 @@
             <span>Salary: {formatSalary()}</span>
           </div>
           
-          <!-- Job Type Badges -->
           <div class="flex flex-wrap gap-2 mb-6">
             <span class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
               {formData.employmentType || 'Full-time'}
@@ -119,9 +115,8 @@
             </span>
           </div>
           
-          <!-- Action Buttons -->
           <div class="mb-8">
-            <button class="flex-1 px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors font-medium mr-1">
+            <button class="flex-1 px-4 py-2 bg-primary text-white text-sm rounded-md hover:bg-primary-600 transition-colors font-medium mr-1">
               Apply
             </button>
             <button class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-50 transition-colors font-medium">
@@ -129,7 +124,6 @@
             </button>
           </div>
           
-          <!-- Job Description -->
           <div class="mb-8">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Job Description</h3>
             {#if formData.jobDescription}
@@ -144,7 +138,6 @@
             {/if}
           </div>
           
-          <!-- Requirements Section -->
           {#if formData.requiredSkills?.length > 0 || formData.yearsOfExperience || formData.educationLevel}
             <div class="mb-8">
               <h3 class="text-lg font-semibold text-gray-900 mb-4">Requirements</h3>
@@ -178,7 +171,6 @@
             </div>
           {/if}
           
-          <!-- About the Company -->
           <div class="mb-8">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">About the Company</h3>
             
@@ -226,7 +218,6 @@
       {:else}
         <!-- Search Result View -->
         <div class="space-y-4 p-6">
-          <!-- Skeleton Card 1 -->
           <div class="p-4 border border-gray-200 rounded-lg animate-pulse">
             <div class="flex items-start gap-3">
               <div class="w-10 h-10 bg-gray-200 rounded"></div>
@@ -244,7 +235,7 @@
           </div>
 
           <!-- Active Job Card -->
-          <div class="p-4 border border-green-500 rounded-lg bg-white">
+          <div class="p-4 border border-primary-300 rounded-lg bg-white">
             <div class="flex items-start gap-3">
               <div class="w-10 h-10 rounded bg-white border border-gray-200 flex items-center justify-center flex-shrink-0">
                 {#if formData.companyLogo}

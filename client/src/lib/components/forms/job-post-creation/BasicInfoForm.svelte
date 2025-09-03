@@ -75,7 +75,7 @@
           type="radio"
           bind:group={formData.workType}
           value="full-time"
-          class="w-4 h-4 text-[#00A859] border-gray-300 focus:ring-[#00A859]"
+          class="w-4 h-4 text-green-500 border-gray-300 focus:ring-green-500"
         />
         <span class="ml-2 text-sm text-gray-700">Full-time</span>
       </label>
@@ -84,7 +84,7 @@
           type="radio"
           bind:group={formData.workType}
           value="part-time"
-          class="w-4 h-4 text-[#00A859] border-gray-300 focus:ring-[#00A859]"
+          class="w-4 h-4 text-green-500 border-gray-300 focus:ring-green-500"
         />
         <span class="ml-2 text-sm text-gray-700">Part-time</span>
       </label>
@@ -93,7 +93,7 @@
           type="radio"
           bind:group={formData.workType}
           value="contract"
-          class="w-4 h-4 text-[#00A859] border-gray-300 focus:ring-[#00A859]"
+          class="w-4 h-4 text-green-500 border-gray-300 focus:ring-green-500"
         />
         <span class="ml-2 text-sm text-gray-700">Contract</span>
       </label>
@@ -102,7 +102,7 @@
           type="radio"
           bind:group={formData.workType}
           value="casual"
-          class="w-4 h-4 text-[#00A859] border-gray-300 focus:ring-[#00A859]"
+          class="w-4 h-4 text-green-500 border-gray-300 focus:ring-green-500"
         />
         <span class="ml-2 text-sm text-gray-700">Casual</span>
       </label>
@@ -120,7 +120,7 @@
           type="radio"
           bind:group={formData.workArrangement}
           value="on-site"
-          class="w-4 h-4 text-[#00A859] border-gray-300 focus:ring-[#00A859]"
+          class="w-4 h-4 text-green-500 border-gray-300 focus:ring-green-500"
         />
         <span class="ml-2 text-sm text-gray-700">On-site</span>
       </label>
@@ -129,7 +129,7 @@
           type="radio"
           bind:group={formData.workArrangement}
           value="hybrid"
-          class="w-4 h-4 text-[#00A859] border-gray-300 focus:ring-[#00A859]"
+          class="w-4 h-4 text-green-500 border-gray-300 focus:ring-green-500"
         />
         <span class="ml-2 text-sm text-gray-700">Hybrid</span>
       </label>
@@ -138,7 +138,7 @@
           type="radio"
           bind:group={formData.workArrangement}
           value="remote"
-          class="w-4 h-4 text-[#00A859] border-gray-300 focus:ring-[#00A859]"
+          class="w-4 h-4 text-green-500 border-gray-300 focus:ring-green-500"
         />
         <span class="ml-2 text-sm text-gray-700">Remote</span>
       </label>
