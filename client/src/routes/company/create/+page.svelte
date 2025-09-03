@@ -1,22 +1,23 @@
 <script>
+  import { goto } from '$app/navigation';
+  import { fly } from 'svelte/transition';
   import { ArrowLeft, ArrowRight, ChevronLeft } from 'lucide-svelte';
   import Stepper from '$lib/components/Stepper.svelte';
-  import BasicInfoForm from '$lib/components/forms/BasicInfoForm.svelte';
-  import DescriptionForm from '$lib/components/forms/DescriptionForm.svelte';
-  import RequirementForm from '$lib/components/forms/RequirementForm.svelte';
-  import PostSettingForm from '$lib/components/forms/PostSettingForm.svelte';
+  import BasicInfoForm from '$lib/components/forms/job-post-creation/BasicInfoForm.svelte';
+  import DescriptionForm from '$lib/components/forms/job-post-creation/DescriptionForm.svelte';
+  import RequirementForm from '$lib/components/forms/job-post-creation/RequirementForm.svelte';
+  import PostSettingForm from '$lib/components/forms/job-post-creation/PostSettingForm.svelte';
   import PreviewDrawer from '$lib/components/PreviewDrawer.svelte';
   
-  let currentStep = $state(1); // Current active step (1-4)
+  let currentStep = $state(1); // Current step (1-4)
   let isPreviewOpen = $state(false);
-  /** @type {any} */
   let stepper;
   
   const steps = [
     { id: 1, name: 'Basic Info' },
     { id: 2, name: 'Description' },
     { id: 3, name: 'Requirement' },
-    { id: 4, name: 'Post Setting' }
+    { id: 4, name: 'Post Settings' }
   ];
 
   let formData = $state({
@@ -49,11 +50,11 @@
   });
 
   function handleBackNavigation() {
-    // Handle back navigation to previous page
+    goto('/company/dashboard');
   }
 
   function handleSaveDraft() {
-    // Handle save draft functionality
+    // Handle save draft
   }
 
   function handlePreview() {
@@ -67,10 +68,9 @@
 </script>
 
 <div class="max-w-4xl mx-auto py-8">
-  <!-- Header -->
   <div class="px-8 mb-2">
     <div class="flex items-center gap-4">
-      <button onclick={handleBackNavigation} class="p-1 hover:bg-gray-100 rounded">
+      <button onclick={handleBackNavigation} class="p-1 hover:bg-gray-200 rounded">
         <ChevronLeft class="w-5 h-5 text-gray-600" />
       </button>
       <h1 class="text-xl font-medium text-gray-900">Create Job Post</h1>
@@ -81,16 +81,23 @@
   
   <form class="px-8 pb-8">
     {#if currentStep === 1}
-      <BasicInfoForm bind:formData />
+      <div in:fly={{ x: 50, duration: 300, delay: 200 }} out:fly={{ x: -50, duration: 200 }}>
+        <BasicInfoForm bind:formData />
+      </div>
     {:else if currentStep === 2}
-      <DescriptionForm bind:formData />
+      <div in:fly={{ x: 50, duration: 300, delay: 200 }} out:fly={{ x: -50, duration: 200 }}>
+        <DescriptionForm bind:formData />
+      </div>
     {:else if currentStep === 3}
-      <RequirementForm bind:formData />
+      <div in:fly={{ x: 50, duration: 300, delay: 200 }} out:fly={{ x: -50, duration: 200 }}>
+        <RequirementForm bind:formData />
+      </div>
     {:else if currentStep === 4}
-      <PostSettingForm bind:formData />
+      <div in:fly={{ x: 50, duration: 300, delay: 200 }} out:fly={{ x: -50, duration: 200 }}>
+        <PostSettingForm bind:formData />
+      </div>
     {/if}
 
-    <!-- Action Buttons -->
     <div class="flex justify-between mt-8 pt-6">
       <div>
         {#if currentStep > 1}
@@ -122,7 +129,7 @@
         <button
           type="button"
           onclick={() => handleProgress(1)}
-          class="text-sm flex items-center px-4 py-2 bg-green-600 text-white hover:bg-green-600/90 rounded-md font-medium"
+          class="text-sm flex items-center px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-md font-medium"
         >
           {currentStep < 4 ? 'Continue' : 'Publish'}
           <ArrowRight class="w-3 h-3 ml-1"/>
@@ -132,6 +139,5 @@
   </form>
 </div>
 
-<!-- Preview Drawer -->
 <PreviewDrawer bind:isOpen={isPreviewOpen} {formData} />
 
