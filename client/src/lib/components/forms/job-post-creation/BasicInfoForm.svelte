@@ -1,18 +1,5 @@
 <script>
   let { formData = $bindable() } = $props();
-
-  const categories = [
-    'Select Category',
-    'Technology',
-    'Marketing',
-    'Sales',
-    'Design',
-    'Finance',
-    'Human Resources',
-    'Operations',
-    'Customer Service',
-    'Other'
-  ];
 </script>
 
 <div class="space-y-6">
@@ -44,24 +31,6 @@
       placeholder="Enter location..."
       class="text-sm min-w-lg px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-gray-400"
     />
-  </div>
-
-  <!-- Category -->
-  <div>
-    <label for="category" class="block text-sm font-medium text-gray-700 mb-2">
-      Category <span class="text-red-500">*</span>
-    </label>
-    <div class="relative">
-      <select
-        id="category"
-        bind:value={formData.category}
-        class="text-sm min-w-lg px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-transparent bg-white appearance-none pr-10"
-      >
-        {#each categories as cat}
-          <option value={cat === 'Select Category' ? '' : cat}>{cat}</option>
-        {/each}
-      </select>
-    </div>
   </div>
 
   <!-- Work Type -->
