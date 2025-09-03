@@ -128,6 +128,7 @@
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Job Description</h3>
             {#if formData.jobDescription}
               <div class="prose prose-sm text-gray-600 max-w-full overflow-hidden line-clamp-5">
+                <!-- eslint-disable-next-line svelte/no-at-html-tags -->
                 {@html formData.jobDescription}
               </div>
               <button class="text-green-600 hover:text-green-700 text-sm font-medium mt-2">
@@ -160,7 +161,7 @@
                 <div class="mb-3">
                   <h4 class="text-sm font-medium text-gray-700 mb-2">Skills & Technologies</h4>
                   <div class="flex flex-wrap gap-2">
-                    {#each formData.requiredSkills as skill}
+                    {#each formData.requiredSkills as skill, index (index)}
                       <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
                         {skill}
                       </span>

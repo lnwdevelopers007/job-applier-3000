@@ -25,7 +25,7 @@
   <div class="max-w-4xl relative">
     <!-- Steps with integrated progress lines -->
     <div class="flex items-start">
-      {#each steps as step, i}
+      {#each steps as step, i (step.id)}
         <div class="flex items-start">
           <!-- Step circle and text -->
           <div class="flex flex-col items-start">

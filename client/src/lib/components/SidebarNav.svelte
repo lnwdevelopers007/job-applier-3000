@@ -1,10 +1,11 @@
 <script lang="ts">
   import { page } from '$app/stores';
+  import type { Component } from 'svelte';
   
   interface NavItem {
     href: string;
     label: string;
-    icon: any;
+    icon: Component;
     badge?: number;
     separatorBefore?: boolean;
   }
@@ -18,7 +19,7 @@
 
 <aside class="w-72 bg-white border border-gray-200 shadow-sm rounded-xl p-3">
   <nav class="space-y-1">
-    {#each navItems as item}
+    {#each navItems as item (item.href)}
       {#if item.separatorBefore}
         <div class="border-t border-gray-200 my-4 mx-3"></div>
       {/if}

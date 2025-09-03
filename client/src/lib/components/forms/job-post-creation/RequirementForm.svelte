@@ -83,7 +83,7 @@
       <!-- Skill Tags -->
       {#if formData.requiredSkills && formData.requiredSkills.length > 0}
         <div class="flex flex-wrap gap-2 mt-3">
-          {#each formData.requiredSkills as skill}
+          {#each formData.requiredSkills as skill, index (index)}
             <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-700">
               {skill}
               <button
