@@ -1,4 +1,4 @@
-<div class="p-2 bg-gray-100">
+<div class="p-2 bg-slate-50">
   <h1 class="text-2xl font-bold text-gray-900">
     Company Dashboard
   </h1>
