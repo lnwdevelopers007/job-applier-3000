@@ -116,7 +116,7 @@
           </div>
           
           <div class="mb-8">
-            <button class="flex-1 px-4 py-2 bg-primary text-white text-sm rounded-md hover:bg-primary-600 transition-colors font-medium mr-1">
+            <button class="flex-1 px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors font-medium mr-1">
               Apply
             </button>
             <button class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-50 transition-colors font-medium">
@@ -134,7 +134,7 @@
                 Show more
               </button>
             {:else}
-              <p class="text-gray-500 italic">No job description provided</p>
+              <p class="text-gray-500 text-sm">No job description provided</p>
             {/if}
           </div>
           
@@ -201,9 +201,7 @@
                   </p>
                 {:else}
                   <p class="text-sm text-gray-500 mt-3 line-clamp-3">
-                    A problem isn't truly solved until it's solved for all. Googlers build products 
-                    that help create opportunities for everyone, whether down the street or 
-                    across the globe. Bring your insight, imagination and a healthy disregard for...
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
                   </p>
                 {/if}
                 
@@ -235,7 +233,7 @@
           </div>
 
           <!-- Active Job Card -->
-          <div class="p-4 border border-primary-300 rounded-lg bg-white">
+          <div class="p-4 border border-green-500 rounded-lg bg-white">
             <div class="flex items-start gap-3">
               <div class="w-10 h-10 rounded bg-white border border-gray-200 flex items-center justify-center flex-shrink-0">
                 {#if formData.companyLogo}
