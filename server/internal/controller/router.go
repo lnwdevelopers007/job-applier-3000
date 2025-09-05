@@ -12,10 +12,14 @@ func NewRouter() *gin.Engine {
 	// generic CRUD
 	router.GET("/jobs", GetController[schema.JobSchema]("jobs").RetrieveAll())
 	router.POST("/jobs", GetController[schema.JobSchema]("jobs").Create())
+	router.PUT("/jobs/:id", GetController[schema.JobSchema]("jobs").Update())
+	router.DELETE("/jobs/:id", GetController[schema.JobSchema]("jobs").Delete())
+
 
 	// custom query route
 	jobCtrl := NewJobController()
 	router.GET("/jobs/query", jobCtrl.QueryJobs())
+
 
 	// health check
 	router.GET("/health", func(c *gin.Context) {
