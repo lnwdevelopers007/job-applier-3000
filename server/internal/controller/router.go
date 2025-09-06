@@ -18,10 +18,6 @@ func NewRouter() *gin.Engine {
 
 	router.Use(cors.New(cfg))
 
-	// --- Auth routes ---
-	// These are handled by browser redirects, not JavaScript.
-	// They DO NOT need CORS middleware.
-
 	authGroup := router.Group("/auth")
 	{
 		authGroup.GET("/:provider", auth.Login)
@@ -29,26 +25,21 @@ func NewRouter() *gin.Engine {
 		authGroup.GET("/:provider/logout", auth.Logout)
 	}
 
-	// --- API routes ---
-	// Create a group for all other API endpoints that WILL be called from your frontend JS.
-	api := router.Group("/api")
-
+	jobs := router.Group("/jobs")
 	{
-		// Move your API endpoints into this group
-		api.GET("/jobs", GetController[schema.JobSchema]("jobs").RetrieveAll)
-		api.POST("/jobs", GetController[schema.JobSchema]("jobs").Create)
-		router.PUT("/jobs/:id", GetController[schema.JobSchema]("jobs").Update())
-		router.DELETE("/jobs/:id", GetController[schema.JobSchema]("jobs").Delete())
+		jobs.GET("/", GetController[schema.JobSchema]("jobs").RetrieveAll)
+		jobs.POST("/", GetController[schema.JobSchema]("jobs").Create)
+		jobs.PUT("/:id", GetController[schema.JobSchema]("jobs").Update)
+		jobs.DELETE("/:id", GetController[schema.JobSchema]("jobs").Delete)
 
-		// custom query route
 		jobCtrl := NewJobController()
-		router.GET("/jobs/query", jobCtrl.QueryJobs())
+		jobs.GET("/query", jobCtrl.QueryJobs())
 
-		// health check
-		api.GET("/health", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{"ok": true})
-		})
 	}
+
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"ok": true})
+	})
 
 	return router
 }
