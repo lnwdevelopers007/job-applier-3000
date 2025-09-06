@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // --- helpers ---
@@ -17,7 +18,7 @@ func validPayload() map[string]any {
 	now := time.Now().UTC().Truncate(time.Second)
 	return map[string]any{
 		"title":        "Brr Brr Engineer",
-		"company":      "Brr Brr Patapim Software Hose Co. LTD.",
+		"companyID":    primitive.NewObjectID(),
 		"location":     "Millenium Science School, Kivotos.",
 		"salary":       120000,
 		"salaryRate":   "yearly",

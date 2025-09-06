@@ -13,7 +13,7 @@ import (
 type Job struct {
 	ID              primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 	Title           string             `bson:"title" json:"title" binding:"required"`
-	Company         string             `bson:"company" json:"company" binding:"required"`
+	CompanyID       primitive.ObjectID `bson:"companyID" json:"companyID" binding:"required"`
 	Location        string             `bson:"location" json:"location" binding:"required"`
 	Salary          int                `bson:"salary" json:"salary" binding:"required,gte=0"`
 	SalaryRate      string             `bson:"salaryRate" json:"salaryRate" binding:"required"`
@@ -37,9 +37,3 @@ type JobCriteria struct {
 	Qualifications  []string `bson:"qualifications" json:"qualifications" binding:"required"`
 	CommonQuestions []string `bson:"commonQuestions" json:"commonQuestions,omitempty"`
 }
-
-// type JobImage struct {
-// 	ID    primitive.ObjectID
-// 	JobID primitive.ObjectID
-// 	File  primitive.Binary
-// }
