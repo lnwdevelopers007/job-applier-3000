@@ -8,5 +8,5 @@ import (
 
 func main() {
 	router := controller.NewRouter()
-	router.Run(os.Getenv("PORT"))
+	router.Run(os.Getenv("SERVER_ADDR"))
 }
