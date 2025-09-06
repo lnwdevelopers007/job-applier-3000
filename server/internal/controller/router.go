@@ -27,10 +27,10 @@ func NewRouter() *gin.Engine {
 
 	jobs := router.Group("/jobs")
 	{
-		jobs.GET("/", GetController[schema.JobSchema]("jobs").RetrieveAll)
-		jobs.POST("/", GetController[schema.JobSchema]("jobs").Create)
-		jobs.PUT("/:id", GetController[schema.JobSchema]("jobs").Update)
-		jobs.DELETE("/:id", GetController[schema.JobSchema]("jobs").Delete)
+		jobs.GET("/", GetController[schema.Job]("jobs").RetrieveAll)
+		jobs.POST("/", GetController[schema.Job]("jobs").Create)
+		jobs.PUT("/:id", GetController[schema.Job]("jobs").Update)
+		jobs.DELETE("/:id", GetController[schema.Job]("jobs").Delete)
 
 		jobCtrl := NewJobController()
 		jobs.GET("/query", jobCtrl.QueryJobs())
