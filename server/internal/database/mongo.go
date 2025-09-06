@@ -40,10 +40,8 @@ func connectToMongoDB() error {
 		return nil
 	}
 
-	uri, err := config.LoadEnv("MONGODB_URI")
-	if err != nil {
-		log.Fatal(err)
-	}
+	uri := config.LoadEnv("MONGODB_URI")
+
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
 	opts := options.Client().ApplyURI(uri).SetServerAPIOptions(serverAPI)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
