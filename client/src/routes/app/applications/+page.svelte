@@ -47,8 +47,8 @@
         <h1 class=" px-2 font-bold">Recent Applications</h1>
       </div>
 
-      {#each applications as app, index}
-        <div class={`flex items-center justify-between p-4 border-b border-gray-300 ${index === applications.length - 1 ? 'border-b-0' : ''}`}>
+      {#each applications as app, i (i)}
+        <div class={`flex items-center justify-between p-4 border-b border-gray-300 ${i === applications.length - 1 ? 'border-b-0' : ''}`}>
           <!-- Left part block -->
           <div class="flex items-center gap-4">
             <img src={app.companyLogo} alt="Company Logo" class="w-10 h-10 rounded-full object-cover" />
@@ -109,7 +109,7 @@
           bottom: calc(2rem);
         "
       ></div>
-      {#each activities as activity, i}
+      {#each activities as activity, i (i)}
         <div class="relative mb-8 last:mb-0">
           <span
             class="absolute left-4 top-1/2 w-5 h-5 rounded-full bg-white border-4 border-green-500 -translate-x-1/2 -translate-y-1/2"
