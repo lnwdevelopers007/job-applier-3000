@@ -37,6 +37,8 @@ func NewRouter() *gin.Engine {
 		// Move your API endpoints into this group
 		api.GET("/jobs", GetController[schema.JobSchema]("jobs").RetrieveAll)
 		api.POST("/jobs", GetController[schema.JobSchema]("jobs").Create)
+		router.PUT("/jobs/:id", GetController[schema.JobSchema]("jobs").Update())
+		router.DELETE("/jobs/:id", GetController[schema.JobSchema]("jobs").Delete())
 
 		// custom query route
 		jobCtrl := NewJobController()
