@@ -19,26 +19,23 @@ import (
 )
 
 func init() {
-	// --- Google Provider Setup ---
-	clientID, _ := config.LoadEnv("CLIENT_ID")
-	clientSecret, _ := config.LoadEnv("CLIENT_SECRET")
-
 	googleAuth := google.New(
-		clientID,
-		clientSecret,
-		"http://localhost:8080/auth/google/callback",
+		config.LoadEnv("CLIENT_ID"),
+		config.LoadEnv("CLIENT_SECRET"),
+		config.LoadOAuthRedirectURI("http", "google"),
 		"email",
 		"profile",
 	)
+
 	goth.UseProviders(googleAuth)
-
-	hashKey, _ := config.LoadEnv("SESSION_HASH_KEY")
-
-	blockKey, _ := config.LoadEnv("SESSION_BLOCK_KEY")
 	maxAge := 86400 * 30 // 30 days
 	isProd := false      // Set to true when serving over https
 
-	store := sessions.NewCookieStore([]byte(hashKey), []byte(blockKey))
+	store := sessions.NewCookieStore(
+		[]byte(config.LoadEnv("SESSION_HASH_KEY")),
+		[]byte(config.LoadEnv("SESSION_BLOCK_KEY")),
+	)
+
 	store.MaxAge(maxAge)
 	store.Options.Path = "/"
 	store.Options.HttpOnly = true

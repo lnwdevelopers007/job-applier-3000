@@ -22,7 +22,7 @@ func NewJobController() JobController {
 	return JobController{collectionName: "jobs"}
 }
 
-// QueryJobs adds advanced filtering (title, location, salary range, etc.)
+// QueryJobs adds advanced filtering (title, company, location, salary range, etc.)
 func (jc JobController) QueryJobs() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		db := database.GetDatabase()
@@ -30,6 +30,7 @@ func (jc JobController) QueryJobs() gin.HandlerFunc {
 
 		// collect filters from query params
 		title := c.Query("title")
+		company := c.Query("company")
 		location := c.Query("location")
 		minSalary := c.Query("minSalary")
 		maxSalary := c.Query("maxSalary")
@@ -38,6 +39,9 @@ func (jc JobController) QueryJobs() gin.HandlerFunc {
 
 		if title != "" {
 			filter["title"] = bson.M{"$regex": title, "$options": "i"}
+		}
+		if company != "" {
+			filter["company"] = bson.M{"$regex": company, "$options": "i"}
 		}
 		if location != "" {
 			filter["location"] = bson.M{"$regex": location, "$options": "i"}

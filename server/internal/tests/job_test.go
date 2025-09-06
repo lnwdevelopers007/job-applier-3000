@@ -18,16 +18,16 @@ func setUp() *gin.Engine {
 	return router
 }
 
-func TestGetJobs(t *testing.T) {
+func TestRetrieveAllJobs(t *testing.T) {
 	router := setUp()
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/jobs", nil)
+	req, _ := http.NewRequest("GET", "/jobs/", nil)
 	router.ServeHTTP(w, req)
 	fmt.Println(w)
 	assert.Equal(t, 200, w.Code)
 }
 
-func TestPostJob(t *testing.T) {
+func TestCreateJob(t *testing.T) {
 	router := setUp()
 	w := httptest.NewRecorder()
 
@@ -35,7 +35,7 @@ func TestPostJob(t *testing.T) {
 	body := `{"title": "Software Engineer", "salary": 1000}`
 
 	// Create POST request with JSON body
-	req, _ := http.NewRequest("POST", "/api/jobs", strings.NewReader(body))
+	req, _ := http.NewRequest("POST", "/jobs/", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 
 	// Perform the request
