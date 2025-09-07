@@ -41,7 +41,7 @@
     <button class="px-3 py-1 bg-white rounded-lg font-semibold text-sm flex item-center gap-1 border-1 border-gray-300 "><Download class="w-5 h-5" /> Export</button>
   </div>
 
-  <div class="p-4 max-w-4xl mx-auto">
+  <div class="p-4 w-full">
     <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-300">
       <div class="p-3 bg-gray-100 border-b border-gray-300">
         <h1 class=" px-2 font-bold">Recent Applications</h1>
