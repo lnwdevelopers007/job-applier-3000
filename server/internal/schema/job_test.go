@@ -49,14 +49,14 @@ func TestValidJob(t *testing.T) {
 }
 
 // --- Title ---
-func TestMissingTitle(t *testing.T) {
+func TestJobMissingTitle(t *testing.T) {
 	payload := jobValidPayload()
 	delete(payload, "title") // required
 	_, err := bindMockJob(t, payload)
 	assert.Error(t, err)
 }
 
-func TestWrongTitleDataType(t *testing.T) {
+func TestJobWrongTitleDataType(t *testing.T) {
 	payload := jobValidPayload()
 	payload["title"] = 1212312121
 	_, err := bindMockJob(t, payload)
@@ -64,7 +64,7 @@ func TestWrongTitleDataType(t *testing.T) {
 }
 
 // --- Company ---
-func TestMissingCompany(t *testing.T) {
+func TestJobMissingCompanyID(t *testing.T) {
 	payload := jobValidPayload()
 	delete(payload, "companyID") // required
 	_, err := bindMockJob(t, payload)
@@ -73,14 +73,14 @@ func TestMissingCompany(t *testing.T) {
 
 // --- Location ---
 
-func TestMissingLocation(t *testing.T) {
+func TestJobMissingLocation(t *testing.T) {
 	payload := jobValidPayload()
 	delete(payload, "location") // required
 	_, err := bindMockJob(t, payload)
 	assert.Error(t, err)
 }
 
-func TestWrongLocationDataType(t *testing.T) {
+func TestJobWrongLocationDataType(t *testing.T) {
 	payload := jobValidPayload()
 	payload["location"] = 1212312121
 	_, err := bindMockJob(t, payload)
@@ -89,20 +89,20 @@ func TestWrongLocationDataType(t *testing.T) {
 
 // --- Salary ---
 
-func TestNegativeSalary(t *testing.T) {
+func TestJobNegativeSalary(t *testing.T) {
 	payload := jobValidPayload()
 	payload["salary"] = -1 // gte=0
 	_, err := bindMockJob(t, payload)
 	assert.Error(t, err)
 }
 
-func TestMissingSalary(t *testing.T) {
+func TestJobMissingSalary(t *testing.T) {
 	payload := jobValidPayload()
 	delete(payload, "salary") // required
 	_, err := bindMockJob(t, payload)
 	assert.Error(t, err)
 }
-func TestWrongSalaryDataType(t *testing.T) {
+func TestJobWrongSalaryDataType(t *testing.T) {
 	payload := jobValidPayload()
 	payload["location"] = 1212312121
 	_, err := bindMockJob(t, payload)
@@ -110,21 +110,21 @@ func TestWrongSalaryDataType(t *testing.T) {
 }
 
 // --- SalaryRate / WorkType / ContractType ---
-func TestMissingSalaryRate(t *testing.T) {
+func TestJobMissingSalaryRate(t *testing.T) {
 	payload := jobValidPayload()
 	delete(payload, "salaryRate") // required
 	_, err := bindMockJob(t, payload)
 	assert.Error(t, err)
 }
 
-func TestMissingWorkType(t *testing.T) {
+func TestJobMissingWorkType(t *testing.T) {
 	payload := jobValidPayload()
 	delete(payload, "workType") // required
 	_, err := bindMockJob(t, payload)
 	assert.Error(t, err)
 }
 
-func TestMissingContractType(t *testing.T) {
+func TestJobMissingContractType(t *testing.T) {
 	payload := jobValidPayload()
 	delete(payload, "contractType") // required
 	_, err := bindMockJob(t, payload)
@@ -133,7 +133,7 @@ func TestMissingContractType(t *testing.T) {
 
 // --- PrivacyPolicy (optional) ---
 
-func TestPrivacyPolicyOmittedIsValid(t *testing.T) {
+func TestJobPrivacyPolicyOmittedIsValid(t *testing.T) {
 	payload := jobValidPayload()
 	delete(payload, "privacyPolicy") // optional
 	_, err := bindMockJob(t, payload)
@@ -142,7 +142,7 @@ func TestPrivacyPolicyOmittedIsValid(t *testing.T) {
 
 // --- Publication (nested) ---
 
-func TestPublicationMissingStartDate(t *testing.T) {
+func TestJobPublicationMissingStartDate(t *testing.T) {
 	payload := jobValidPayload()
 	pub := payload["publicationInfo"].(map[string]any)
 	delete(pub, "startDate") // required
@@ -150,7 +150,7 @@ func TestPublicationMissingStartDate(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestPublicationMissingEndDate(t *testing.T) {
+func TestJobPublicationMissingEndDate(t *testing.T) {
 	payload := jobValidPayload()
 	pub := payload["publicationInfo"].(map[string]any)
 	delete(pub, "endDate") // required
@@ -158,7 +158,7 @@ func TestPublicationMissingEndDate(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestPublicationMissingCreatedAt(t *testing.T) {
+func TestJobPublicationMissingCreatedAt(t *testing.T) {
 	payload := jobValidPayload()
 	pub := payload["publicationInfo"].(map[string]any)
 	delete(pub, "createdAt") // required
@@ -166,7 +166,7 @@ func TestPublicationMissingCreatedAt(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestPublicationMissingIsHiring(t *testing.T) {
+func TestJobPublicationMissingIsHiring(t *testing.T) {
 	payload := jobValidPayload()
 	pub := payload["publicationInfo"].(map[string]any)
 	delete(pub, "isHiring") // required
@@ -176,7 +176,7 @@ func TestPublicationMissingIsHiring(t *testing.T) {
 
 // --- Criteria (nested) ---
 
-func TestCriteriaMissingRequirements(t *testing.T) {
+func TestJobCriteriaMissingRequirements(t *testing.T) {
 	payload := jobValidPayload()
 	crit := payload["criteria"].(map[string]any)
 	delete(crit, "requirements") // required slice
@@ -184,7 +184,7 @@ func TestCriteriaMissingRequirements(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestCriteriaEmptyRequirements(t *testing.T) {
+func TestJobCriteriaEmptyRequirements(t *testing.T) {
 	payload := jobValidPayload()
 	crit := payload["criteria"].(map[string]any)
 	crit["requirements"] = []string{} // required slice cannot be empty
@@ -192,7 +192,7 @@ func TestCriteriaEmptyRequirements(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestCriteriaMissingQualifications(t *testing.T) {
+func TestJobCriteriaMissingQualifications(t *testing.T) {
 	payload := jobValidPayload()
 	crit := payload["criteria"].(map[string]any)
 	delete(crit, "qualifications") // required slice
@@ -200,7 +200,7 @@ func TestCriteriaMissingQualifications(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestIsApprovedCanBeFalse(t *testing.T) {
+func TestJobIsApprovedCanBeFalse(t *testing.T) {
 	payload := jobValidPayload()
 	payload["isApproved"] = false // `required` on bool -> false is invalid
 	_, err := bindMockJob(t, payload)

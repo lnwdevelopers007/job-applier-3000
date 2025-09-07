@@ -35,7 +35,7 @@ func TestValidJobSeeker(t *testing.T) {
 
 // --- UserID ---
 
-func TestMissingUserIDInJobSeeker(t *testing.T) {
+func TestJobSeekerMissingUserIDInJobSeeker(t *testing.T) {
 	payload := jobSeekerValidPayload()
 	delete(payload, "userID")
 	_, err := bindMockJobSeeker(t, payload)
@@ -44,14 +44,14 @@ func TestMissingUserIDInJobSeeker(t *testing.T) {
 
 // --- Contact ---
 
-func TestMissingContactInJobSeeker(t *testing.T) {
+func TestJobSeekerMissingContactInJobSeeker(t *testing.T) {
 	payload := jobSeekerValidPayload()
 	delete(payload, "contact")
 	_, err := bindMockJobSeeker(t, payload)
 	assert.Error(t, err)
 }
 
-func TestMissingLocationInContact(t *testing.T) {
+func TestJobSeekerMissingLocationInContact(t *testing.T) {
 	payload := jobSeekerValidPayload()
 	contact := payload["contact"].(map[string]any)
 	delete(contact, "location")
@@ -59,7 +59,7 @@ func TestMissingLocationInContact(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestMissingPhoneInContact(t *testing.T) {
+func TestJobSeekerMissingPhoneInContact(t *testing.T) {
 	payload := jobSeekerValidPayload()
 	contact := payload["contact"].(map[string]any)
 	delete(contact, "phone")
@@ -67,7 +67,7 @@ func TestMissingPhoneInContact(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestMissingLinkedInInContact(t *testing.T) {
+func TestJobSeekerMissingLinkedInInContact(t *testing.T) {
 	payload := jobSeekerValidPayload()
 	contact := payload["contact"].(map[string]any)
 	delete(contact, "linkedIn")

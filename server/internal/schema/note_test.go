@@ -34,7 +34,7 @@ func TestValidNote(t *testing.T) {
 
 // --- JobApplicationID ---
 
-func TestMissingJobApplicationID(t *testing.T) {
+func TesNoteMissingJobApplicationID(t *testing.T) {
 	payload := noteValidPayload()
 	delete(payload, "jobApplicationID")
 	_, err := bindMockNote(t, payload)
@@ -43,7 +43,7 @@ func TestMissingJobApplicationID(t *testing.T) {
 
 // --- Content ---
 
-func TestMissingContent(t *testing.T) {
+func TestNoteMissingContent(t *testing.T) {
 	payload := noteValidPayload()
 	delete(payload, "content")
 	_, err := bindMockNote(t, payload)
@@ -52,7 +52,7 @@ func TestMissingContent(t *testing.T) {
 
 // --- Timestamp ---
 
-func TestMissingTimestamp(t *testing.T) {
+func TestNoteMissingTimestamp(t *testing.T) {
 	payload := noteValidPayload()
 	delete(payload, "timestamp")
 	_, err := bindMockNote(t, payload)

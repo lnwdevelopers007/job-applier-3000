@@ -27,49 +27,49 @@ func TestValidCompany(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestWrongNameDataType(t *testing.T) {
+func TestCompanyWrongNameDataType(t *testing.T) {
 	payload := companyValidPayload()
 	payload["name"] = 123213213
 	_, err := bindMockCompany(t, payload)
 	assert.Error(t, err)
 }
 
-func TestMissingName(t *testing.T) {
+func TestCompanyMissingName(t *testing.T) {
 	payload := companyValidPayload()
 	delete(payload, "name")
 	_, err := bindMockCompany(t, payload)
 	assert.Error(t, err)
 }
 
-func TestMissingAboutUs(t *testing.T) {
+func TestCompanyMissingAboutUs(t *testing.T) {
 	p := companyValidPayload()
 	delete(p, "aboutUs")
 	_, err := bindMockCompany(t, p)
 	assert.Error(t, err)
 }
 
-func TestWrongAboutUsDataType(t *testing.T) {
+func TestCompanyWrongAboutUsDataType(t *testing.T) {
 	payload := companyValidPayload()
 	payload["aboutUs"] = 123
 	_, err := bindMockCompany(t, payload)
 	assert.Error(t, err)
 }
 
-func TestMissingCompanyType(t *testing.T) {
+func TestCompanyMissingCompanyType(t *testing.T) {
 	p := companyValidPayload()
 	delete(p, "companyType")
 	_, err := bindMockCompany(t, p)
 	assert.Error(t, err)
 }
 
-func TestWrongCompanyDataType(t *testing.T) {
+func TestCompanyWrongCompanyDataType(t *testing.T) {
 	payload := companyValidPayload()
 	payload["companyType"] = 123
 	_, err := bindMockCompany(t, payload)
 	assert.Error(t, err)
 }
 
-func TestMissingUserID(t *testing.T) {
+func TestCompanyMissingUserID(t *testing.T) {
 	payload := companyValidPayload()
 	delete(payload, "userID")
 	_, err := bindMockCompany(t, payload)

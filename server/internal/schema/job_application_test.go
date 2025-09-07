@@ -32,7 +32,7 @@ func TestValidJobApplication(t *testing.T) {
 }
 
 // error when there's no applicant id
-func TestMissingApplicationID(t *testing.T) {
+func TestJobApplicationMissingApplicationID(t *testing.T) {
 	payload := jobApplicationValidPayload()
 	delete(payload, "applicantID")
 	_, err := bindMockJobApplication(t, payload)
@@ -40,7 +40,7 @@ func TestMissingApplicationID(t *testing.T) {
 }
 
 // error when there's no job id
-func TestMissingJobID(t *testing.T) {
+func TestJobApplicationMissingJobID(t *testing.T) {
 	payload := jobApplicationValidPayload()
 	delete(payload, "jobID")
 	_, err := bindMockJobApplication(t, payload)
@@ -48,28 +48,28 @@ func TestMissingJobID(t *testing.T) {
 }
 
 // error when missing company id
-func TestMissingCompanyID(t *testing.T) {
+func TestJobApplicationMissingCompanyID(t *testing.T) {
 	payload := jobApplicationValidPayload()
 	delete(payload, "companyID")
 	_, err := bindMockJobApplication(t, payload)
 	assert.Error(t, err)
 }
 
-func TestMissingStatus(t *testing.T) {
+func TestJobApplicationMissingStatus(t *testing.T) {
 	payload := jobApplicationValidPayload()
 	delete(payload, "status")
 	_, err := bindMockJobApplication(t, payload)
 	assert.Error(t, err)
 }
 
-func TestWrongStatusDataType(t *testing.T) {
+func TestJobApplicationWrongStatusDataType(t *testing.T) {
 	payload := jobApplicationValidPayload()
 	payload["status"] = 123
 	_, err := bindMockJobApplication(t, payload)
 	assert.Error(t, err)
 }
 
-func TestMissingCreatedAt(t *testing.T) {
+func TestJobApplicationMissingCreatedAt(t *testing.T) {
 	payload := jobApplicationValidPayload()
 	delete(payload, "createdAt")
 	_, err := bindMockJobApplication(t, payload)
