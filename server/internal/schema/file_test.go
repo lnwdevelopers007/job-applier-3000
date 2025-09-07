@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"encoding/base64"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,14 +11,14 @@ import (
 // --- helpers ---
 
 func fileValidPayload() map[string]any {
+	data := []byte("hello world")
 	return map[string]any{
 		"parentID":      primitive.NewObjectID(),
 		"parentColl":    "jobs",
-		"content":       primitive.Binary{Subtype: 0x00, Data: []byte("hello world")},
+		"content":       base64.StdEncoding.EncodeToString(data), // JSON string → []byte
 		"fileExtension": "pdf",
 	}
 }
-
 func bindMockFile(t *testing.T, payload map[string]any) (File, error) {
 	return bindMockRequest[File](t, payload)
 }
