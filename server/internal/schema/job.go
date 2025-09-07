@@ -22,7 +22,7 @@ type Job struct {
 	PrivacyPolicy   string             `bson:"privacyPolicy" json:"privacyPolicy,omitempty"`
 	PublicationInfo Publication        `bson:"publicationInfo" json:"publicationInfo" binding:"required"`
 	Criteria        JobCriteria        `bson:"criteria" json:"criteria" binding:"required" `
-	IsApproved      bool               `bson:"isApproved" json:"isApproved" binding:"required"`
+	IsApproved      bool               `bson:"isApproved" json:"isApproved" binding:"boolean"`
 }
 
 type Publication struct {
