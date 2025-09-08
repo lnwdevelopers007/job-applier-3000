@@ -17,7 +17,7 @@
 
       <div class="space-y-3 mb-8">
         <!-- Option 1 - Student/Alumni -->
-        <a href="/auth/signup/form?role=student" class="block border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-green-600 transition-colors">
+        <a href="/auth/signup/student" class="block border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-green-600 transition-colors">
           <div class="flex items-start space-x-3">
             <div class="flex-shrink-0">
               <div class="flex -space-x-2">
@@ -37,7 +37,7 @@
         </a>
 
         <!-- Option 2 - Recruiter -->
-        <a href="/auth/signup/form?role=company" class="block border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-green-600 transition-colors">
+        <a href="/auth/signup/company" class="block border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-green-600 transition-colors">
           <div class="flex items-start space-x-3">
             <div class="flex-shrink-0">
               <div class="flex -space-x-2">
