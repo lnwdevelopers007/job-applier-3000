@@ -2,13 +2,13 @@
   import { goto } from '$app/navigation';
   import { fly } from 'svelte/transition';
   import { ArrowLeft, ArrowRight, ChevronLeft } from 'lucide-svelte';
-  import Stepper from '$lib/components/Stepper.svelte';
-  import BasicInfoForm from '$lib/components/forms/job-post-creation/BasicInfoForm.svelte';
-  import DescriptionForm from '$lib/components/forms/job-post-creation/DescriptionForm.svelte';
-  import RequirementForm from '$lib/components/forms/job-post-creation/RequirementForm.svelte';
-  import PostSettingForm from '$lib/components/forms/job-post-creation/PostSettingForm.svelte';
-  import PreviewDrawer from '$lib/components/PreviewDrawer.svelte';
-  
+  import Stepper from '$lib/components/job-post-creation/Stepper.svelte';
+  import BasicInfoForm from '$lib/components/job-post-creation/forms/BasicInfoForm.svelte';
+  import DescriptionForm from '$lib/components/job-post-creation/forms/DescriptionForm.svelte';
+  import RequirementForm from '$lib/components/job-post-creation/forms/RequirementForm.svelte';
+  import PostSettingForm from '$lib/components/job-post-creation/forms/PostSettingForm.svelte';
+  import PreviewDrawer from '$lib/components/job-post-creation/PreviewDrawer.svelte';
+
   let currentStep = $state(1); // Current step (1-4)
   let isPreviewOpen = $state(false);
   let stepper;
