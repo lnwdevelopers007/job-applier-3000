@@ -23,6 +23,7 @@ func NewRouter() *gin.Engine {
 		authGroup.GET("/:provider", auth.Login)
 		authGroup.GET("/:provider/callback", auth.OAuthCallback)
 		authGroup.GET("/:provider/logout", auth.Logout)
+		authGroup.POST("/refresh", auth.RefreshToken)
 	}
 
 	jobs := router.Group("/jobs")

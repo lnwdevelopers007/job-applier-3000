@@ -51,6 +51,7 @@
 		"@tiptap/extension-placeholder": "^3.3.0",
 		"@tiptap/pm": "^3.3.0",
 		"@tiptap/starter-kit": "^3.3.0",
+		"jwt-decode": "^4.0.0",
 		"lucide-svelte": "^0.541.0"
 	}
 }
