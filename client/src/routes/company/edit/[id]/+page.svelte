@@ -48,8 +48,25 @@
     isPreviewOpen = true;
   }
 
-  function handlePublish() {
-    console.log('Publishing job:', jobId);
+  async function handlePublish() {
+    try {
+      const res = await fetch(`/jobs/${jobId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to update job: ${res.status}`);
+      }
+
+      const updatedJob = await res.json();
+      console.log('Job updated successfully:', updatedJob);
+
+      goto('/company/dashboard');
+    } catch (err) {
+      console.error('Error updating job:', err);
+    }
   }
 
   function scrollToSection(sectionId) {
