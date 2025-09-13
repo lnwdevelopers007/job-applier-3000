@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"time"
 
@@ -22,24 +21,22 @@ func init() {
 	googleAuth := google.New(
 		config.LoadEnv("CLIENT_ID"),
 		config.LoadEnv("CLIENT_SECRET"),
-		config.LoadOAuthRedirectURI("http", "google"),
+		config.LoadCallbackURI("http", "google"),
 		"email",
 		"profile",
 	)
 
 	goth.UseProviders(googleAuth)
-	maxAge := 86400 * 30 // 30 days
-	isProd := false      // Set to true when serving over https
-
+	maxAgeSeconds := 86400 * config.LoadInt("MAX_COOKIE_AGE_DAYS")
 	store := sessions.NewCookieStore(
 		[]byte(config.LoadEnv("SESSION_HASH_KEY")),
 		[]byte(config.LoadEnv("SESSION_BLOCK_KEY")),
 	)
 
-	store.MaxAge(maxAge)
+	store.MaxAge(maxAgeSeconds)
 	store.Options.Path = "/"
 	store.Options.HttpOnly = true
-	store.Options.Secure = isProd
+	store.Options.Secure = config.LoadBoolean("IS_PROD")
 	store.Options.SameSite = http.SameSiteLaxMode
 	gothic.Store = store
 }
@@ -96,15 +93,33 @@ func OAuthCallback(c *gin.Context) {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	if _, err := json.Marshal(user); err != nil {
+
+	if _, err := upsertUser(user); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	if _, err := upsertUser(user); err != nil {
+	accessToken, refreshToken, err := generateTokens(user.Email, user.Name)
+	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
+		return
 	}
-	c.JSON(http.StatusOK, user)
+
+	refreshTokenAge := config.LoadInt("REFRESH_TOKEN_AGE_DAYS") * 24 * 3600
+	// Set refresh token as HttpOnly cookie
+	c.SetCookie(
+		"refresh_token",
+		refreshToken,
+		refreshTokenAge,
+		"/", "localhost",
+		false,
+		true,
+	)
+
+	// Build redirect URL for frontend
+	redirectURL := config.LoadEnv("FRONTEND") + "/callback?token=" + accessToken
+
+	c.Redirect(http.StatusFound, redirectURL)
 }
 
 // Login log user in via OAuth.
@@ -118,5 +133,7 @@ func Logout(c *gin.Context) {
 	if err := gothic.Logout(c.Writer, c.Request); err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 	}
-	c.JSON(http.StatusOK, "User logged out successfully")
+
+	c.SetCookie("refresh_token", "", -1, "/", c.Request.URL.Hostname(), false, true)
+	c.Redirect(http.StatusPermanentRedirect, config.LoadEnv("FRONTEND"))
 }
