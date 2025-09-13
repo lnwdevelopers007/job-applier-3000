@@ -61,10 +61,30 @@
     isPreviewOpen = true;
   }
 
-  const handleProgress = (stepIncrement) => {
-    stepper.handleProgress(stepIncrement);
-  }
+  const handleProgress = async (stepIncrement) => {
+    if (currentStep === 4 && stepIncrement === 1) {
+      try {
+        const res = await fetch('/jobs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
 
+        if (!res.ok) {
+          throw new Error(`Failed: ${res.status}`);
+        }
+
+        const data = await res.json();
+        console.log('Job created:', data);
+
+        goto('/company/dashboard');
+      } catch (err) {
+        console.error('Error creating job:', err);
+      }
+    } else {
+      stepper.handleProgress(stepIncrement);
+    }
+  };
 </script>
 
 <div class="max-w-4xl mx-auto py-8">
