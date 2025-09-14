@@ -29,9 +29,9 @@ func TestRetrieveAllJobs(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 }
 
-func newJob() ([]byte, error) {
+func rawJob() map[string]any {
 	now := time.Now().UTC().Truncate(time.Second)
-	return json.Marshal(map[string]any{
+	return map[string]any{
 		// basic info
 		"title":           "Brr Brr Engineer",
 		"companyID":       "64f3a2b7e1d3a8c1b0f9d2a1",
@@ -58,7 +58,7 @@ func newJob() ([]byte, error) {
 		"visibility":          "public",
 		"emailNotifications":  true,
 		"autoReject":          false,
-	})
+	}
 }
 
 func TestCreateJob(t *testing.T) {
@@ -66,7 +66,7 @@ func TestCreateJob(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	// Example JSON payload
-	body, _ := newJob()
+	body, _ := json.Marshal(rawJob())
 
 	// Create POST request with JSON body
 	req, _ := http.NewRequest("POST", "/jobs/", bytes.NewReader(body))
@@ -82,4 +82,28 @@ func TestCreateJob(t *testing.T) {
 	// Assertions
 	assert.Equal(t, http.StatusCreated, w.Code) // or StatusCreated if you return 201
 	assert.Contains(t, w.Body.String(), "InsertedID")
+}
+
+func TestCreateJobWithWrongCompanyID(t *testing.T) {
+	router := setUp()
+	w := httptest.NewRecorder()
+
+	// Example JSON payload
+	raw := rawJob()
+	raw["companyID"] = "64f3a2b7e1d3a8c1b0f9d2xx"
+	body, _ := json.Marshal(raw)
+
+	// Create POST request with JSON body
+	req, _ := http.NewRequest("POST", "/jobs/", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	// Perform the request
+	router.ServeHTTP(w, req)
+
+	// Debug output (optional)
+	fmt.Println("Response code:", w.Code)
+	fmt.Println("Response body:", w.Body.String())
+
+	// Assertions
+	assert.Equal(t, http.StatusBadRequest, w.Code) // or StatusCreated if you return 201
 }
