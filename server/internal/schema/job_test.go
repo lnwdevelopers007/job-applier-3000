@@ -13,26 +13,32 @@ import (
 func jobValidPayload() map[string]any {
 	now := time.Now().UTC().Truncate(time.Second)
 	return map[string]any{
-		"title":        "Brr Brr Engineer",
-		"companyID":    primitive.NewObjectID(),
-		"location":     "Millenium Science School, Kivotos.",
-		"salary":       120000,
-		"salaryRate":   "yearly",
-		"workType":     "onsite",
-		"contractType": "full-time",
-		// privacyPolicy is optional
-		"publicationInfo": map[string]any{
-			"isHiring":  true,
-			"createdAt": now.Format(time.RFC3339),
-			"startDate": now.Format(time.RFC3339),
-			"endDate":   now.AddDate(0, 1, 0).Format(time.RFC3339),
-		},
-		"criteria": map[string]any{
-			"requirements":   []string{"Go", "MongoDB"},
-			"qualifications": []string{"Bachelor's Degree"},
-			// commonQuestions is optional
-		},
-		"isApproved": true, // NOTE: with `binding:"required"` on a bool, false will fail validation
+		// basic info
+		"title":           "Brr Brr Engineer",
+		"companyID":       primitive.NewObjectID(),
+		"location":        "Millenium Science School, Kivotos.",
+		"workType":        "onsite",
+		"workArrangement": "full-time",
+		"currency":        "THB",
+		"minSalary":       2000.34,
+		"maxSalary":       300000.213213,
+
+		// description
+		"jobDescription": "long",
+		"jobSummary":     "longer",
+
+		// requirements
+		"requiredSkills":  "none",
+		"experienceLevel": "a lot",
+		"education":       "maybe",
+		"niceToHave":      "noting",
+
+		// post settings
+		"applicationDeadline": now,
+		"numberOfPositions":   1,
+		"visibility":          "public",
+		"emailNotifications":  true,
+		"autoReject":          false,
 	}
 }
 
@@ -89,120 +95,31 @@ func TestJobWrongLocationDataType(t *testing.T) {
 
 // --- Salary ---
 
-func TestJobNegativeSalary(t *testing.T) {
+func TestJobNegativeMinSalary(t *testing.T) {
 	payload := jobValidPayload()
-	payload["salary"] = -1 // gte=0
+	payload["minSalary"] = -1 // gte=0
 	_, err := bindMockJob(t, payload)
 	assert.Error(t, err)
 }
 
-func TestJobMissingSalary(t *testing.T) {
+func TestJobMissingMinSalary(t *testing.T) {
 	payload := jobValidPayload()
-	delete(payload, "salary") // required
-	_, err := bindMockJob(t, payload)
-	assert.Error(t, err)
-}
-func TestJobWrongSalaryDataType(t *testing.T) {
-	payload := jobValidPayload()
-	payload["location"] = 1212312121
+	delete(payload, "minSalary") // required
 	_, err := bindMockJob(t, payload)
 	assert.Error(t, err)
 }
 
-// --- SalaryRate / WorkType / ContractType ---
-func TestJobMissingSalaryRate(t *testing.T) {
+func TestJobNegativeMaxSalary(t *testing.T) {
 	payload := jobValidPayload()
-	delete(payload, "salaryRate") // required
+	payload["minSalary"] = 0  // gte=0
+	payload["maxSalary"] = -1 // gte=0
 	_, err := bindMockJob(t, payload)
 	assert.Error(t, err)
 }
 
-func TestJobMissingWorkType(t *testing.T) {
+func TestJobMissingMaxSalary(t *testing.T) {
 	payload := jobValidPayload()
-	delete(payload, "workType") // required
+	delete(payload, "maxSalary") // required
 	_, err := bindMockJob(t, payload)
 	assert.Error(t, err)
-}
-
-func TestJobMissingContractType(t *testing.T) {
-	payload := jobValidPayload()
-	delete(payload, "contractType") // required
-	_, err := bindMockJob(t, payload)
-	assert.Error(t, err)
-}
-
-// --- PrivacyPolicy (optional) ---
-
-func TestJobPrivacyPolicyOmittedIsValid(t *testing.T) {
-	payload := jobValidPayload()
-	delete(payload, "privacyPolicy") // optional
-	_, err := bindMockJob(t, payload)
-	assert.NoError(t, err)
-}
-
-// --- Publication (nested) ---
-
-func TestJobPublicationMissingStartDate(t *testing.T) {
-	payload := jobValidPayload()
-	pub := payload["publicationInfo"].(map[string]any)
-	delete(pub, "startDate") // required
-	_, err := bindMockJob(t, payload)
-	assert.Error(t, err)
-}
-
-func TestJobPublicationMissingEndDate(t *testing.T) {
-	payload := jobValidPayload()
-	pub := payload["publicationInfo"].(map[string]any)
-	delete(pub, "endDate") // required
-	_, err := bindMockJob(t, payload)
-	assert.Error(t, err)
-}
-
-func TestJobPublicationMissingCreatedAt(t *testing.T) {
-	payload := jobValidPayload()
-	pub := payload["publicationInfo"].(map[string]any)
-	delete(pub, "createdAt") // required
-	_, err := bindMockJob(t, payload)
-	assert.Error(t, err)
-}
-
-func TestJobPublicationMissingIsHiring(t *testing.T) {
-	payload := jobValidPayload()
-	pub := payload["publicationInfo"].(map[string]any)
-	delete(pub, "isHiring") // required
-	_, err := bindMockJob(t, payload)
-	assert.Error(t, err)
-}
-
-// --- Criteria (nested) ---
-
-func TestJobCriteriaMissingRequirements(t *testing.T) {
-	payload := jobValidPayload()
-	crit := payload["criteria"].(map[string]any)
-	delete(crit, "requirements") // required slice
-	_, err := bindMockJob(t, payload)
-	assert.Error(t, err)
-}
-
-func TestJobCriteriaEmptyRequirements(t *testing.T) {
-	payload := jobValidPayload()
-	crit := payload["criteria"].(map[string]any)
-	crit["requirements"] = []string{} // required slice cannot be empty
-	_, err := bindMockJob(t, payload)
-	assert.Error(t, err)
-}
-
-func TestJobCriteriaMissingQualifications(t *testing.T) {
-	payload := jobValidPayload()
-	crit := payload["criteria"].(map[string]any)
-	delete(crit, "qualifications") // required slice
-	_, err := bindMockJob(t, payload)
-	assert.Error(t, err)
-}
-
-func TestJobIsApprovedCanBeFalse(t *testing.T) {
-	payload := jobValidPayload()
-	payload["isApproved"] = false // `required` on bool -> false is invalid
-	_, err := bindMockJob(t, payload)
-	assert.NoError(t, err)
 }

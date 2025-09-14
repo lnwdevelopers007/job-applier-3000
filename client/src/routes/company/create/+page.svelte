@@ -22,9 +22,9 @@
 
   let formData = $state({
     // Basic Info
-    jobTitle: '',
+    title: '',
+    companyID: '',
     location: '',
-    category: '',
     workType: 'full-time',
     workArrangement: 'on-site',
     currency: 'THB',
@@ -33,7 +33,7 @@
     
     // Description
     jobDescription: '',
-    companyDescription: '',
+    jobSummary: '',
     
     // Requirements
     requiredSkills: '',
