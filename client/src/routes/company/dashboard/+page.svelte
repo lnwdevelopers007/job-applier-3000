@@ -89,6 +89,8 @@
 
   let jobs = [];
   let selectedJob = null;
+  let error = null;
+  let loading = true;
 
   function selectRow(index) {
     selectedJob = selectedJob === index ? null : index;

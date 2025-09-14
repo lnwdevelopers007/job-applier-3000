@@ -1,5 +1,7 @@
 <script>
   import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
+  import { get } from 'svelte/store';
   import { onMount } from 'svelte';
   import { ChevronLeft } from 'lucide-svelte';
   import BasicInfoForm from '$lib/components/forms/job-post-creation/BasicInfoForm.svelte';
@@ -8,33 +10,40 @@
   import PostSettingForm from '$lib/components/forms/job-post-creation/PostSettingForm.svelte';
   import PreviewDrawer from '$lib/components/PreviewDrawer.svelte';
   import FormSidebar from '$lib/components/FormSidebar.svelte';
-  
+
+  let jobId = $derived($page.params.id);
   let isPreviewOpen = $state(false);
   let activeSection = $state('basic-info');
-  let loading = $state(true);
+  let loading = true;
   let error = $state(null);
-  let jobId = 'demo-123';
 
   let formData = $state({
     // Basic Info
-    title: 'Senior Software Engineer',
+    jobTitle: '',
     companyID: '',
-    location: 'Bangkok, Thailand',
-    category: 'Technology',
+    location: '',
+    category: '',
     workType: 'full-time',
-    workArrangement: 'hybrid',
+    workArrangement: 'on-site',
     currency: 'THB',
-    minSalary: '80000',
-    maxSalary: '120000',
-    
+    minSalary: '',
+    maxSalary: '',
+
     // Description
-    jobDescription: 'We are looking for a Senior Software Engineer...',
-    jobSummary: 'This job position is for data management in our system.',
-    
+    jobDescription: '',
+    jobSummary: '',
+
     // Requirements
-    requiredSkills: ['JavaScript', 'React', 'Node.js'],
-    experienceLevel: 'Mid-Level (4-6 years)',
-    education: 'Bachelor\'s Degree',
+    requiredSkills: [],
+    experienceLevel: '',
+    education: '',
+
+    // Post Settings
+    applicationDeadline: '',
+    numberOfPositions: 1,
+    visibility: 'public',
+    emailNotifications: true,
+    autoReject: false
   });
 
   const sections = [
@@ -53,6 +62,7 @@
   }
 
   async function handlePublish() {
+    jobId = get(page).params.id;
     try {
       const res = await fetch(`/jobs/${jobId}`, {
         method: 'PUT',
@@ -90,7 +100,7 @@
       if (element) {
         const elementTop = element.offsetTop - offset;
         const elementBottom = elementTop + element.offsetHeight;
-        
+
         if (scrollY >= elementTop && scrollY < elementBottom) {
           activeSection = section.id;
           break;
@@ -103,9 +113,25 @@
     try {
       const res = await fetch(`/jobs/query?id=${jobId}`);
       if (!res.ok) throw new Error(`Failed to load job: ${res.status}`);
-      const job = await res.json();
+      const data = await res.json();
+      const job = Array.isArray(data) ? data[0] : data;
 
-      formData = { ...formData, ...job };
+      const formattedDeadline = job.applicationDeadline
+        ? new Date(job.applicationDeadline).toISOString().slice(0, 10)
+        : '';
+
+      formData = {
+        ...formData,
+        ...job,
+        requiredSkills: typeof job.requiredSkills === 'string'
+          ? job.requiredSkills.split(',').map(s => s.trim()).filter(Boolean)
+          : job.requiredSkills || [],
+        postingCloseDate: formattedDeadline,
+        jobTitle: job.title || '',
+        screeningQuestions: job.questions || ''
+      };
+
+      console.log('Loaded job:', formData);
     } catch (err) {
       error = err.message;
     } finally {
