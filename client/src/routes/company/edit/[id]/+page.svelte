@@ -61,13 +61,50 @@
     isPreviewOpen = true;
   }
 
+  function buildPayload(formData) {
+    return {
+      // Basic Info
+      title: formData.jobTitle || "Test Job Title",
+      companyID: String(formData.companyID || "64f0c44a27b1c27f4d92e9a2"),
+      location: formData.location || "Bangkok, Thailand",
+      workType: formData.workType,
+      workArrangement: formData.workArrangement,
+      currency: formData.currency,
+      minSalary: Number(formData.minSalary || 0),
+      maxSalary: Number(formData.maxSalary || 0),
+
+      // Description
+      jobDescription: formData.jobDescription || "Test description",
+      jobSummary: formData.jobSummary || "Test summary",
+
+      // Requirements
+      requiredSkills: Array.isArray(formData.requiredSkills) && formData.requiredSkills.length
+          ? formData.requiredSkills.join(", ")
+          : "JS, Node",
+      experienceLevel: formData.experienceLevel || "Mid-Level",
+      education: formData.education || "Bachelor",
+      niceToHave: formData.niceToHave || "",
+      questions: formData.screeningQuestions || "What is your expected salary?",
+
+      // Post Settings
+      applicationDeadline: formData.postingCloseDate
+        ? new Date(formData.postingCloseDate).toISOString()
+        : new Date().toISOString(),
+      numberOfPositions: Number(formData.numberOfPositions || 1),
+      visibility: formData.visibility || "public",
+      emailNotifications: Boolean(formData.emailNotifications),
+      autoReject: Boolean(formData.autoReject)
+    };
+  }
+
   async function handlePublish() {
     jobId = get(page).params.id;
     try {
+      const payload = buildPayload(formData);
       const res = await fetch(`/jobs/${jobId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
 
       if (!res.ok) {
