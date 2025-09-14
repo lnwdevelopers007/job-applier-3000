@@ -127,7 +127,6 @@
 
   function handleAction(action, job) {
     if (action.label === 'Edit') {
-      console.log(`${job.id}`);
       goto(`/company/edit/${job.id}`);
     }
     if (action.label === 'View') {
