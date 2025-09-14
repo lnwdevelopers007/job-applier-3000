@@ -12,7 +12,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/controller"
 	"github.com/stretchr/testify/assert"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func setUp() *gin.Engine {
@@ -33,26 +32,32 @@ func TestRetrieveAllJobs(t *testing.T) {
 func newJob() ([]byte, error) {
 	now := time.Now().UTC().Truncate(time.Second)
 	return json.Marshal(map[string]any{
-		"title":        "Brr Brr Engineer",
-		"companyID":    primitive.NewObjectID(),
-		"location":     "Millenium Science School, Kivotos.",
-		"salary":       120000,
-		"salaryRate":   "yearly",
-		"workType":     "onsite",
-		"contractType": "full-time",
-		// privacyPolicy is optional
-		"publicationInfo": map[string]any{
-			"isHiring":  true,
-			"createdAt": now.Format(time.RFC3339),
-			"startDate": now.Format(time.RFC3339),
-			"endDate":   now.AddDate(0, 1, 0).Format(time.RFC3339),
-		},
-		"criteria": map[string]any{
-			"requirements":   []string{"Go", "MongoDB"},
-			"qualifications": []string{"Bachelor's Degree"},
-			// commonQuestions is optional
-		},
-		"isApproved": true, // NOTE: with `binding:"required"` on a bool, false will fail validation
+		// basic info
+		"title":           "Brr Brr Engineer",
+		"companyID":       "64f3a2b7e1d3a8c1b0f9d2a1",
+		"location":        "Millenium Science School, Kivotos.",
+		"workType":        "onsite",
+		"workArrangement": "full-time",
+		"currency":        "THB",
+		"minSalary":       2000.34,
+		"maxSalary":       300000.213213,
+
+		// description
+		"jobDescription": "long",
+		"jobSummary":     "longer",
+
+		// requirements
+		"requiredSkills":  "none",
+		"experienceLevel": "a lot",
+		"education":       "maybe",
+		"niceToHave":      "noting",
+
+		// post settings
+		"applicationDeadline": now,
+		"numberOfPositions":   1,
+		"visibility":          "public",
+		"emailNotifications":  true,
+		"autoReject":          false,
 	})
 }
 
