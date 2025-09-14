@@ -8,6 +8,7 @@
   import RequirementForm from '$lib/components/forms/job-post-creation/RequirementForm.svelte';
   import PostSettingForm from '$lib/components/forms/job-post-creation/PostSettingForm.svelte';
   import PreviewDrawer from '$lib/components/PreviewDrawer.svelte';
+	import { form } from '$app/server';
   
   let currentStep = $state(1); // Current step (1-4)
   let isPreviewOpen = $state(false);
@@ -22,14 +23,14 @@
 
   let formData = $state({
     // Basic Info
-    title: '',
-    companyID: '',
+    jobTitle: '',
+    companyID: '64f0c44a27b1c27f4d92e9a2',
     location: '',
     workType: 'full-time',
     workArrangement: 'on-site',
     currency: 'THB',
-    minSalary: '',
-    maxSalary: '',
+    minSalary: 1,
+    maxSalary: 1,
     
     // Description
     jobDescription: '',
@@ -61,22 +62,63 @@
     isPreviewOpen = true;
   }
 
+  function buildPayload(formData) {
+    return {
+      // Basic Info
+      title: formData.jobTitle || "Test Job Title",
+      companyID: String(formData.companyID || "64f0c44a27b1c27f4d92e9a2"),
+      location: formData.location || "Bangkok, Thailand",
+      workType: formData.workType,
+      workArrangement: formData.workArrangement,
+      currency: formData.currency,
+      minSalary: Number(formData.minSalary || 0),
+      maxSalary: Number(formData.maxSalary || 0),
+
+      // Description
+      jobDescription: formData.jobDescription || "Test description",
+      jobSummary: formData.jobSummary || "Test summary",
+
+      // Requirements
+      requiredSkills: Array.isArray(formData.requiredSkills) && formData.requiredSkills.length
+          ? formData.requiredSkills.join(", ")
+          : "JS, Node",
+      experienceLevel: formData.experienceLevel || "Mid-Level",
+      education: formData.education || "Bachelor",
+      niceToHave: formData.niceToHave || "",
+      questions: formData.screeningQuestions || "What is your expected salary?",
+
+      // Post Settings
+      applicationDeadline: formData.postingCloseDate
+        ? new Date(formData.postingCloseDate).toISOString()
+        : new Date().toISOString(),
+      numberOfPositions: Number(formData.numberOfPositions || 1),
+      visibility: formData.visibility || "public",
+      emailNotifications: Boolean(formData.emailNotifications),
+      autoReject: Boolean(formData.autoReject)
+    };
+  }
+
+
   const handleProgress = async (stepIncrement) => {
     if (currentStep === 4 && stepIncrement === 1) {
       try {
-        const res = await fetch('/jobs', {
+        const payload = buildPayload(formData);
+        console.log("Sending payload:", payload);
+
+        const res = await fetch('/jobs/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData)
+          body: JSON.stringify(payload)
         });
 
         if (!res.ok) {
-          throw new Error(`Failed: ${res.status}`);
+          const text = await res.text();
+          console.error('Server error body:', text);
+          throw new Error(`Failed: ${res.status} ${text}`);
         }
 
         const data = await res.json();
         console.log('Job created:', data);
-
         goto('/company/dashboard');
       } catch (err) {
         console.error('Error creating job:', err);
@@ -85,6 +127,7 @@
       stepper.handleProgress(stepIncrement);
     }
   };
+
 </script>
 
 <div class="max-w-4xl mx-auto py-8">

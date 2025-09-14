@@ -1,5 +1,6 @@
 <script>
   import { goto } from '$app/navigation';
+  import { onMount } from 'svelte';
   import { ChevronLeft } from 'lucide-svelte';
   import BasicInfoForm from '$lib/components/forms/job-post-creation/BasicInfoForm.svelte';
   import DescriptionForm from '$lib/components/forms/job-post-creation/DescriptionForm.svelte';
@@ -10,12 +11,14 @@
   
   let isPreviewOpen = $state(false);
   let activeSection = $state('basic-info');
-
+  let loading = $state(true);
+  let error = $state(null);
   let jobId = 'demo-123';
 
   let formData = $state({
     // Basic Info
-    jobTitle: 'Senior Software Engineer',
+    title: 'Senior Software Engineer',
+    companyID: '',
     location: 'Bangkok, Thailand',
     category: 'Technology',
     workType: 'full-time',
@@ -26,6 +29,7 @@
     
     // Description
     jobDescription: 'We are looking for a Senior Software Engineer...',
+    jobSummary: 'This job position is for data management in our system.',
     
     // Requirements
     requiredSkills: ['JavaScript', 'React', 'Node.js'],
@@ -94,6 +98,21 @@
       }
     }
   }
+
+  onMount(async () => {
+    try {
+      const res = await fetch(`/jobs/query?id=${jobId}`);
+      if (!res.ok) throw new Error(`Failed to load job: ${res.status}`);
+      const job = await res.json();
+
+      formData = { ...formData, ...job };
+    } catch (err) {
+      error = err.message;
+    } finally {
+      loading = false;
+    }
+  });
+
 </script>
 
 <svelte:window on:scroll={handleScroll} />
