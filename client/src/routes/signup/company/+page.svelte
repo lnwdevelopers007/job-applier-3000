@@ -81,7 +81,7 @@
     <p class="text-sm text-gray-500 mb-6">Tell us more about your company</p>
     
     <div class="flex items-center space-x-3 mb-6">
-      <ArrowLeft class="w-4 h-4 text-gray-600 cursor-pointer" on:click={goBackToEmailStep} />
+      <ArrowLeft class="w-4 h-4 text-gray-600 cursor-pointer" onclick={goBackToEmailStep} />
       <p class="text-sm font-light text-gray-600"><span class="font-medium">{email}</span></p>
     </div>
     
