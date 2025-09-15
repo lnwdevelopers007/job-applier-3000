@@ -14,8 +14,6 @@
   let jobId = $derived($page.params.id);
   let isPreviewOpen = $state(false);
   let activeSection = $state('basic-info');
-  let loading = true;
-  let error = $state(null);
 
   let formData = $state({
     // Basic Info
@@ -177,12 +175,8 @@
         educationLevel: job.education || '',
         yearsOfExperience: job.experienceLevel || ''
       };
-
-      console.log('Loaded job:', formData);
     } catch (err) {
-      error = err.message;
-    } finally {
-      loading = false;
+      console.error('Error loading job:', err);
     }
   });
 

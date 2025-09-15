@@ -89,11 +89,21 @@
 
   let jobs = [];
   let selectedJob = null;
-  let error = null;
-  let loading = true;
 
   function selectRow(index) {
     selectedJob = selectedJob === index ? null : index;
+  }
+
+  function handleAction(action, job) {
+    if (action.label === 'Edit') {
+      goto(`/company/edit/${job.id}`);
+    }
+    if (action.label === 'View') {
+      console.log("View this posting");
+    }
+    if (action.label === 'Manage') {
+      console.log("Manage this posting");
+    }
   }
 
   onMount(async () => {
@@ -121,22 +131,7 @@
         ]
       }));
     } catch (err) {
-      console.error(err);
-      error = err.message;
-    } finally {
-      loading = false;
+      console.error("Error fetching jobs:", err);
     }
   });
-
-  function handleAction(action, job) {
-    if (action.label === 'Edit') {
-      goto(`/company/edit/${job.id}`);
-    }
-    if (action.label === 'View') {
-      console.log("View this posting");
-    }
-    if (action.label === 'Manage') {
-      console.log("Manage this posting");
-    }
-  }
 </script>

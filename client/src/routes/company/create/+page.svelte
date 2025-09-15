@@ -8,7 +8,6 @@
   import RequirementForm from '$lib/components/forms/job-post-creation/RequirementForm.svelte';
   import PostSettingForm from '$lib/components/forms/job-post-creation/PostSettingForm.svelte';
   import PreviewDrawer from '$lib/components/PreviewDrawer.svelte';
-	import { form } from '$app/server';
   
   let currentStep = $state(1); // Current step (1-4)
   let isPreviewOpen = $state(false);
