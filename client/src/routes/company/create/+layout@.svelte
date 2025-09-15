@@ -6,7 +6,7 @@
 </script>
 
 <div class="bg-white">
-  <LayoutHeader userName="Company" userRole="Recruiter" />
+  <LayoutHeader />
 
   <main class="flex-1">
     {@render children?.()}
