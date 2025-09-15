@@ -10,6 +10,7 @@ import (
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/database"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // JobController is a custom controller for JobSchema
@@ -29,6 +30,7 @@ func (jc JobController) QueryJobs() gin.HandlerFunc {
 		collection := db.Collection(jc.collectionName)
 
 		// collect filters from query params
+		id := c.Query("id")
 		title := c.Query("title")
 		company := c.Query("company")
 		location := c.Query("location")
@@ -37,6 +39,14 @@ func (jc JobController) QueryJobs() gin.HandlerFunc {
 
 		filter := bson.M{}
 
+		if id != "" {
+			objectID, err := primitive.ObjectIDFromHex(id)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+				return
+			}
+			filter["_id"] = objectID
+		}
 		if title != "" {
 			filter["title"] = bson.M{"$regex": title, "$options": "i"}
 		}
