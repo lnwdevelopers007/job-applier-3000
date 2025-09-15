@@ -62,6 +62,11 @@
   }
 
   function buildPayload(formData) {
+    function withDeadlineTime(dateStr) {
+      const d = new Date(dateStr);
+      d.setUTCHours(16, 59, 0, 0);
+      return d.toISOString();
+    }
     return {
       // Basic Info
       title: formData.jobTitle || "Test Job Title",
@@ -91,8 +96,8 @@
         ? new Date(formData.postingOpenDate).toISOString()
         : new Date().toISOString(),
       applicationDeadline: formData.postingCloseDate
-        ? new Date(formData.postingCloseDate).toISOString()
-        : new Date().toISOString(),
+        ? withDeadlineTime(formData.postingCloseDate)
+        : withDeadlineTime(new Date()),
       numberOfPositions: Number(formData.numberOfPositions || 1),
       visibility: formData.visibility || "public",
       emailNotifications: Boolean(formData.emailNotifications),
