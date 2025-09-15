@@ -53,6 +53,7 @@ func rawJob() map[string]any {
 		"niceToHave":      "noting",
 
 		// post settings
+		"postOpenDate": now,
 		"applicationDeadline": now,
 		"numberOfPositions":   1,
 		"visibility":          "public",
