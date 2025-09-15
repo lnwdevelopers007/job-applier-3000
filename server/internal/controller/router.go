@@ -44,7 +44,7 @@ func NewRouter() *gin.Engine {
 		applyRoutes.GET("/query", applicationController.QueryApplications())
 		applyRoutes.POST("/", applicationController.CreateApplication())
 		applyRoutes.PUT("/:id", applicationController.UpdateApplication())
-	
+		applyRoutes.DELETE("/:id", applicationController.DeleteApplication())
 	}
 
 	router.GET("/health", func(c *gin.Context) {

@@ -140,3 +140,31 @@ func (jc JobApplicationController) UpdateApplication() gin.HandlerFunc {
         c.JSON(http.StatusOK, gin.H{"message": "Application updated successfully"})
     }
 }
+
+// DeleteApplication deletes a job application by ID
+func (jc JobApplicationController) DeleteApplication() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        id := c.Param("id")
+        objID, err := primitive.ObjectIDFromHex(id)
+        if err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+            return
+        }
+
+        db := database.GetDatabase()
+        collection := db.Collection(jc.collectionName)
+
+        res, err := collection.DeleteOne(context.Background(), bson.M{"_id": objID})
+        if err != nil {
+            c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+            return
+        }
+
+        if res.DeletedCount == 0 {
+            c.JSON(http.StatusNotFound, gin.H{"error": "Application not found"})
+            return
+        }
+
+        c.JSON(http.StatusOK, gin.H{"message": "Application deleted successfully"})
+    }
+}
