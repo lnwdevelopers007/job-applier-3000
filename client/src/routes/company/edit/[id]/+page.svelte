@@ -81,14 +81,17 @@
       requiredSkills: Array.isArray(formData.requiredSkills) && formData.requiredSkills.length
           ? formData.requiredSkills.join(", ")
           : "JS, Node",
-      experienceLevel: formData.experienceLevel || "Mid-Level",
-      education: formData.education || "Bachelor",
+      experienceLevel: formData.yearsOfExperience || "Mid-Level",
+      education: formData.educationLevel|| "Bachelor",
       niceToHave: formData.niceToHave || "",
       questions: formData.screeningQuestions || "What is your expected salary?",
 
       // Post Settings
       applicationDeadline: formData.postingCloseDate
         ? new Date(formData.postingCloseDate).toISOString()
+        : new Date().toISOString(),
+      postOpenDate: formData.postingOpenDate
+        ? new Date(formData.postingOpenDate).toISOString()
         : new Date().toISOString(),
       numberOfPositions: Number(formData.numberOfPositions || 1),
       visibility: formData.visibility || "public",
@@ -157,6 +160,10 @@
         ? new Date(job.applicationDeadline).toISOString().slice(0, 10)
         : '';
 
+      const formattedOpenDate = job.postOpenDate
+        ? new Date(job.postOpenDate).toISOString().slice(0, 10)
+        : '';
+
       formData = {
         ...formData,
         ...job,
@@ -164,8 +171,11 @@
           ? job.requiredSkills.split(',').map(s => s.trim()).filter(Boolean)
           : job.requiredSkills || [],
         postingCloseDate: formattedDeadline,
+        postingOpenDate: formattedOpenDate,
         jobTitle: job.title || '',
-        screeningQuestions: job.questions || ''
+        screeningQuestions: job.questions || '',
+        educationLevel: job.education || '',
+        yearsOfExperience: job.experienceLevel || ''
       };
 
       console.log('Loaded job:', formData);

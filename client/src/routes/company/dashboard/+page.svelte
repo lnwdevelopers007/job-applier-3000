@@ -101,16 +101,19 @@
       const res = await fetch('/jobs');
       if (!res.ok) throw new Error(`Failed to load jobs: ${res.status}`);
       const data = await res.json();
+
       jobs = data.map(job => ({
         id: job._id,
         title: job.title,
         status: job.status || 'Active',
         applicants: job.applicants || 0,
         views: job.views || 0,
-        posted: job.postedAt || job.createdAt
-          ? new Date(job.postedAt || job.createdAt).toLocaleDateString()
+        posted: job.postOpenDate
+          ? new Date(job.postOpenDate).toLocaleDateString()
           : "None",
-        expires: new Date(job.applicationDeadline).toLocaleDateString(),
+        expires: job.applicationDeadline
+          ? new Date(job.applicationDeadline).toLocaleDateString()
+          : "None",
         actions: [
           { label: 'View', disabled: false },
           { label: 'Edit', disabled: false },
