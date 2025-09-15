@@ -38,6 +38,13 @@ func NewRouter() *gin.Engine {
 
 	}
 
+	applicationController := NewJobApplicationController()
+	applyRoutes := router.Group("/apply")
+	{
+		applyRoutes.GET("/query", applicationController.QueryApplications())
+	
+	}
+
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"ok": true})
 	})
