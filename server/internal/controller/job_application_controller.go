@@ -73,3 +73,32 @@ func (jc JobApplicationController) QueryApplications() gin.HandlerFunc {
         c.JSON(http.StatusOK, applications)
     }
 }
+
+
+// CreateApplication adds a new job application
+func (jc JobApplicationController) CreateApplication() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        db := database.GetDatabase()
+        collection := db.Collection(jc.collectionName)
+
+        var application schema.JobApplication
+        if err := c.ShouldBindJSON(&application); err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+            return
+        }
+
+        application.ID = primitive.NewObjectID()
+        application.CreatedAt = time.Now()
+
+        ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+        defer cancel()
+
+        res, err := collection.InsertOne(ctx, application)
+        if err != nil {
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create application"})
+            return
+        }
+
+        c.JSON(http.StatusCreated, res)
+    }
+}

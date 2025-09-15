@@ -42,6 +42,7 @@ func NewRouter() *gin.Engine {
 	applyRoutes := router.Group("/apply")
 	{
 		applyRoutes.GET("/query", applicationController.QueryApplications())
+		applyRoutes.POST("/", applicationController.CreateApplication())
 	
 	}
 
