@@ -43,6 +43,7 @@ func NewRouter() *gin.Engine {
 	{
 		applyRoutes.GET("/query", applicationController.QueryApplications())
 		applyRoutes.POST("/", applicationController.CreateApplication())
+		applyRoutes.PUT("/:id", applicationController.UpdateApplication())
 	
 	}
 

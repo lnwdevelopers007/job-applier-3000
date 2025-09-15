@@ -102,3 +102,41 @@ func (jc JobApplicationController) CreateApplication() gin.HandlerFunc {
         c.JSON(http.StatusCreated, res)
     }
 }
+
+// UpdateApplication updates a job application by ID
+func (jc JobApplicationController) UpdateApplication() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        id := c.Param("id")
+        objID, err := primitive.ObjectIDFromHex(id)
+        if err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+            return
+        }
+
+        var application schema.JobApplication
+        if err := c.ShouldBindJSON(&application); err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+            return
+        }
+
+        db := database.GetDatabase()
+        collection := db.Collection(jc.collectionName)
+
+        ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+        defer cancel()
+
+        update := bson.M{"$set": application}
+        res, err := collection.UpdateOne(ctx, bson.M{"_id": objID}, update)
+        if err != nil {
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update application"})
+            return
+        }
+
+        if res.MatchedCount == 0 {
+            c.JSON(http.StatusNotFound, gin.H{"error": "Application not found"})
+            return
+        }
+
+        c.JSON(http.StatusOK, gin.H{"message": "Application updated successfully"})
+    }
+}
