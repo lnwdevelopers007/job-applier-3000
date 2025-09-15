@@ -1,56 +1,94 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 	import { jwtDecode } from 'jwt-decode';
-	import apiFetch from './apifetch';
+	import { AlertTriangle } from 'lucide-svelte';
 
 	type TokenPayload = {
 		email: string;
 		name: string;
 		exp: number;
+		role?: string;
+		avatarURL?: string;
+		userID?: string;
+		provider?: string;
 	};
 
-	// Using `any` since we don't care about the specific structure for raw display
-	let user: TokenPayload | null = null;
-	let jobs: object[] = [];
-
-	async function loadJobs(): Promise<object[]> {
-		try {
-			const res = await apiFetch('http://localhost:8080/jobs/');
-			if (!res.ok) {
-				throw new Error(`HTTP error! status: ${res.status}`);
-			}
-			return await res.json();
-		} catch (err) {
-			console.error('Failed to fetch jobs:', err);
-			return [{ error: 'Failed to load jobs.' }]; // Show an error object
-		}
-	}
+	let error: string | null = null;
+	let isProcessing = true;
 
 	onMount(async () => {
-		// Get token from query params
 		const params = new URLSearchParams(window.location.search);
 		const token = params.get('token');
+		const errorParam = params.get('error');
+
+		if (errorParam) {
+			error = errorParam;
+			isProcessing = false;
+			setTimeout(() => {
+				goto('/login');
+			}, 3000);
+			return;
+		}
 
 		if (token) {
 			try {
-				user = jwtDecode<TokenPayload>(token);
-				localStorage.setItem('access_token', token);
-			} catch (err) {
-				console.error('Invalid token', err);
-			}
-		}
+				const decoded = jwtDecode<TokenPayload>(token);
+				
+				if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+					throw new Error('Token has expired');
+				}
 
-		jobs = await loadJobs();
+				localStorage.setItem('access_token', token);
+				localStorage.setItem('user', JSON.stringify({
+					email: decoded.email,
+					name: decoded.name,
+					role: decoded.role,
+					avatarUrl: decoded.avatarURL
+				}));
+
+				// Redirect based on user role or to dashboard
+				if (decoded.role === 'company') {
+					await goto('/company/dashboard');
+				} else if (decoded.role === 'student') {
+					await goto('/app/jobs');
+				} else {
+					await goto('/app/jobs');
+				}
+			} catch (err) {
+				console.error('Failed to process token:', err);
+				error = 'Authentication failed. Please try again.';
+				isProcessing = false;
+				
+				setTimeout(() => {
+					goto('/login');
+				}, 3000);
+			}
+		} else {
+			// No token provided
+			error = 'No authentication token received.';
+			isProcessing = false;
+			setTimeout(() => {
+				goto('/login');
+			}, 2000);
+		}
 	});
 </script>
 
-{#if user}
-	<h1>Welcome, {user.name}!</h1>
-	<p>Email: {user.email}</p>
-
-	<hr />
-
-	<pre>{JSON.stringify(jobs, null, 2)}</pre>
-{:else}
-	<p>Loading user...</p>
-{/if}
+<div class="min-h-screen flex items-center justify-center bg-gray-50">
+	<div class="text-center">
+		{#if isProcessing}
+			<div class="space-y-4">
+				<div class="inline-flex items-center justify-center w-10 h-10 border-3 border-gray-600 border-t-transparent rounded-full animate-spin"></div>
+			</div>
+		{:else if error}
+			<div class="space-y-1">
+				<div class="inline-flex items-center justify-center w-16 h-16 mb-4 bg-red-100 rounded-full">
+					<AlertTriangle class="w-8 h-8 text-red-800" />
+				</div>
+				<p class="text-lg text-gray-600">{error}</p>
+				<p class="text-sm text-gray-500">Redirecting to login...</p>
+			</div>
+		{/if}
+	</div>
+</div>

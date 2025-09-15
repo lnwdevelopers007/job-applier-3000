@@ -1,4 +1,5 @@
 <script>
+  import { goto } from '$app/navigation';
   import AuthContainer from '$lib/components/auth/AuthContainer.svelte';
   import AuthHeader from '$lib/components/auth/AuthHeader.svelte';
   import PasswordInput from '$lib/components/auth/PasswordInput.svelte';
@@ -13,14 +14,14 @@
   function handleLogin() {
     console.log('Login:', { email, password, rememberMe });
   }
-  
-  function handleGoogleOAuth() {
-    console.log('Google OAuth login');
+
+  function handleBack() {
+    goto('/');
   }
 </script>
 
 <AuthContainer>
-  <AuthHeader />
+  <AuthHeader onBack={handleBack} />
   <h1 class="text-2xl font-semibold text-gray-900 mb-5">Sign in</h1>
 
   <form on:submit|preventDefault={handleLogin} class="space-y-6">
@@ -52,7 +53,7 @@
         />
         <span class="ml-2 text-sm text-gray-700">Remember me</span>
       </label>
-      <a href="/auth/forgot-password" class="text-sm text-green-600 hover:text-green-700 font-medium">
+      <a href="/forgot-password" class="text-sm text-green-600 hover:text-green-700 font-medium">
         Forgot password
       </a>
     </div>
@@ -66,5 +67,12 @@
   </form>
 
   <OrDivider />
-  <GoogleOAuthButton onClick={handleGoogleOAuth} />
+  <GoogleOAuthButton />
+  
+  <p class="text-center text-sm text-gray-600 mt-6">
+    Don't have an account?{' '}
+    <a href="/signup" class="text-green-600 hover:text-green-700 font-medium">
+      Sign up
+    </a>
+  </p>
 </AuthContainer>

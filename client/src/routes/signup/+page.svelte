@@ -17,7 +17,7 @@
 
       <div class="space-y-3 mb-8">
         <!-- Option 1 - Student/Alumni -->
-        <a href="/auth/signup/student" class="block border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-green-600 transition-colors">
+        <a href="/signup/student" class="block border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-green-600 transition-colors">
           <div class="flex items-start space-x-3">
             <div class="flex-shrink-0">
               <div class="flex -space-x-2">
@@ -37,7 +37,7 @@
         </a>
 
         <!-- Option 2 - Recruiter -->
-        <a href="/auth/signup/company" class="block border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-green-600 transition-colors">
+        <a href="/signup/company" class="block border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-green-600 transition-colors">
           <div class="flex items-start space-x-3">
             <div class="flex-shrink-0">
               <div class="flex -space-x-2">
@@ -60,7 +60,7 @@
       <div class="text-center">
         <p class="text-sm text-gray-500">
           Already have an account? 
-          <a href="/auth/login" class="text-green-600 hover:text-green-700 font-medium">Log in</a>
+          <a href="/login" class="text-green-600 hover:text-green-700 font-medium">Log in</a>
         </p>
       </div>
     </div>

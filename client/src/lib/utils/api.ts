@@ -1,6 +1,4 @@
-// utils/api.ts
-
-async function apiFetch(url: string, options: RequestInit = {}) {
+export async function apiFetch(url: string, options: RequestInit = {}) {
 	const token = localStorage.getItem('access_token');
 
 	// Try the request with the current token
@@ -40,5 +38,3 @@ async function apiFetch(url: string, options: RequestInit = {}) {
 
 	return res;
 }
-
-export default apiFetch;
