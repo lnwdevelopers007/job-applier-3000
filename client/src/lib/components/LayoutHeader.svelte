@@ -71,7 +71,7 @@
             name: decoded.name || decoded.email.split('@')[0],
             email: decoded.email,
             role: decoded.role || 'User',
-            avatarUrl: decoded.avatarURL // Using avatarURL from MongoDB schema
+            avatarUrl: decoded.avatarURL
           };
           
           localStorage.setItem('user', JSON.stringify(userInfo));
@@ -90,12 +90,10 @@
   function formatRole(role: string): string {
     if (!role) return 'User';
     
-    // Capitalize first letter and handle common roles
     const roleMap: Record<string, string> = {
       'student': 'Student',
       'company': 'Recruiter',
       'admin': 'Administrator',
-      'recruiter': 'Recruiter'
     };
     
     return roleMap[role.toLowerCase()] || role.charAt(0).toUpperCase() + role.slice(1);
