@@ -78,7 +78,7 @@
   </div>
 
   <!-- Right Side -->
-  <div class="w-full lg:w-3/5 bg-gradient-to-br from-green-50 to-blue-50 relative overflow-hidden">
+  <div class="w-full lg:w-3/5 bg-gradient-to-br from-green-50 to-blue-50 relative overflow-hidden border-white">
     <div class="h-full flex flex-col justify-between p-12">
       <div class="max-w-2xl pt-20 px-20">
         <p class="text-gray-700 text-2xl leading-relaxed mb-6">
