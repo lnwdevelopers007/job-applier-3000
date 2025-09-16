@@ -1,5 +1,16 @@
 <script>
+  import { onNavigate } from '$app/navigation';
+  
+  onNavigate((navigation) => {
+    if (!document.startViewTransition) return;
 
+    return new Promise((resolve) => {
+      document.startViewTransition(async () => {
+        resolve();
+        await navigation.complete;
+      });
+    });
+  });
 </script>
 
 <div class="min-h-screen flex flex-col lg:flex-row">
@@ -17,7 +28,7 @@
 
       <div class="space-y-3 mb-8">
         <!-- Option 1 - Student/Alumni -->
-        <a href="/signup/student" class="block border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-green-600 transition-colors">
+        <a href="/signup/student" class="block border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-green-600 transition-all duration-200">
           <div class="flex items-start space-x-3">
             <div class="flex-shrink-0">
               <div class="flex -space-x-2">
@@ -37,7 +48,7 @@
         </a>
 
         <!-- Option 2 - Recruiter -->
-        <a href="/signup/company" class="block border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-green-600 transition-colors">
+        <a href="/signup/company" class="block border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-green-600 transition-all duration-200">
           <div class="flex items-start space-x-3">
             <div class="flex-shrink-0">
               <div class="flex -space-x-2">
@@ -91,3 +102,41 @@
     </div>
   </div>
 </div>
+
+<style>
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes slide-from-right {
+    from {
+      transform: translateX(30px);
+    }
+  }
+
+  @keyframes slide-to-left {
+    to {
+      transform: translateX(-30px);
+    }
+  }
+
+  :root::view-transition-old(root) {
+    animation:
+      90ms cubic-bezier(0.4, 0, 1, 1) both fade-out,
+      300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-left;
+  }
+
+  :root::view-transition-new(root) {
+    animation:
+      210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in,
+      300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-right;
+  }
+</style>
