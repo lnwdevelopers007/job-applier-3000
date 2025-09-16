@@ -1,5 +1,8 @@
 <script>
   import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
+  import { get } from 'svelte/store';
+  import { onMount } from 'svelte';
   import { ChevronLeft } from 'lucide-svelte';
   import BasicInfoForm from '$lib/components/job-post-creation/forms/BasicInfoForm.svelte';
   import DescriptionForm from '$lib/components/job-post-creation/forms/DescriptionForm.svelte';
@@ -7,30 +10,38 @@
   import PostSettingForm from '$lib/components/job-post-creation/forms/PostSettingForm.svelte';
   import PreviewDrawer from '$lib/components/job-post-creation/PreviewDrawer.svelte';
   import FormSidebar from '$lib/components/job-post-creation/FormSidebar.svelte';
-  
+
+  let jobId = $derived($page.params.id);
   let isPreviewOpen = $state(false);
   let activeSection = $state('basic-info');
 
-  let jobId = 'demo-123';
-
   let formData = $state({
     // Basic Info
-    jobTitle: 'Senior Software Engineer',
-    location: 'Bangkok, Thailand',
-    category: 'Technology',
+    jobTitle: '',
+    companyID: '',
+    location: '',
+    category: '',
     workType: 'full-time',
-    workArrangement: 'hybrid',
+    workArrangement: 'on-site',
     currency: 'THB',
-    minSalary: '80000',
-    maxSalary: '120000',
-    
+    minSalary: '',
+    maxSalary: '',
+
     // Description
-    jobDescription: 'We are looking for a Senior Software Engineer...',
-    
+    jobDescription: '',
+    jobSummary: '',
+
     // Requirements
-    requiredSkills: ['JavaScript', 'React', 'Node.js'],
-    experienceLevel: 'Mid-Level (4-6 years)',
-    education: 'Bachelor\'s Degree',
+    requiredSkills: [],
+    experienceLevel: '',
+    education: '',
+
+    // Post Settings
+    applicationDeadline: '',
+    numberOfPositions: 1,
+    visibility: 'public',
+    emailNotifications: true,
+    autoReject: false
   });
 
   const sections = [
@@ -48,8 +59,71 @@
     isPreviewOpen = true;
   }
 
-  function handlePublish() {
-    console.log('Publishing job:', jobId);
+  function buildPayload(formData) {
+    function withDeadlineTime(dateStr) {
+      const d = new Date(dateStr);
+      d.setUTCHours(16, 59, 0, 0);
+      return d.toISOString();
+    }
+    return {
+      // Basic Info
+      title: formData.jobTitle || "Test Job Title",
+      companyID: String(formData.companyID || "64f0c44a27b1c27f4d92e9a2"),
+      location: formData.location || "Bangkok, Thailand",
+      workType: formData.workType,
+      workArrangement: formData.workArrangement,
+      currency: formData.currency,
+      minSalary: Number(formData.minSalary || 0),
+      maxSalary: Number(formData.maxSalary || 0),
+
+      // Description
+      jobDescription: formData.jobDescription || "Test description",
+      jobSummary: formData.jobSummary || "Test summary",
+
+      // Requirements
+      requiredSkills: Array.isArray(formData.requiredSkills) && formData.requiredSkills.length
+          ? formData.requiredSkills.join(", ")
+          : "JS, Node",
+      experienceLevel: formData.yearsOfExperience || "Mid-Level",
+      education: formData.educationLevel|| "Bachelor",
+      niceToHave: formData.niceToHave || "",
+      questions: formData.screeningQuestions || "What is your expected salary?",
+
+      // Post Settings
+      applicationDeadline: formData.postingCloseDate
+        ? withDeadlineTime(formData.postingCloseDate)
+        : withDeadlineTime(new Date()),
+      postOpenDate: formData.postingOpenDate
+        ? new Date(formData.postingOpenDate).toISOString()
+        : new Date().toISOString(),
+      numberOfPositions: Number(formData.numberOfPositions || 1),
+      visibility: formData.visibility || "public",
+      emailNotifications: Boolean(formData.emailNotifications),
+      autoReject: Boolean(formData.autoReject)
+    };
+  }
+
+  async function handlePublish() {
+    jobId = get(page).params.id;
+    try {
+      const payload = buildPayload(formData);
+      const res = await fetch(`/jobs/${jobId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to update job: ${res.status}`);
+      }
+
+      const updatedJob = await res.json();
+      console.log('Job updated successfully:', updatedJob);
+
+      goto('/company/dashboard');
+    } catch (err) {
+      console.error('Error updating job:', err);
+    }
   }
 
   function scrollToSection(sectionId) {
@@ -69,7 +143,7 @@
       if (element) {
         const elementTop = element.offsetTop - offset;
         const elementBottom = elementTop + element.offsetHeight;
-        
+
         if (scrollY >= elementTop && scrollY < elementBottom) {
           activeSection = section.id;
           break;
@@ -77,6 +151,40 @@
       }
     }
   }
+
+  onMount(async () => {
+    try {
+      const res = await fetch(`/jobs/query?id=${jobId}`);
+      if (!res.ok) throw new Error(`Failed to load job: ${res.status}`);
+      const data = await res.json();
+      const job = Array.isArray(data) ? data[0] : data;
+
+      const formattedDeadline = job.applicationDeadline
+        ? new Date(job.applicationDeadline).toISOString().slice(0, 10)
+        : '';
+
+      const formattedOpenDate = job.postOpenDate
+        ? new Date(job.postOpenDate).toISOString().slice(0, 10)
+        : '';
+
+      formData = {
+        ...formData,
+        ...job,
+        requiredSkills: typeof job.requiredSkills === 'string'
+          ? job.requiredSkills.split(',').map(s => s.trim()).filter(Boolean)
+          : job.requiredSkills || [],
+        postingCloseDate: formattedDeadline,
+        postingOpenDate: formattedOpenDate,
+        jobTitle: job.title || '',
+        screeningQuestions: job.questions || '',
+        educationLevel: job.education || '',
+        yearsOfExperience: job.experienceLevel || ''
+      };
+    } catch (err) {
+      console.error('Error loading job:', err);
+    }
+  });
+
 </script>
 
 <svelte:window on:scroll={handleScroll} />
