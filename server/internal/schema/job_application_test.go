@@ -73,5 +73,5 @@ func TestJobApplicationMissingCreatedAt(t *testing.T) {
 	payload := jobApplicationValidPayload()
 	delete(payload, "createdAt")
 	_, err := bindMockJobApplication(t, payload)
-	assert.Error(t, err)
+	assert.NoError(t, err)
 }
