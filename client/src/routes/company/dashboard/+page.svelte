@@ -68,6 +68,10 @@
                 <button
                   class="px-3 py-1 text-sm rounded bg-gray-100 text-gray-900 border-gray-500 border-1 disabled:opacity-50 disabled:cursor-not-allowed enabled:hover:bg-gray-300"
                   disabled={action.disabled}
+                  on:click={(e) => {
+                    e.stopPropagation();
+                    handleAction(action, job);
+                  }}
                 >
                   {action.label}
                 </button>
@@ -80,50 +84,54 @@
   </div>
 </div>
 <script>
-  let jobs = [
-    {
-      title: "AI Researcher",
-      status: "Active",
-      applicants: 34,
-      views: 120,
-      posted: "Aug 20, 2025",
-      expires: "Sep 20, 2025",
-      actions: [
-        { label: "View", disabled: false },
-        { label: "Edit", disabled: false },
-        { label: "Manage", disabled: false }
-      ]
-    },
-    {
-      title: "Frontend Developer",
-      status: "Paused",
-      applicants: 12,
-      views: 85,
-      posted: "Aug 15, 2025",
-      expires: "Sep 15, 2025",
-      actions: [
-        { label: "View", disabled: false },
-        { label: "Edit", disabled: false },
-        { label: "Manage", disabled: true }
-      ]
-    },
-    {
-      title: "QA Tester",
-      status: "Closed",
-      applicants: 48,
-      views: 210,
-      posted: "Jul 10, 2025",
-      expires: "Aug 10, 2025",
-      actions: [
-        { label: "View", disabled: false },
-        { label: "Edit", disabled: true },
-        { label: "Manage", disabled: true }
-      ]
-    }
-  ];
+  import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
+
+  let jobs = [];
   let selectedJob = null;
 
   function selectRow(index) {
     selectedJob = selectedJob === index ? null : index;
   }
+
+  function handleAction(action, job) {
+    if (action.label === 'Edit') {
+      goto(`/company/edit/${job.id}`);
+    }
+    if (action.label === 'View') {
+      console.log("View this posting");
+    }
+    if (action.label === 'Manage') {
+      console.log("Manage this posting");
+    }
+  }
+
+  onMount(async () => {
+    try {
+      const res = await fetch('/jobs');
+      if (!res.ok) throw new Error(`Failed to load jobs: ${res.status}`);
+      const data = await res.json();
+
+      jobs = data.map(job => ({
+        id: job._id,
+        title: job.title,
+        status: job.status || 'Active',
+        applicants: job.applicants || 0,
+        views: job.views || 0,
+        posted: job.postOpenDate
+          ? new Date(job.postOpenDate).toLocaleDateString()
+          : "None",
+        expires: job.applicationDeadline
+          ? new Date(job.applicationDeadline).toLocaleDateString()
+          : "None",
+        actions: [
+          { label: 'View', disabled: false },
+          { label: 'Edit', disabled: false },
+          { label: 'Manage', disabled: false }
+        ]
+      }));
+    } catch (err) {
+      console.error("Error fetching jobs:", err);
+    }
+  });
 </script>

@@ -12,7 +12,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/controller"
 	"github.com/stretchr/testify/assert"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func setUp() *gin.Engine {
@@ -30,30 +29,37 @@ func TestRetrieveAllJobs(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 }
 
-func newJob() ([]byte, error) {
+func rawJob() map[string]any {
 	now := time.Now().UTC().Truncate(time.Second)
-	return json.Marshal(map[string]any{
-		"title":        "Brr Brr Engineer",
-		"companyID":    primitive.NewObjectID(),
-		"location":     "Millenium Science School, Kivotos.",
-		"salary":       120000,
-		"salaryRate":   "yearly",
-		"workType":     "onsite",
-		"contractType": "full-time",
-		// privacyPolicy is optional
-		"publicationInfo": map[string]any{
-			"isHiring":  true,
-			"createdAt": now.Format(time.RFC3339),
-			"startDate": now.Format(time.RFC3339),
-			"endDate":   now.AddDate(0, 1, 0).Format(time.RFC3339),
-		},
-		"criteria": map[string]any{
-			"requirements":   []string{"Go", "MongoDB"},
-			"qualifications": []string{"Bachelor's Degree"},
-			// commonQuestions is optional
-		},
-		"isApproved": true, // NOTE: with `binding:"required"` on a bool, false will fail validation
-	})
+	return map[string]any{
+		// basic info
+		"title":           "Brr Brr Engineer",
+		"companyID":       "64f3a2b7e1d3a8c1b0f9d2a1",
+		"location":        "Millenium Science School, Kivotos.",
+		"workType":        "onsite",
+		"workArrangement": "full-time",
+		"currency":        "THB",
+		"minSalary":       2000.34,
+		"maxSalary":       300000.213213,
+
+		// description
+		"jobDescription": "long",
+		"jobSummary":     "longer",
+
+		// requirements
+		"requiredSkills":  "none",
+		"experienceLevel": "a lot",
+		"education":       "maybe",
+		"niceToHave":      "noting",
+
+		// post settings
+		"postOpenDate": now,
+		"applicationDeadline": now,
+		"numberOfPositions":   1,
+		"visibility":          "public",
+		"emailNotifications":  true,
+		"autoReject":          false,
+	}
 }
 
 func TestCreateJob(t *testing.T) {
@@ -61,7 +67,7 @@ func TestCreateJob(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	// Example JSON payload
-	body, _ := newJob()
+	body, _ := json.Marshal(rawJob())
 
 	// Create POST request with JSON body
 	req, _ := http.NewRequest("POST", "/jobs/", bytes.NewReader(body))
@@ -77,4 +83,28 @@ func TestCreateJob(t *testing.T) {
 	// Assertions
 	assert.Equal(t, http.StatusCreated, w.Code) // or StatusCreated if you return 201
 	assert.Contains(t, w.Body.String(), "InsertedID")
+}
+
+func TestCreateJobWithWrongCompanyID(t *testing.T) {
+	router := setUp()
+	w := httptest.NewRecorder()
+
+	// Example JSON payload
+	raw := rawJob()
+	raw["companyID"] = "64f3a2b7e1d3a8c1b0f9d2xx"
+	body, _ := json.Marshal(raw)
+
+	// Create POST request with JSON body
+	req, _ := http.NewRequest("POST", "/jobs/", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	// Perform the request
+	router.ServeHTTP(w, req)
+
+	// Debug output (optional)
+	fmt.Println("Response code:", w.Code)
+	fmt.Println("Response body:", w.Body.String())
+
+	// Assertions
+	assert.Equal(t, http.StatusBadRequest, w.Code) // or StatusCreated if you return 201
 }
