@@ -29,44 +29,76 @@ func (jc JobController) QueryJobs() gin.HandlerFunc {
 		db := database.GetDatabase()
 		collection := db.Collection(jc.collectionName)
 
-		// collect filters from query params
-		id := c.Query("id")
-		title := c.Query("title")
-		company := c.Query("company")
-		location := c.Query("location")
-		minSalary := c.Query("minSalary")
-		maxSalary := c.Query("maxSalary")
+		// Only accept specific query params
+		allowedParams := map[string]func(string) (interface{}, error){
+			"id": func(v string) (interface{}, error) {
+				if v == "" {
+					return nil, fmt.Errorf("id parameter is empty")
+				}
+				return primitive.ObjectIDFromHex(v)
+			},
+			"title": func(v string) (interface{}, error) {
+				if v == "" {
+					return nil, nil
+				}
+				return bson.M{"$regex": v, "$options": "i"}, nil
+			},
+			"company": func(v string) (interface{}, error) {
+				if v == "" {
+					return nil, nil
+				}
+				return bson.M{"$regex": v, "$options": "i"}, nil
+			},
+			"location": func(v string) (interface{}, error) {
+				if v == "" {
+					return nil, nil
+				}
+				return bson.M{"$regex": v, "$options": "i"}, nil
+			},
+			"minSalary": func(v string) (interface{}, error) {
+				if v == "" {
+					return nil, nil
+				}
+				return toInt(v), nil
+			},
+			"maxSalary": func(v string) (interface{}, error) {
+				if v == "" {
+					return nil, nil
+				}
+				return toInt(v), nil
+			},
+		}
 
 		filter := bson.M{}
+		salaryFilter := bson.M{}
 
-		if id != "" {
-			objectID, err := primitive.ObjectIDFromHex(id)
-			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id format"})
+		// Loop through query params
+		for key, values := range c.Request.URL.Query() {
+			if fn, ok := allowedParams[key]; ok {
+				val, err := fn(values[0])
+				if err != nil {
+					c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+					return
+				}
+				if val != nil {
+					switch key {
+					case "id":
+						filter["_id"] = val
+					case "minSalary":
+						salaryFilter["$gte"] = val
+					case "maxSalary":
+						salaryFilter["$lte"] = val
+					default:
+						filter[key] = val
+					}
+				}
+			} else {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported query parameter: " + key})
 				return
 			}
-			filter["_id"] = objectID
 		}
-		if title != "" {
-			filter["title"] = bson.M{"$regex": title, "$options": "i"}
-		}
-		if company != "" {
-			filter["company"] = bson.M{"$regex": company, "$options": "i"}
-		}
-		if location != "" {
-			filter["location"] = bson.M{"$regex": location, "$options": "i"}
-		}
-		if minSalary != "" || maxSalary != "" {
-			salaryFilter := bson.M{}
-			if minSalary != "" {
-				// convert string to int
-				// ignore error handling for now
-				// TODO: handle parsing errors safely
-				salaryFilter["$gte"] = toInt(minSalary)
-			}
-			if maxSalary != "" {
-				salaryFilter["$lte"] = toInt(maxSalary)
-			}
+
+		if len(salaryFilter) > 0 {
 			filter["salary"] = salaryFilter
 		}
 
@@ -85,9 +117,15 @@ func (jc JobController) QueryJobs() gin.HandlerFunc {
 			return
 		}
 
+		if len(jobs) == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"message": "No jobs found"})
+			return
+		}
+
 		c.JSON(http.StatusOK, jobs)
 	}
 }
+
 
 // small helper
 func toInt(s string) int {
