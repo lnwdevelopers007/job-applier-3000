@@ -42,7 +42,7 @@ func (jc JobController) QueryJobs() gin.HandlerFunc {
 		if id != "" {
 			objectID, err := primitive.ObjectIDFromHex(id)
 			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id format"})
 				return
 			}
 			filter["_id"] = objectID
