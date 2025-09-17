@@ -109,7 +109,11 @@
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
     
-    goto('/');
+    if (window.location.pathname === '/') {
+      window.location.reload();
+    } else {
+      goto('/');
+    }
   }
 
   // Close dropdown when clicking outside
