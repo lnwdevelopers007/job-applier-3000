@@ -2,7 +2,7 @@
   export let text = 'Continue with Google';
   
   function handleGoogleOAuth() {
-    window.location.href = 'http://localhost:8080/auth/google';
+    window.location.href = `${import.meta.env.VITE_BACKEND}/auth/google`;
   }
 </script>
 

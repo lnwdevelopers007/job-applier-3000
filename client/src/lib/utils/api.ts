@@ -12,7 +12,7 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
 
 	// If unauthorized, try refreshing the token
 	if (res.status === 401) {
-		const refreshRes = await fetch('http://localhost:8080/auth/refresh', {
+		const refreshRes = await fetch(`${import.meta.env.VITE_BACKEND}/auth/refresh`, {
 			method: 'POST',
 			credentials: 'include' // important if backend sets httpOnly cookies
 		});
