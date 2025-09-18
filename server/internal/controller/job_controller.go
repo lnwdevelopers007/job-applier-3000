@@ -43,11 +43,11 @@ func (jc JobController) QueryJobs() gin.HandlerFunc {
 				}
 				return bson.M{"$regex": v, "$options": "i"}, nil
 			},
-			"company": func(v string) (interface{}, error) {
+			"companyID": func(v string) (interface{}, error) {
 				if v == "" {
 					return nil, nil
 				}
-				return bson.M{"$regex": v, "$options": "i"}, nil
+				return primitive.ObjectIDFromHex(v)
 			},
 			"location": func(v string) (interface{}, error) {
 				if v == "" {
