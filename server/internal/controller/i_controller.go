@@ -6,8 +6,7 @@ import "github.com/gin-gonic/gin"
 type IController[T any] interface {
 	Create(*gin.Context)
 	RetrieveAll(*gin.Context)
+	Query(*gin.Context)
 	Update(*gin.Context)
 	Delete(*gin.Context)
 }
-
-// Query() method to be added.

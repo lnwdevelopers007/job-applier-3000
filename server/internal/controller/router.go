@@ -8,7 +8,6 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/auth"
-	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
 )
 
 // NewRouter returns new, default router.
@@ -29,23 +28,23 @@ func NewRouter() *gin.Engine {
 	jobs := router.Group("/jobs")
 	jobCtrl := NewJobController()
 	{
-		jobs.GET("/", GetController[schema.Job]("jobs").RetrieveAll)
-		jobs.POST("/", GetController[schema.Job]("jobs").Create)
-		jobs.PUT("/:id", GetController[schema.Job]("jobs").Update)
-		jobs.DELETE("/:id", GetController[schema.Job]("jobs").Delete)
+		jobs.GET("/", jobCtrl.RetrieveAll)
+		jobs.POST("/", jobCtrl.Create)
+		jobs.PUT("/:id", jobCtrl.Update)
+		jobs.DELETE("/:id", jobCtrl.Delete)
 
-		jobs.GET("/query", jobCtrl.QueryJobs())
+		jobs.GET("/query", jobCtrl.Query)
 
 	}
 
 	applicationController := NewJobApplicationController()
 	applyRoutes := router.Group("/apply")
 	{
-		applyRoutes.GET("/", applicationController.QueryApplications())
-		applyRoutes.GET("/query", applicationController.QueryApplications())
-		applyRoutes.POST("/", applicationController.CreateApplication())
-		applyRoutes.PUT("/:id", applicationController.UpdateApplication())
-		applyRoutes.DELETE("/:id", applicationController.DeleteApplication())
+		applyRoutes.GET("/", applicationController.Query)
+		applyRoutes.GET("/query", applicationController.Query)
+		applyRoutes.POST("/", applicationController.Create)
+		applyRoutes.PUT("/:id", applicationController.Update)
+		applyRoutes.DELETE("/:id", applicationController.Delete)
 	}
 
 	router.GET("/health", func(c *gin.Context) {
