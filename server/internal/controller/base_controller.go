@@ -12,15 +12,16 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// GenericController implements IController interface.
+// BaseController implements IController interface.
 // It is a basic controller for basic CRUD operations
 // involving only one specific collection in the database.
-type GenericController[Schema any] struct {
+type BaseController[Schema any] struct {
 	collectionName string
+	displayName    string
 }
 
 // Create() inserts one document (row) to collectionName collection.
-func (controller GenericController[Schema]) Create(c *gin.Context) {
+func (controller BaseController[Schema]) Create(c *gin.Context) {
 	db := database.GetDatabase()
 	collection := db.Collection(controller.collectionName)
 
@@ -35,7 +36,9 @@ func (controller GenericController[Schema]) Create(c *gin.Context) {
 
 	res, err := collection.InsertOne(ctx, raw)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to insert job"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to create " + controller.displayName,
+		})
 		return
 	}
 
@@ -44,7 +47,7 @@ func (controller GenericController[Schema]) Create(c *gin.Context) {
 
 // RetrieveAll retrieves all documents (row) and all of its attirbutes
 // from collectionName collection
-func (controller GenericController[Schema]) RetrieveAll(c *gin.Context) {
+func (controller BaseController[Schema]) RetrieveAll(c *gin.Context) {
 	db := database.GetDatabase()
 	collection := db.Collection(controller.collectionName)
 	cursor, err := collection.Find(context.Background(), bson.D{{}})
@@ -62,7 +65,7 @@ func (controller GenericController[Schema]) RetrieveAll(c *gin.Context) {
 }
 
 // Update() updates a resource by ID.
-func (controller GenericController[Schema]) Update(c *gin.Context) {
+func (controller BaseController[Schema]) Update(c *gin.Context) {
 	id := c.Param("id") // get :id from URL
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -87,20 +90,26 @@ func (controller GenericController[Schema]) Update(c *gin.Context) {
 
 	res, err := collection.UpdateOne(ctx, bson.M{"_id": objID}, update)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update job"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to update " + controller.displayName,
+		})
 		return
 	}
 
 	if res.MatchedCount == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Job not found"})
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": controller.displayName + " not found",
+		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Job updated successfully"})
+	c.JSON(http.StatusOK, gin.H{
+		"message": controller.displayName + " updated successfully",
+	})
 }
 
 // Delete() deletes a resource by ID.
-func (controller GenericController[Schema]) Delete(c *gin.Context) {
+func (controller BaseController[Schema]) Delete(c *gin.Context) {
 	id := c.Param("id")
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -119,9 +128,13 @@ func (controller GenericController[Schema]) Delete(c *gin.Context) {
 	}
 
 	if result.DeletedCount == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Resource not found"})
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "No " + controller.displayName + " found",
+		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Deleted successfully"})
+	c.JSON(http.StatusOK, gin.H{
+		"message": controller.displayName + " Deleted successfully",
+	})
 }
