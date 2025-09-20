@@ -12,5 +12,5 @@ type JobApplication struct {
 	JobID       primitive.ObjectID `bson:"jobID" json:"jobID" binding:"required"`
 	CompanyID   primitive.ObjectID `bson:"companyID" json:"companyID" binding:"required"`
 	Status      string             `bson:"status" json:"status" binding:"required"`
-	CreatedAt   time.Time          `bson:"createdAt" json:"createdAt" binding:"required"`
+	CreatedAt   time.Time          `bson:"createdAt" json:"createdAt"`
 }
