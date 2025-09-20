@@ -4,12 +4,12 @@
   import { get } from 'svelte/store';
   import { onMount } from 'svelte';
   import { ChevronLeft } from 'lucide-svelte';
-  import BasicInfoForm from '$lib/components/forms/job-post-creation/BasicInfoForm.svelte';
-  import DescriptionForm from '$lib/components/forms/job-post-creation/DescriptionForm.svelte';
-  import RequirementForm from '$lib/components/forms/job-post-creation/RequirementForm.svelte';
-  import PostSettingForm from '$lib/components/forms/job-post-creation/PostSettingForm.svelte';
-  import PreviewDrawer from '$lib/components/PreviewDrawer.svelte';
-  import FormSidebar from '$lib/components/FormSidebar.svelte';
+  import BasicInfoForm from '$lib/components/job-post-creation/forms/BasicInfoForm.svelte';
+  import DescriptionForm from '$lib/components/job-post-creation/forms/DescriptionForm.svelte';
+  import RequirementForm from '$lib/components/job-post-creation/forms/RequirementForm.svelte';
+  import PostSettingForm from '$lib/components/job-post-creation/forms/PostSettingForm.svelte';
+  import PreviewDrawer from '$lib/components/job-post-creation/PreviewDrawer.svelte';
+  import FormSidebar from '$lib/components/job-post-creation/FormSidebar.svelte';
 
   let jobId = $derived($page.params.id);
   let isPreviewOpen = $state(false);

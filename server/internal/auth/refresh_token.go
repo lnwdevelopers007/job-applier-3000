@@ -29,9 +29,11 @@ func RefreshToken(c *gin.Context) {
 	}
 
 	email := claims["email"].(string)
+	name, _ := claims["name"].(string)
+	avatarURL, _ := claims["avatarURL"].(string)
 
 	// Issue new access token
-	accessToken, _, err := generateTokens(email, "")
+	accessToken, _, err := generateTokens(email, name, avatarURL)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate token"})
 		return

@@ -1,6 +1,6 @@
 <div class="min-h-screen bg-slate-50 flex flex-col mx-auto">
 
-  <LayoutHeader userName="Company name" userRole="Recruiter" />
+  <LayoutHeader />
 
   <div class="flex flex-1 py-6 px-12 gap-6 items-start">
     <SidebarNav {navItems} />

@@ -1,5 +1,5 @@
 <script>
-  import TiptapEditor from '$lib/components/TextEditor.svelte';
+  import TiptapEditor from '$lib/components/job-post-creation/TextEditor.svelte';
   
   let { formData = $bindable() } = $props();
 </script>

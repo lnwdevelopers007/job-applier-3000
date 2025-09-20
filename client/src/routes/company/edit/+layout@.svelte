@@ -6,7 +6,7 @@
 </script>
 
 <div class="bg-white min-h-screen">
-  <LayoutHeader userName="Company" userRole="Recruiter" />
+  <LayoutHeader />
 
   <div class="flex">
     <main class="flex-1">

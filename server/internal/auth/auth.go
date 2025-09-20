@@ -99,7 +99,7 @@ func OAuthCallback(c *gin.Context) {
 		return
 	}
 
-	accessToken, refreshToken, err := generateTokens(user.Email, user.Name)
+	accessToken, refreshToken, err := generateTokens(user.Email, user.Name, user.AvatarURL)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
