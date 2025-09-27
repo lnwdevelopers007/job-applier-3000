@@ -1,59 +1,192 @@
+<script>
+  import { Search, Filter, MapPin } from 'lucide-svelte';
+  import DOMPurify from 'dompurify';
+  import { onMount } from 'svelte';
+
+  let jobs = [];
+  let filteredJobs = [];
+  let selectedJob = null;
+  let searchQuery = "";
+
+  let activeFilters = {
+    type: null,
+    posted: null,
+    arrangement: null,
+  };
+
+  const typeCycle = ["Full-time", "Part-time", "Contract", "Casual"];
+  const arrangementCycle = ["On-site", "Remote", "Hybrid"];
+
+  function sanitizeHTML(html) {
+    return DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
+  }
+
+  async function fetchJobs(query = "", filters = {}) {
+    try {
+      const params = new URLSearchParams();
+      if (query) params.set("title", query);
+      if (filters.type) params.set("workType", filters.type);
+      if (filters.posted) params.set("postOpenDate", filters.posted);
+      if (filters.arrangement) params.set("workArrangement", filters.arrangement);
+
+      const res = await fetch(`/jobs/query?${params.toString()}`);
+
+      if (res.status === 404) {
+        jobs = [];
+        filteredJobs = [];
+        selectedJob = null;
+        return;
+      }
+
+      if (!res.ok) throw new Error(`Failed to load jobs: ${res.status}`);
+      const data = await res.json();
+
+      jobs = data.map(job => ({
+        id: job.id,
+        title: job.title,
+        company: job.company || "Unknown Company",
+        location: job.location || "N/A",
+        type: job.workType || "Full-time",
+        tags: job.requiredSkills
+          ? job.requiredSkills.split(",").map(skill => skill.trim())
+          : [],
+        posted: job.postOpenDate
+          ? new Date(job.postOpenDate).toLocaleDateString()
+          : "Unknown",
+        closeDate: job.applicationDeadline
+          ? new Date(job.applicationDeadline).toLocaleDateString()
+          : "Unknown",
+        description: job.jobDescription
+          ? sanitizeHTML(job.jobDescription)
+          : "No description provided.",
+        logo: "https://images.unsplash.com/photo-1534237710431-e2fc698436d0?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8YnVpbGRpbmd8ZW58MHx8MHx8fDA%3D"
+      }));
+
+      filteredJobs = jobs;
+      selectedJob = jobs[0] || null;
+      console.log(jobs);
+    } catch (err) {
+      console.error("Error fetching jobs:", err);
+      jobs = [];
+      filteredJobs = [];
+      selectedJob = null;
+    }
+  }
+
+  function toggleCycle(field) {
+    if (field === "type") {
+      let idx = typeCycle.indexOf(activeFilters.type);
+      activeFilters.type = idx === -1 ? typeCycle[0] : (idx + 1 < typeCycle.length ? typeCycle[idx + 1] : null);
+    } else if (field === "arrangement") {
+      let idx = arrangementCycle.indexOf(activeFilters.arrangement);
+      activeFilters.arrangement = idx === -1 ? arrangementCycle[0] : (idx + 1 < arrangementCycle.length ? arrangementCycle[idx + 1] : null);
+    }
+    activeFilters = { ...activeFilters };
+    fetchJobs(searchQuery, activeFilters);
+  }
+
+  function toggleFilter(type, value) {
+    activeFilters[type] = activeFilters[type] === value ? null : value;
+    activeFilters = { ...activeFilters };
+    fetchJobs(searchQuery, activeFilters);
+  }
+
+  function onSearchInput() {
+    fetchJobs(searchQuery, activeFilters);
+  }
+
+  onMount(() => {
+    fetchJobs();
+  });
+</script>
+
 <div class="flex h-screen">
   <main class="flex-1 p-0.5 space-y-6 w-full min-w-0">
+    <!-- Search and Filters -->
     <div class="flex items-center gap-3">
-      <!-- Search bar -->
       <div class="flex-1 flex items-center bg-white rounded-lg shadow px-3 py-1">
         <Search class="w-5 h-5 text-gray-500" />
         <input
           type="text"
           placeholder="Search jobs..."
           class="flex-1 ml-2 outline-none border-none"
+          bind:value={searchQuery}
+          on:input={onSearchInput}
         />
       </div>
+
       <div class="flex gap-2">
-        <button class="px-3 py-1 bg-white rounded-full text-sm">Full-time</button>
-        <button class="px-3 py-1 bg-white rounded-full text-sm">1 day ago</button>
-        <button class="px-3 py-1 bg-white rounded-full text-sm">AI</button>
-        <button class="px-3 py-1 bg-white rounded-full text-sm">Remote</button>
-        <button class="px-3 py-1 bg-white rounded-full text-sm flex items-center"><Filter class="h-4 w-4 mr-1" /> Filters</button>
+        <button
+          class={`px-3 py-1 rounded-full text-sm ${activeFilters.type && typeCycle.includes(activeFilters.type) ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
+          on:click={() => toggleCycle("type")}
+        >
+          {activeFilters.type || "Work Type"}
+        </button>
+
+        <button
+          class={`px-3 py-1 rounded-full text-sm ${activeFilters.posted === '1d' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
+          on:click={() => toggleFilter("posted", "1d")}
+        >
+          1 day ago
+        </button>
+        <button
+          class={`px-3 py-1 rounded-full text-sm ${activeFilters.posted === '6w' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
+          on:click={() => toggleFilter("posted", "6w")}
+        >
+          6 weeks
+        </button>
+
+        <button
+          class={`px-3 py-1 rounded-full text-sm ${activeFilters.arrangement && arrangementCycle.includes(activeFilters.arrangement) ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
+          on:click={() => toggleCycle("arrangement")}
+        >
+          {activeFilters.arrangement || "Arrangement"}
+        </button>
+
+        <button class="px-3 py-1 bg-gray-200 rounded-full text-sm flex items-center">
+          <Filter class="h-4 w-4 mr-1" /> Filters
+        </button>
       </div>
     </div>
 
     <div class="grid grid-cols-2 gap-6 w-full">
-      <!--Jobs List -->
+      <!-- Jobs List -->
       <section class="col-span-1 flex flex-col space-y-4">
-        <div class="flex-1 overflow-y-auto w-full space-y-3 p-2">
-          {#each jobs as job (job.id)}
-          <button
-            on:click={() => (selectedJob = job)}
-            class="w-full flex flex-col cursor-pointer bg-white rounded-lg shadow ring-offset-2 hover:ring-2 hover:ring-green-300 {selectedJob.id === job.id ? 'ring-2 ring-green-500' : ''}"
-          >
-            <div class="flex items-start gap-3 p-2">
-              <div class="mt-2">
-              <img src={job.logo} alt={job.company} class="w-12 h-12 rounded-full object-cover flex-shrink-0" />
+          <div class="flex-1 overflow-y-auto w-full space-y-3 p-2">
+            {#if filteredJobs.length === 0}
+              <div class="text-center text-gray-500 mt-4">
+                No jobs match your search or filters.
               </div>
-              <div class="flex flex-col text-left flex-1">
-                <div class="font-semibold">{job.title}</div>
-                <div class="text-sm text-gray-600">{job.company}</div>
-                <div class="text-sm text-black flex items-center gap-2 mt-1">
-                  <MapPin class="w-4 h-4 mt-0.5" />
-                  {job.location}
-                </div>
-              </div>
-            </div>
-            <div class="flex flex-wrap gap-2 mt-2 p-2">
-              {#each job.tags as tag, i (i)}
-                <span class="px-2 py-1 bg-gray-100 rounded-full text-sm">{tag}</span>
+            {:else}
+              {#each filteredJobs as job (job.id)}
+                <button
+                  on:click={() => (selectedJob = job)}
+                  class={`w-full flex flex-col cursor-pointer bg-white rounded-lg shadow ring-offset-2 hover:ring-2 hover:ring-green-300 ${selectedJob?.id === job.id ? 'ring-2 ring-green-500' : ''}`}
+                >
+                  <div class="flex items-start gap-3 p-2">
+                    <img src={job.logo} alt={job.company} class="w-12 h-12 rounded-full object-cover flex-shrink-0 mt-2" />
+                    <div class="flex flex-col text-left flex-1">
+                      <div class="font-semibold">{job.title}</div>
+                      <div class="text-sm text-gray-600">{job.company}</div>
+                      <div class="text-sm text-black flex items-center gap-2 mt-1">
+                        <MapPin class="w-4 h-4 mt-0.5" />
+                        {job.location}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex flex-wrap gap-2 mt-2 p-2">
+                    {#each job.tags as tag, i (i)}
+                      <span class="px-2 py-1 bg-gray-100 rounded-full text-sm">{tag}</span>
+                    {/each}
+                  </div>
+                  <div class="text-xs text-left mx-3 pb-2 text-gray-500 mt-1">{job.posted}</div>
+                </button>
               {/each}
-            </div>
-            <div class="text-xs text-left mx-3 pb-2 text-gray-500 mt-1">{job.posted}</div>
-          </button>
+            {/if}
+          </div>
+        </section>
 
-          {/each}
-        </div>
-      </section>
-
-      <!--Job Detail -->
+      <!-- Job Detail -->
       <section class="col-span-1 bg-white p-6 rounded-lg shadow space-y-2">
         {#if selectedJob}
           <div class="mb-2">
@@ -63,68 +196,40 @@
             </div>
             <h2 class="text-xl font-bold">{selectedJob.title}</h2>
             <div class="text-sm text-black flex items-center gap-2 my-2">
-                <MapPin class="w-4 h-4 mt-0.5" />
-                {selectedJob.location}
+              <MapPin class="w-4 h-4 mt-0.5" />
+              {selectedJob.location}
             </div>
             <p class="text-sm text-gray-500 my-2">{selectedJob.posted}</p>
           </div>
+
           <div class="flex gap-2">
             {#each selectedJob.tags as tag, i (i)}
               <span class="px-2 py-1 bg-gray-100 rounded-full text-sm">{tag}</span>
             {/each}
           </div>
+
           <div class="flex gap-2 mb-4">
-            <button class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg">Apply</button>
+            {#if new Date(selectedJob.closeDate) < new Date()}
+              <button
+                class="px-4 py-2 bg-gray-400 text-white text-sm rounded-lg cursor-not-allowed"
+                disabled
+              >
+                Closed
+              </button>
+            {:else}
+              <button class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg">
+                Apply
+              </button>
+            {/if}
             <button class="px-4 py-2 bg-yellow-400 text-sm rounded-lg">Bookmark</button>
           </div>
+
           <h3 class="font-semibold text-lg">Job Description</h3>
           <div class="space-y-4">
-            <p>{selectedJob.description}</p>
+            {@html selectedJob.description}
           </div>
         {/if}
       </section>
     </div>
   </main>
 </div>
-
-<script>
-  import { Search, Filter, MapPin } from 'lucide-svelte';
-
-  let jobs = [
-    {
-      id: 1,
-      title: "Software Engineer, AI Acceleration",
-      company: "Google",
-      location: "Singapore",
-      type: "Full-time",
-      tags: ["Remote", "AI"],
-      posted: "1 day ago",
-      description: "Google wants to have more software engineer for researching and improving AI abilities.",
-      logo: "https://logo.clearbit.com/google.com",
-    },
-    {
-      id: 2,
-      title: "Software Developer, Back End",
-      company: "Agoda",
-      location: "Bangkok, Thailand",
-      type: "Full-time",
-      tags: ["Backend", "Node.js"],
-      posted: "2 days ago",
-      description: "Backend-focused developer role which is responsible for creating API for our applications and managing database.",
-      logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRbx0J4R5cqy54hvPd9lNP8ywO5kGWl5JlO9A&s",
-    },
-    {
-      id: 3,
-      title: "Fullstack Web Developer",
-      company: "Kasikorn Bank",
-      location: "Bangkok, Thailand",
-      type: "Full-time",
-      tags: ["React", "Node.js"],
-      posted: "5 days ago",
-      description: "Work across frontend and backend...",
-      logo: "https://logo.clearbit.com/kasikornbank.com",
-    },
-  ];
-
-  let selectedJob = jobs[0];
-</script>
