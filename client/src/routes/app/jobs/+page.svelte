@@ -1,6 +1,6 @@
 <script>
   import { Search, Filter, MapPin } from 'lucide-svelte';
-  import DOMPurify from 'dompurify';
+  import SafeHTML from '$lib/utils/SafeHTML.svelte';
   import { onMount } from 'svelte';
 
   let jobs = [];
@@ -16,10 +16,6 @@
 
   const typeCycle = ["Full-time", "Part-time", "Contract", "Casual"];
   const arrangementCycle = ["On-site", "Remote", "Hybrid"];
-
-  function sanitizeHTML(html) {
-    return DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
-  }
 
   async function fetchJobs(query = "", filters = {}) {
     try {
@@ -56,9 +52,7 @@
         closeDate: job.applicationDeadline
           ? new Date(job.applicationDeadline).toLocaleDateString()
           : "Unknown",
-        description: job.jobDescription
-          ? sanitizeHTML(job.jobDescription)
-          : "No description provided.",
+        description: job.jobDescription || "No description provided.",
         logo: "https://images.unsplash.com/photo-1534237710431-e2fc698436d0?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8YnVpbGRpbmd8ZW58MHx8MHx8fDA%3D"
       }));
 
@@ -187,7 +181,7 @@
         </section>
 
       <!-- Job Detail -->
-      <section class="col-span-1 bg-white p-6 rounded-lg shadow space-y-2">
+      <section class="col-span-1 bg-white p-6 rounded-lg shadow space-y-2 min-h-[400px] flex flex-col">
         {#if selectedJob}
           <div class="mb-2">
             <div class="flex items-start gap-3 px-2">
@@ -226,7 +220,11 @@
 
           <h3 class="font-semibold text-lg">Job Description</h3>
           <div class="space-y-4">
-            {@html selectedJob.description}
+            <SafeHTML html={selectedJob.description} />
+          </div>
+        {:else}
+          <div class="flex-1 flex items-center justify-center text-gray-500">
+            No job selected.
           </div>
         {/if}
       </section>
