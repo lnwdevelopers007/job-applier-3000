@@ -83,14 +83,19 @@ func (jc JobController) QueryJobs() gin.HandlerFunc {
 					if v == "" {
 							return nil, nil
 					}
-					durationMap := map[string]time.Duration{
-							"1d": 24 * time.Hour,
-							"6w": 6 * 7 * 24 * time.Hour,
+
+					now := time.Now()
+
+					midnight := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+
+					switch v {
+					case "1d":
+							return bson.M{"$gte": midnight.AddDate(0, 0, -1)}, nil
+					case "6w":
+							return bson.M{"$gte": midnight.AddDate(0, 0, -7*6)}, nil
+					default:
+							return nil, nil
 					}
-					if d, ok := durationMap[v]; ok {
-							return bson.M{"$gte": time.Now().Add(-d)}, nil
-					}
-					return nil, nil
 			},
 		}
 

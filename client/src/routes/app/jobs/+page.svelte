@@ -193,7 +193,10 @@
               <MapPin class="w-4 h-4 mt-0.5" />
               {selectedJob.location}
             </div>
-            <p class="text-sm text-gray-500 my-2">{selectedJob.posted}</p>
+            <div class="text-sm text-gray-500 flex gap-4 my-2">
+              <span>Open: {selectedJob.posted}</span>
+              <span>Close: {selectedJob.closeDate}</span>
+            </div>
           </div>
 
           <div class="flex gap-2">
