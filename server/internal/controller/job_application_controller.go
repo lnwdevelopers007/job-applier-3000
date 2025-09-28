@@ -95,11 +95,77 @@ func (jc JobApplicationController) Query(c *gin.Context) {
 	}
 
 	if len(applications) == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"message": "No applications found"})
+		c.JSON(http.StatusOK, []any{})
 		return
 	}
 
-	c.JSON(http.StatusOK, applications)
+	// Extract applicant IDs from applications
+	applicantIDs := make([]primitive.ObjectID, 0, len(applications))
+	applicantIDMap := make(map[primitive.ObjectID]bool)
+	for _, app := range applications {
+		if _, exists := applicantIDMap[app.ApplicantID]; !exists {
+			applicantIDMap[app.ApplicantID] = true
+			applicantIDs = append(applicantIDs, app.ApplicantID)
+		}
+	}
+
+	fmt.Println(applicantIDs)
+
+	// Query job seekers
+	jobSeekerCollection := db.Collection("jobSeeker")
+
+	// Create filter for job seekers
+	jobSeekerFilter := bson.M{"_id": bson.M{"$in": applicantIDs}}
+	jobSeekerCursor, err := jobSeekerCollection.Find(ctx, jobSeekerFilter)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var jobSeekers []schema.JobSeeker
+	if err := jobSeekerCursor.All(ctx, &jobSeekers); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	fmt.Println(jobSeekers)
+
+	// Create a map of job seekers for easy lookup
+	jobSeekerMap := make(map[primitive.ObjectID]schema.JobSeeker)
+	for _, js := range jobSeekers {
+		jobSeekerMap[js.ID] = js
+	}
+
+	// Combine applications with job seeker data
+	type ApplicationWithSeekerInfo struct {
+		ID            primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+		ApplicantID   primitive.ObjectID `bson:"applicantID" json:"applicantID" binding:"required"`
+		JobID         primitive.ObjectID `bson:"jobID" json:"jobID" binding:"required"`
+		CompanyID     primitive.ObjectID `bson:"companyID" json:"companyID" binding:"required"`
+		Status        string             `bson:"status" json:"status" binding:"required"`
+		CreatedAt     time.Time          `bson:"createdAt" json:"createdAt"`
+		ApplicantInfo schema.JobSeeker   `json:"applicantInfo"`
+	}
+
+	combinedResults := make([]ApplicationWithSeekerInfo, 0, len(applications))
+	for _, app := range applications {
+		result := ApplicationWithSeekerInfo{
+			ID:          app.ID,
+			ApplicantID: app.ApplicantID,
+			JobID:       app.JobID,
+			CompanyID:   app.CompanyID,
+			Status:      app.Status,
+			CreatedAt:   app.CreatedAt,
+		}
+
+		if jobSeeker, exists := jobSeekerMap[app.ApplicantID]; exists {
+			result.ApplicantInfo = jobSeeker
+		}
+
+		combinedResults = append(combinedResults, result)
+	}
+
+	c.JSON(http.StatusOK, combinedResults)
 }
 
 // Create adds a new job application
