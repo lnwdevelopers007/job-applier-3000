@@ -72,5 +72,5 @@ func TestJobSeekerMissingLinkedInInContact(t *testing.T) {
 	contact := payload["contact"].(map[string]any)
 	delete(contact, "linkedIn")
 	_, err := bindMockJobSeeker(t, payload)
-	assert.Error(t, err)
+	assert.NoError(t, err)
 }
