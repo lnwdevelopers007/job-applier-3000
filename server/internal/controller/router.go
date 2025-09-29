@@ -50,6 +50,7 @@ func NewRouter() *gin.Engine {
 	jobSeeker := NewJobSeekerController()
 	jobSeekerRoutes := router.Group("/seeker")
 	{
+		jobSeekerRoutes.GET("/", jobSeeker.RetrieveAll)
 		jobSeekerRoutes.POST("/", jobSeeker.Create)
 		jobSeekerRoutes.PUT("/", jobSeeker.Update)
 		jobSeekerRoutes.DELETE("/", jobSeeker.Delete)
