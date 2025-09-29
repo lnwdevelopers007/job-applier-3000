@@ -13,3 +13,9 @@ type ContactInfo struct {
 	Phone    string `bson:"phone" json:"phone" binding:"required"`
 	LinkedIn string `bson:"linkedIn" json:"linkedIn" binding:"required"`
 }
+
+type JobSeekerDenormalised struct {
+	ID      primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	User    User               `bson:"user" json:"user"`
+	Contact ContactInfo        `bson:"contact" json:"contact" binding:"required"`
+}
