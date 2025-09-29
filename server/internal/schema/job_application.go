@@ -14,3 +14,8 @@ type JobApplication struct {
 	Status      string             `bson:"status" json:"status" binding:"required"`
 	CreatedAt   time.Time          `bson:"createdAt" json:"createdAt"`
 }
+
+type ApplicationWithSeekerInfo struct {
+	JobApplication JobApplication `json:"jobApplication"`
+	Applicant      any            `json:"applicant"`
+}
