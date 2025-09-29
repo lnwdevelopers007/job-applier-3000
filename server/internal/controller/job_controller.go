@@ -34,42 +34,72 @@ func (jc JobController) Query(c *gin.Context) {
 	collection := db.Collection(jc.baseController.collectionName)
 
 	// Only accept specific query params
-	allowedParams := map[string]func(string) (any, error){
-		"id": func(v string) (any, error) {
+	allowedParams := map[string]func(string) (interface{}, error){
+		"id": func(v string) (interface{}, error) {
 			if v == "" {
 				return nil, fmt.Errorf("id parameter is empty")
 			}
 			return primitive.ObjectIDFromHex(v)
 		},
-		"title": func(v string) (any, error) {
+		"title": func(v string) (interface{}, error) {
 			if v == "" {
 				return nil, nil
 			}
 			return bson.M{"$regex": v, "$options": "i"}, nil
 		},
-		"companyID": func(v string) (any, error) {
+		"companyID": func(v string) (interface{}, error) {
 			if v == "" {
 				return nil, nil
 			}
 			return primitive.ObjectIDFromHex(v)
 		},
-		"location": func(v string) (any, error) {
+		"location": func(v string) (interface{}, error) {
 			if v == "" {
 				return nil, nil
 			}
 			return bson.M{"$regex": v, "$options": "i"}, nil
 		},
-		"minSalary": func(v string) (any, error) {
+		"minSalary": func(v string) (interface{}, error) {
 			if v == "" {
 				return nil, nil
 			}
 			return toInt(v), nil
 		},
-		"maxSalary": func(v string) (any, error) {
+		"maxSalary": func(v string) (interface{}, error) {
 			if v == "" {
 				return nil, nil
 			}
 			return toInt(v), nil
+		},
+		"workType": func(v string) (interface{}, error) {
+			if v == "" {
+				return nil, nil
+			}
+			return bson.M{"$regex": v, "$options": "i"}, nil
+		},
+		"workArrangement": func(v string) (interface{}, error) {
+			if v == "" {
+				return nil, nil
+			}
+			return bson.M{"$regex": v, "$options": "i"}, nil
+		},
+		"postOpenDate": func(v string) (interface{}, error) {
+			if v == "" {
+				return nil, nil
+			}
+
+			now := time.Now()
+
+			midnight := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+
+			switch v {
+			case "1d":
+				return bson.M{"$gte": midnight.AddDate(0, 0, -1)}, nil
+			case "6w":
+				return bson.M{"$gte": midnight.AddDate(0, 0, -7*6)}, nil
+			default:
+				return nil, nil
+			}
 		},
 	}
 
@@ -77,6 +107,8 @@ func (jc JobController) Query(c *gin.Context) {
 	salaryFilter := bson.M{}
 
 	// Loop through query params
+	fmt.Println("Query params:", c.Request.URL.Query())
+
 	for key, values := range c.Request.URL.Query() {
 		if fn, ok := allowedParams[key]; ok {
 			val, err := fn(values[0])
@@ -92,6 +124,8 @@ func (jc JobController) Query(c *gin.Context) {
 					salaryFilter["$gte"] = val
 				case "maxSalary":
 					salaryFilter["$lte"] = val
+				case "postOpenDate":
+					filter["postOpenDate"] = val
 				default:
 					filter[key] = val
 				}
