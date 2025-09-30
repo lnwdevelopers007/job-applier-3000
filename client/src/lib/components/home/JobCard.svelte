@@ -1,0 +1,147 @@
+<script lang="ts">
+	import { MapPin, DollarSign, Clock } from 'lucide-svelte';
+	import AuthModal from '$lib/components/ui/AuthModal.svelte';
+	import { goto } from '$app/navigation';
+
+	type Job = {
+		id: string;
+		company: string;
+		companyLogo?: string;
+		title: string;
+		location: string;
+		locationType: 'on-site' | 'remote' | 'hybrid';
+		salary: string;
+		type: string;
+		tags: string[];
+		postedAt: string;
+		badge?: {
+			text: string;
+			type: 'new' | 'remote' | 'internship';
+		};
+		logoStyle?: string;
+	};
+
+	let { job }: { job: Job } = $props();
+	let showAuthModal = $state(false);
+
+	const badgeColors = {
+		new: 'bg-green-600 text-white',
+		remote: 'bg-blue-600 text-white',
+		internship: 'bg-purple-600 text-white'
+	};
+
+	function getCompanyInitial(name: string): string {
+		return name.charAt(0).toUpperCase();
+	}
+
+	function handleApply() {
+		const token = localStorage.getItem('access_token');
+		
+		if (token) {
+			// User is logged in - proceed to job application
+			goto(`/app/jobs/${job.id}/apply`);
+		} else {
+			// User not logged in - show auth modal
+			showAuthModal = true;
+			// Store job ID for after login
+			sessionStorage.setItem('pendingJobApplication', job.id);
+		}
+	}
+
+	function handleAuthModalClose() {
+		showAuthModal = false;
+		// Clear pending application if user cancels
+		sessionStorage.removeItem('pendingJobApplication');
+	}
+</script>
+
+<div
+	class="relative bg-white border border-gray-200 rounded-xl p-6 hover:shadow-sm transition-all duration-200 group flex flex-col h-full"
+>
+	{#if job.badge}
+		<span
+			class="absolute top-4 right-4 px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded {badgeColors[
+				job.badge.type
+			]}"
+		>
+			{job.badge.text}
+		</span>
+	{/if}
+
+	<div class="flex items-start gap-4 mb-4">
+		{#if job.companyLogo}
+			<div
+				class="w-12 h-12 rounded-lg flex items-center justify-center text-xl font-semibold flex-shrink-0 {job.logoStyle ||
+					'bg-gray-100'}"
+			>
+				{getCompanyInitial(job.company)}
+			</div>
+		{:else}
+			<div
+				class="w-12 h-12 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-600 font-semibold flex-shrink-0"
+			>
+				{getCompanyInitial(job.company)}
+			</div>
+		{/if}
+		<div class="flex-1 min-w-0">
+			<p class="text-sm font-semibold text-gray-600 mb-1">{job.company}</p>
+			<h3 class="text-lg font-semibold text-gray-900 transition-colors">
+				{job.title}
+			</h3>
+		</div>
+	</div>
+
+	<div class="flex items-center gap-2 mb-3 text-sm text-gray-600">
+		{#if job.locationType === 'remote'}
+			<div class="flex items-center gap-1">
+				<MapPin class="w-4 h-4" />
+				<span>Remote (Worldwide)</span>
+			</div>
+		{:else}
+			<div class="flex items-center gap-1">
+				<MapPin class="w-4 h-4" />
+				<span>{job.location}</span>
+			</div>
+		{/if}
+	</div>
+
+	<div class="flex items-center gap-4 mb-4 text-sm">
+		<span class="font-semibold text-green-600 flex items-center gap-1">
+			{job.salary}
+		</span>
+		<span class="text-gray-600">• {job.type}</span>
+		<span class="text-gray-600">• {job.locationType}</span>
+	</div>
+
+	<div class="flex flex-wrap gap-2 mb-4">
+		{#each job.tags as tag}
+			<span class="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-md font-medium">
+				{tag}
+			</span>
+		{/each}
+	</div>
+
+	<!-- Spacer to push footer to bottom -->
+	<div class="flex-grow"></div>
+
+	<div class="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
+		<span class="text-xs text-gray-500 flex items-center gap-1">
+			<Clock class="w-3 h-3" />
+			{job.postedAt}
+		</span>
+		<button
+			onclick={handleApply}
+			class="px-5 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 cursor-pointer transition-colors"
+		>
+			Apply
+		</button>
+	</div>
+</div>
+
+<!-- Auth Modal -->
+<AuthModal
+	bind:isOpen={showAuthModal}
+	onClose={handleAuthModalClose}
+	title="Sign in to apply"
+	description="Please log in or sign up to apply for this job position"
+/>
