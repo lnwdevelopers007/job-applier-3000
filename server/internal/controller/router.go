@@ -55,6 +55,15 @@ func NewRouter() *gin.Engine {
 		jobSeekerRoutes.DELETE("/", jobSeeker.Delete)
 	}
 
+	company := NewCompanyController()
+	companyRoutes := router.Group("/company")
+	{
+		companyRoutes.GET("/", company.RetrieveAll)
+		companyRoutes.POST("/", company.Create)
+		companyRoutes.PUT("/", company.Update)
+		companyRoutes.DELETE("/", company.Delete)
+	}
+
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"ok": true})
 	})
