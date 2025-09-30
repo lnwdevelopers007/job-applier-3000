@@ -5,14 +5,10 @@ import (
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
 )
 
-// CompanyController wraps the BaseController with schema.Company
-// and provides REST handlers for the "companies" collection.
 type CompanyController struct {
 	baseController BaseController[schema.Company]
 }
 
-// NewCompanyController creates a new CompanyController
-// configured to operate on the "companies" collection.
 func NewCompanyController() CompanyController {
 	return CompanyController{
 		baseController: BaseController[schema.Company]{
@@ -40,4 +36,9 @@ func (jc CompanyController) Delete(c *gin.Context) {
 // RetrieveAll fetches all companies from the database.
 func (jc CompanyController) RetrieveAll(c *gin.Context) {
 	jc.baseController.RetrieveAll(c)
+}
+
+// RetrieveOne fetches a single company by ID.
+func (jc CompanyController) RetrieveOne(c *gin.Context) {
+	jc.baseController.RetrieveOne(c)
 }
