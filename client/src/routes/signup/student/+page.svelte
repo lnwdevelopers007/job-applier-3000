@@ -1,4 +1,7 @@
 <script>
+  import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
+  import { isAuthenticated } from '$lib/utils/auth';
   import { ArrowLeft } from 'lucide-svelte';
   import { fly } from 'svelte/transition';
   import AuthLayout from '$lib/components/auth/AuthLayout.svelte';
@@ -9,6 +12,12 @@
   import FormButton from '$lib/components/auth/FormButton.svelte';
   import GoogleOAuthButton from '$lib/components/auth/GoogleOAuthButton.svelte';
   import OrDivider from '$lib/components/auth/OrDivider.svelte';
+
+  onMount(() => {
+    if (isAuthenticated()) {
+      goto('/app/jobs');
+    }
+  });
   
   let currentStep = 1;
   let email = '';

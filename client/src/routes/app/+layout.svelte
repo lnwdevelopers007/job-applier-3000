@@ -17,7 +17,7 @@
   import { House, Cog, Mail, ChartColumn, Briefcase } from 'lucide-svelte';
   
   const navItems = [
-    { href: '/app', label: 'Home', icon: House },
+    { href: '/', label: 'Home', icon: House },
     { href: '/app/jobs', label: 'Jobs', icon: Briefcase },
     { href: '/app/applications', label: 'Applications', icon: ChartColumn },
     { href: '/app/settings', label: 'Settings', icon: Cog },

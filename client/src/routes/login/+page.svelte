@@ -1,4 +1,7 @@
 <script>
+  import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
+  import { isAuthenticated } from '$lib/utils/auth';
   import AuthLayout from '$lib/components/auth/AuthLayout.svelte';
   import AuthHeader from '$lib/components/auth/AuthHeader.svelte';
   import FormInput from '$lib/components/auth/FormInput.svelte';
@@ -11,6 +14,12 @@
   let password = '';
   let rememberMe = false;
   let showPassword = false;
+
+  onMount(() => {
+    if (isAuthenticated()) {
+      goto('/app/jobs');
+    }
+  });
 
   function handleLogin() {
     console.log('Login:', { email, password, rememberMe });

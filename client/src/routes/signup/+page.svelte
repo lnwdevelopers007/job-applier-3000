@@ -1,15 +1,12 @@
 <script>
-  import { onNavigate } from '$app/navigation';
+  import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
+  import { isAuthenticated } from '$lib/utils/auth';
   
-  onNavigate((navigation) => {
-    if (!document.startViewTransition) return;
-
-    return new Promise((resolve) => {
-      document.startViewTransition(async () => {
-        resolve();
-        await navigation.complete;
-      });
-    });
+  onMount(() => {
+    if (isAuthenticated()) {
+      goto('/app/jobs');
+    }
   });
 </script>
 

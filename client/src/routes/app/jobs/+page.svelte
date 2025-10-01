@@ -2,6 +2,8 @@
   import { Search, Filter, MapPin } from 'lucide-svelte';
   import SafeHTML from '$lib/utils/SafeHTML.svelte';
   import { onMount } from 'svelte';
+  import { jobSearchStore } from '$lib/stores/jobSearch';
+  import { get } from 'svelte/store';
 
   let jobs = [];
   let filteredJobs = [];
@@ -90,7 +92,29 @@
   }
 
   onMount(() => {
-    fetchJobs();
+    // Subscribe to the job search store
+    const unsubscribe = jobSearchStore.subscribe(state => {
+      if (state.shouldFetch) {
+        console.log('Search triggered from hero/career:', state.query);
+        // Set the search query from the store
+        searchQuery = state.query;
+        // Fetch jobs with the search query
+        fetchJobs(state.query, activeFilters).then(() => {
+          // Clear the fetch flag after successful fetch
+          jobSearchStore.clearFetchFlag();
+        });
+      }
+    });
+
+    // Initial fetch if no search from hero
+    const currentState = get(jobSearchStore);
+    if (!currentState.shouldFetch) {
+      fetchJobs();
+    }
+
+    return () => {
+      unsubscribe();
+    };
   });
 </script>
 
@@ -105,37 +129,37 @@
           placeholder="Search jobs..."
           class="flex-1 ml-2 outline-none border-none"
           bind:value={searchQuery}
-          on:input={onSearchInput}
+          oninput={onSearchInput}
         />
       </div>
 
       <div class="flex gap-2">
         <button
-          class={`px-3 py-1 rounded-full text-sm ${activeFilters.type && typeCycle.includes(activeFilters.type) ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
-          on:click={() => toggleCycle("type")}
-        >
-          {activeFilters.type || "Work Type"}
-        </button>
+            class={`px-3 py-1 rounded-full text-sm ${activeFilters.type && typeCycle.includes(activeFilters.type) ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
+            onclick={() => toggleCycle("type")}
+          >
+            {activeFilters.type || "Work Type"}
+          </button>
 
-        <button
-          class={`px-3 py-1 rounded-full text-sm ${activeFilters.posted === '1d' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
-          on:click={() => toggleFilter("posted", "1d")}
-        >
-          1 day ago
-        </button>
-        <button
-          class={`px-3 py-1 rounded-full text-sm ${activeFilters.posted === '6w' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
-          on:click={() => toggleFilter("posted", "6w")}
-        >
-          6 weeks
-        </button>
+          <button
+            class={`px-3 py-1 rounded-full text-sm ${activeFilters.posted === '1d' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
+            onclick={() => toggleFilter("posted", "1d")}
+          >
+            1 day ago
+          </button>
+          <button
+            class={`px-3 py-1 rounded-full text-sm ${activeFilters.posted === '6w' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
+            onclick={() => toggleFilter("posted", "6w")}
+          >
+            6 weeks
+          </button>
 
-        <button
-          class={`px-3 py-1 rounded-full text-sm ${activeFilters.arrangement && arrangementCycle.includes(activeFilters.arrangement) ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
-          on:click={() => toggleCycle("arrangement")}
-        >
-          {activeFilters.arrangement || "Arrangement"}
-        </button>
+          <button
+            class={`px-3 py-1 rounded-full text-sm ${activeFilters.arrangement && arrangementCycle.includes(activeFilters.arrangement) ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
+            onclick={() => toggleCycle("arrangement")}
+          >
+            {activeFilters.arrangement || "Arrangement"}
+          </button>
 
         <button class="px-3 py-1 bg-gray-200 rounded-full text-sm flex items-center">
           <Filter class="h-4 w-4 mr-1" /> Filters
@@ -154,7 +178,7 @@
             {:else}
               {#each filteredJobs as job (job.id)}
                 <button
-                  on:click={() => (selectedJob = job)}
+                  onclick={() => (selectedJob = job)}
                   class={`w-full flex flex-col cursor-pointer bg-white rounded-lg shadow ring-offset-2 hover:ring-2 hover:ring-green-300 ${selectedJob?.id === job.id ? 'ring-2 ring-green-500' : ''}`}
                 >
                   <div class="flex items-start gap-3 p-2">

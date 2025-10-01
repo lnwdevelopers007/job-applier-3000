@@ -1,88 +1,22 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import { jwtDecode } from 'jwt-decode';
   import { LogOut, User } from 'lucide-svelte';
   import { scale } from 'svelte/transition';
   import userAvatar from '$lib/assets/user.png';
+  import { isAuthenticated, getUserInfo, logout, type UserInfo } from '$lib/utils/auth';
   
-  type TokenPayload = {
-    email: string;
-    name: string;
-    exp: number;
-    role?: string;
-    avatarURL?: string;
-    userID?: string;
-    provider?: string;
-  };
+  let { transparent = false, absolute = false }: { transparent?: boolean; absolute?: boolean } = $props();
 
-  type UserInfo = {
-    name: string;
-    email: string;
-    role: string;
-    avatarUrl?: string;
-  };
-
-  let userInfo: UserInfo = $state({
-    name: 'Guest',
-    email: '',
-    role: 'User',
-    avatarUrl: undefined
-  });
-
+  let userInfo: UserInfo | null = $state(null);
   let isLoggedIn = $state(false);
   let isDropdownOpen = $state(false);
   let dropdownRef = $state<HTMLDivElement>();
 
   onMount(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        const parsed = JSON.parse(storedUser);
-        userInfo = {
-          name: parsed.name || 'Guest',
-          email: parsed.email || '',
-          role: parsed.role || 'User',
-          avatarUrl: parsed.avatarUrl
-        };
-        isLoggedIn = true;
-        return;
-      } catch (err) {
-        console.error('Failed to parse stored user info:', err);
-      }
-    }
-
-    // Fallback: decode token directly
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      try {
-        const decoded = jwtDecode<TokenPayload>(token);
-        
-        // Check if token is expired
-        if (decoded.exp && decoded.exp * 1000 < Date.now()) {
-          console.warn('Token has expired');
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('user');
-          isLoggedIn = false;
-        } else {
-          // Get avatar URL from the JWT (matches MongoDB schema field)
-          
-          userInfo = {
-            name: decoded.name || decoded.email.split('@')[0],
-            email: decoded.email,
-            role: decoded.role || 'User',
-            avatarUrl: decoded.avatarURL
-          };
-          
-          localStorage.setItem('user', JSON.stringify(userInfo));
-          isLoggedIn = true;
-        }
-      } catch (err) {
-        console.error('Failed to decode token:', err);
-        isLoggedIn = false;
-      }
-    } else {
-      isLoggedIn = false;
+    isLoggedIn = isAuthenticated();
+    if (isLoggedIn) {
+      userInfo = getUserInfo();
     }
   });
 
@@ -104,10 +38,7 @@
   }
 
   function handleLogout() {
-    // Clear all auth-related data from localStorage
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
+    logout();
     
     if (window.location.pathname === '/') {
       window.location.reload();
@@ -133,11 +64,16 @@
   });
 </script>
 
-<header class="flex items-center justify-between bg-white border-b border-gray-200 px-6 py-3">
-  <div class="flex items-start space-x-1">
-      <h2 class="text-lg font-semibold text-black">Job Applier </h2>
-      <h2 class="text-lg font-semibold text-green-700">3000</h2>
-  </div>
+<header class="{absolute ? 'absolute top-0 left-0 right-0 z-20' : ''} flex items-center justify-between {transparent ? '' : 'bg-white border-b border-gray-200'} px-6 py-3">
+  <button 
+    class="flex items-start space-x-1 group cursor-pointer"
+    onclick={() => goto('/')}
+    onkeydown={(e) => e.key === 'Enter' && goto('/')}
+    aria-label="Go to home page"
+  >
+    <h2 class="text-lg font-semibold text-black">Job Applier </h2>
+    <h2 class="text-lg font-semibold text-green-700">3000</h2>
+  </button>
 
   {#if isLoggedIn}
     <div class="relative" bind:this={dropdownRef}>
@@ -145,7 +81,7 @@
         onclick={toggleDropdown}
         class="flex items-center space-x-3 hover:cursor-pointer focus:outline-gray-300 focus:outline  focus:transition-colors rounded-full"
       >
-        <img src={userInfo.avatarUrl || userAvatar} alt="Avatar" class="w-9 h-9 rounded-full object-cover" />
+        <img src={userInfo?.avatarUrl || userAvatar} alt="Avatar" class="w-9 h-9 rounded-full object-cover" />
       </button>
 
       {#if isDropdownOpen}
@@ -156,11 +92,11 @@
         <!-- User info section -->
         <div class="px-4 py-3 border-b border-gray-100 mb-1">
           <div class="flex items-center space-x-3">
-            <img src={userInfo.avatarUrl || userAvatar} alt="Avatar" class="w-10 h-10 rounded-full object-cover" />
+            <img src={userInfo?.avatarUrl || userAvatar} alt="Avatar" class="w-10 h-10 rounded-full object-cover" />
             <div>
-              <p class="text-sm font-semibold text-gray-900">{userInfo.name}</p>
-              <p class="text-xs text-gray-500">{userInfo.email}</p>
-              <p class="text-xs text-gray-500 mt-0.5">{formatRole(userInfo.role)}</p>
+              <p class="text-sm font-semibold text-gray-900">{userInfo?.name || 'Guest'}</p>
+              <p class="text-xs text-gray-500">{userInfo?.email || ''}</p>
+              <p class="text-xs text-gray-500 mt-0.5">{formatRole(userInfo?.role || 'User')}</p>
             </div>
           </div>
         </div>
@@ -170,7 +106,7 @@
           <button
             onclick={() => {
               isDropdownOpen = false;
-              goto(userInfo.role === 'company' ? '/company/profile' : '/profile');
+              goto(userInfo?.role === 'company' ? '/company/profile' : '/profile');
             }}
             class="w-full flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 hover:cursor-pointer transition-colors"
           >
