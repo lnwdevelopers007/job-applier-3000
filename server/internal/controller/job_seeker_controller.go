@@ -18,6 +18,10 @@ func NewJobSeekerController() JobSeekerController {
 	}
 }
 
+func (jc JobSeekerController) RetrieveAll(c *gin.Context) {
+	jc.baseController.RetrieveAll(c)
+}
+
 func (jc JobSeekerController) Create(c *gin.Context) {
 	jc.baseController.Create(c)
 }
