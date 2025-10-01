@@ -86,16 +86,16 @@
 	</div>
 	
 	<!-- Location skeleton -->
-	<div class="flex items-center gap-2 mb-4">
+	<div class="flex items-center gap-2 mb-3">
 		<div class="w-4 h-4 bg-gray-200 rounded"></div>
 		<div class="h-4 bg-gray-200 rounded w-32"></div>
 	</div>
 	
 	<!-- Salary and type skeleton -->
-	<div class="flex items-center gap-4 mb-5">
+	<div class="flex items-center gap-2 mb-5">
 		<div class="h-4 bg-gray-200 rounded w-24"></div>
-		<div class="h-4 bg-gray-200 rounded w-20"></div>
-		<div class="h-4 bg-gray-200 rounded w-16"></div>
+		<div class="h-6 bg-gray-200 rounded w-16"></div>
+		<div class="h-6 bg-gray-200 rounded w-20"></div>
 	</div>
 	
 	<!-- Tags skeleton -->
@@ -165,12 +165,16 @@
 		{/if}
 	</div>
 
-	<div class="flex items-center gap-4 mb-4 text-sm">
-		<span class="font-semibold text-green-600 flex items-center gap-1">
+	<div class="flex items-center gap-2 mb-4 text-sm">
+		<span class="font-semibold text-green-600 flex items-center gap-1 mr-2">
 			{job ? formatSalary(job.minSalary, job.maxSalary, job.currency) : ''}
 		</span>
-		<span class="text-gray-600">• {job?.type}</span>
-		<span class="text-gray-600">• {job?.locationType}</span>
+		{#if job?.type}
+			<span class="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded font-medium">{job.type}</span>
+		{/if}
+		{#if job?.locationType}
+			<span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded font-medium capitalize">{job.locationType}</span>
+		{/if}
 	</div>
 
 	<div class="flex flex-wrap gap-2 mb-4">
