@@ -22,7 +22,7 @@
 		closeOnBackdrop?: boolean;
 		closeOnEscape?: boolean;
 		class?: string;
-		children?: any;
+		children?: import('svelte').Snippet;
 	} = $props();
 
 	const sizeClasses: Record<ModalSize, string> = {

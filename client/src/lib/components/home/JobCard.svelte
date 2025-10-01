@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { MapPin, DollarSign, Clock } from 'lucide-svelte';
+	import { MapPin, Clock } from 'lucide-svelte';
 	import AuthModal from '$lib/components/ui/AuthModal.svelte';
 	import { goto } from '$app/navigation';
 	import { isAuthenticated } from '$lib/utils/auth';
@@ -178,7 +178,7 @@
 	</div>
 
 	<div class="flex flex-wrap gap-2 mb-4">
-		{#each job?.tags || [] as tag}
+		{#each job?.tags || [] as tag, index (tag + index)}
 			<span class="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-md font-medium">
 				{tag}
 			</span>

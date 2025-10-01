@@ -6,13 +6,14 @@
 	import { isAuthenticated } from '$lib/utils/auth';
 
 	type CareerPath = {
-		id: string;
+		id: string; // Used for keying in each loops
 		title: string;
 		icon: ComponentType;
 		iconStyle: string;
 		positions: number;
 	};
 
+	// eslint-disable-next-line svelte/no-unused-props
 	let { path }: { path: CareerPath } = $props();
 	let showAuthModal = $state(false);
 	const Icon = path.icon;

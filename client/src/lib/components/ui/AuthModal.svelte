@@ -1,7 +1,6 @@
 <script lang="ts">
 	import Modal from './Modal.svelte';
 	import { goto } from '$app/navigation';
-	import { LogIn, UserPlus } from 'lucide-svelte';
 
 	let {
 		isOpen = $bindable(false),
@@ -35,42 +34,33 @@
 		goto('/signup');
 	}
 
-	function handleClose() {
-		if (onClose) {
-			onClose();
-		} else {
-			isOpen = false;
-		}
-	}
 </script>
 
 <Modal bind:isOpen {onClose} size="lg" showCloseButton={true}>
-	{#snippet children()}
-		<div class="p-12">
-			<!-- Content -->
-			<h2 class="text-xl font-semibold text-gray-900 text-center mb-3">
-				{title}
-			</h2>
-			<p class="text-gray-600 text-md text-center mb-8">
-				{description}
-			</p>
+	<div class="p-12">
+		<!-- Content -->
+		<h2 class="text-xl font-semibold text-gray-900 text-center mb-3">
+			{title}
+		</h2>
+		<p class="text-gray-600 text-md text-center mb-8">
+			{description}
+		</p>
 
-			<!-- Actions -->
-			<div class="space-y-3">
-				<button
-					onclick={handleLogin}
-					class="w-full px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 cursor-pointer transition-colors flex items-center justify-center gap-2"
-				>
-					Log In
-				</button>
+		<!-- Actions -->
+		<div class="space-y-3">
+			<button
+				onclick={handleLogin}
+				class="w-full px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 cursor-pointer transition-colors flex items-center justify-center gap-2"
+			>
+				Log In
+			</button>
 
-				<button
-					onclick={handleSignup}
-					class="w-full px-4 py-2 bg-white border border-gray-200 text-gray-900 font-medium text-sm rounded-lg hover:bg-gray-50 cursor-pointer transition-colors flex items-center justify-center gap-2"
-				>
-					Sign Up
-				</button>
-			</div>
+			<button
+				onclick={handleSignup}
+				class="w-full px-4 py-2 bg-white border border-gray-200 text-gray-900 font-medium text-sm rounded-lg hover:bg-gray-50 cursor-pointer transition-colors flex items-center justify-center gap-2"
+			>
+				Sign Up
+			</button>
 		</div>
-	{/snippet}
+	</div>
 </Modal>

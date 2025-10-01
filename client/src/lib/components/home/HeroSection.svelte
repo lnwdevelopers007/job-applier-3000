@@ -70,7 +70,7 @@
 
 		<!-- Stats -->
 		<div class="flex flex-wrap justify-center gap-8 sm:gap-12">
-			{#each stats as stat, i}
+			{#each stats as stat, i (stat.label)}
 				<div class="text-center px-8 {i < stats.length - 1 ? 'border-r border-gray-300' : ''}">
 					<div class="text-3xl sm:text-4xl font-bold text-gray-900">{stat.number}</div>
 					<div class="text-sm text-gray-500 font-medium mt-1">{stat.label}</div>

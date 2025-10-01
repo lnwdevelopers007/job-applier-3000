@@ -1,12 +1,13 @@
 <script lang="ts">
 	type Company = {
-		id: string;
+		id: string; // Used for keying in each loops
 		name: string;
 		logo?: string;
 		logoStyle?: string;
 		positions: number;
 	};
 
+	// eslint-disable-next-line svelte/no-unused-props
 	let { company }: { company: Company } = $props();
 
 	function getCompanyInitial(name: string): string {

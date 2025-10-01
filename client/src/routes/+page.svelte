@@ -41,7 +41,18 @@
 			if (res.ok) {
 				const data = await res.json();
 				// Get the 3 most recent jobs and map to home page format
-				recentJobs = data.slice(0, 3).map((job: any) => ({
+				recentJobs = data.slice(0, 3).map((job: {
+					id: string;
+					title?: string;
+					location?: string;
+					workArrangement?: string;
+					minSalary?: number;
+					maxSalary?: number;
+					currency?: string;
+					workType?: string;
+					requiredSkills?: string;
+					postOpenDate?: string;
+				}) => ({
 					id: job.id,
 					company: "Unknown Company",
 					title: job.title || "Untitled Position",
@@ -107,7 +118,6 @@
 	];
 
 	let currentSlide = $state(0);
-	let previousSlide = $state(0);
 	let screenWidth = $state(0);
 	
 	// Reactive companies per slide based on screen width
@@ -132,21 +142,18 @@
 
 	function nextSlide() {
 		if (currentSlide < totalSlides() - 1) {
-			previousSlide = currentSlide;
 			currentSlide = currentSlide + 1;
 		}
 	}
 
 	function prevSlide() {
 		if (currentSlide > 0) {
-			previousSlide = currentSlide;
 			currentSlide = currentSlide - 1;
 		}
 	}
 
 	function goToSlide(index: number) {
 		if (index !== currentSlide) {
-			previousSlide = currentSlide;
 			currentSlide = index;
 		}
 	}
@@ -160,7 +167,6 @@
 	$effect(() => {
 		if (currentSlide >= totalSlides()) {
 			currentSlide = 0;
-			previousSlide = 0;
 		}
 	});
 
@@ -205,11 +211,12 @@
 
 				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 					{#if isLoadingJobs}
-						{#each Array(3) as _}
+						<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
+						{#each Array(3) as _, index (index)}
 							<JobCard skeleton={true} />
 						{/each}
 					{:else if recentJobs.length > 0}
-						{#each recentJobs as job}
+						{#each recentJobs as job (job.id)}
 							<JobCard {job} />
 						{/each}
 					{:else}
@@ -273,7 +280,8 @@
 							class="flex transition-transform duration-500 ease-in-out"
 							style="transform: translateX(-{currentSlide * (100 / totalSlides())}%); width: {totalSlides() * 100}%;"
 						>
-							{#each Array(totalSlides()) as _, slideIndex}
+							<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
+							{#each Array(totalSlides()) as _, slideIndex (slideIndex)}
 								<div class="flex gap-2 sm:gap-3 lg:gap-4 flex-shrink-0 px-1 sm:px-2" style="width: {100 / totalSlides()}%;">
 									{#each getVisibleCompanies(slideIndex) as company (company.id)}
 										<div class="flex-1">
@@ -287,7 +295,8 @@
 
 					<!-- Pagination Dots -->
 					<div class="flex justify-center mt-8 gap-2">
-						{#each Array(totalSlides()) as _, index}
+						<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
+						{#each Array(totalSlides()) as _, index (index)}
 							<button
 								onclick={() => goToSlide(index)}
 								class="w-2 h-2 rounded-full transition-colors {currentSlide === index ? 'bg-green-600' : 'bg-gray-300'} hover:cursor-pointer"
@@ -310,7 +319,7 @@
 				</div>
 
 				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-					{#each careerPaths as path}
+					{#each careerPaths as path (path.id)}
 						<CareerPathCard {path} />
 					{/each}
 				</div>
