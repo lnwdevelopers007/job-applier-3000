@@ -7,11 +7,13 @@
 	type Job = {
 		id: string;
 		company: string;
-		companyLogo?: string;
+		companyLogo?: string; // Will be populated from backend in the future
 		title: string;
 		location: string;
 		locationType: 'on-site' | 'remote' | 'hybrid';
-		salary: string;
+		minSalary: number;
+		maxSalary: number;
+		currency: string;
 		type: string;
 		tags: string[];
 		postedAt: string;
@@ -19,7 +21,7 @@
 			text: string;
 			type: 'new' | 'remote' | 'internship';
 		};
-		logoStyle?: string;
+		logoStyle?: string; // Placeholder styling - remove when companyLogo is implemented
 	};
 
 	let { job }: { job: Job } = $props();
@@ -38,7 +40,7 @@
 	function handleApply() {
 		if (isAuthenticated()) {
 			// User is logged in - proceed to job application
-			goto(`/app/jobs/${job.id}/apply`);
+			goto(`/app/jobs`);
 		} else {
 			// User not logged in - show auth modal
 			showAuthModal = true;
@@ -51,6 +53,24 @@
 		showAuthModal = false;
 		// Clear pending application if user cancels
 		sessionStorage.removeItem('pendingJobApplication');
+	}
+
+	function formatSalary(minSalary: number, maxSalary: number, currency: string): string {
+		const formatNumber = (num: number) => {
+			if (num >= 1000000) {
+				return (num / 1000000).toFixed(1) + 'M';
+			}
+			if (num >= 1000) {
+				return (num / 1000).toFixed(0) + 'k';
+			}
+			return num.toString();
+		};
+
+		const min = formatNumber(minSalary);
+		const max = formatNumber(maxSalary);
+		const symbol = currency === 'THB' ? '฿' : currency === 'USD' ? '$' : currency;
+		
+		return `${symbol}${min} - ${symbol}${max}`;
 	}
 </script>
 
@@ -106,7 +126,7 @@
 
 	<div class="flex items-center gap-4 mb-4 text-sm">
 		<span class="font-semibold text-green-600 flex items-center gap-1">
-			{job.salary}
+			{formatSalary(job.minSalary, job.maxSalary, job.currency)}
 		</span>
 		<span class="text-gray-600">• {job.type}</span>
 		<span class="text-gray-600">• {job.locationType}</span>
