@@ -28,23 +28,23 @@ func NewRouter() *gin.Engine {
 	jobs := router.Group("/jobs")
 	jobCtrl := NewJobController()
 	{
+		jobs.GET("/query", jobCtrl.Query)
 		jobs.GET("/", jobCtrl.RetrieveAll)
 		jobs.POST("/", jobCtrl.Create)
 		jobs.PUT("/:id", jobCtrl.Update)
 		jobs.DELETE("/:id", jobCtrl.Delete)
-
-		jobs.GET("/query", jobCtrl.Query)
-
+		jobs.GET("/:id", jobCtrl.RetrieveOne)
 	}
 
 	applicationController := NewJobApplicationController()
 	applyRoutes := router.Group("/apply")
 	{
-		applyRoutes.GET("/", applicationController.Query)
 		applyRoutes.GET("/query", applicationController.Query)
+		applyRoutes.GET("/", applicationController.RetrieveAll)
 		applyRoutes.POST("/", applicationController.Create)
 		applyRoutes.PUT("/:id", applicationController.Update)
 		applyRoutes.DELETE("/:id", applicationController.Delete)
+		applyRoutes.GET("/:id", applicationController.RetrieveOne)
 	}
 
 	jobSeeker := NewJobSeekerController()
@@ -53,6 +53,7 @@ func NewRouter() *gin.Engine {
 		jobSeekerRoutes.POST("/", jobSeeker.Create)
 		jobSeekerRoutes.PUT("/", jobSeeker.Update)
 		jobSeekerRoutes.DELETE("/", jobSeeker.Delete)
+		jobSeekerRoutes.GET("/:id", jobSeeker.RetrieveOne)
 	}
 
 	company := NewCompanyController()
@@ -60,9 +61,9 @@ func NewRouter() *gin.Engine {
 	{
 		companyRoutes.GET("/", company.RetrieveAll)
 		companyRoutes.POST("/", company.Create)
-		companyRoutes.GET("/:id", company.RetrieveOne)
 		companyRoutes.PUT("/:id", company.Update)
 		companyRoutes.DELETE("/:id", company.Delete)
+		companyRoutes.GET("/:id", company.RetrieveOne)
 	}
 
 	router.GET("/health", func(c *gin.Context) {
