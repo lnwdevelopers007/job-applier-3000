@@ -46,9 +46,9 @@
 
 <Modal bind:isOpen {onClose} size="lg" showCloseButton={true}>
 	{#snippet children()}
-		<div class="px-12 py-16">
+		<div class="p-12">
 			<!-- Content -->
-			<h2 class="text-2xl font-semibold text-gray-900 text-center mb-3">
+			<h2 class="text-xl font-semibold text-gray-900 text-center mb-3">
 				{title}
 			</h2>
 			<p class="text-gray-600 text-md text-center mb-8">
@@ -59,14 +59,14 @@
 			<div class="space-y-3">
 				<button
 					onclick={handleLogin}
-					class="w-full px-4 py-2 bg-green-600 text-white text-md font-medium rounded-lg hover:bg-green-700 cursor-pointer transition-colors flex items-center justify-center gap-2"
+					class="w-full px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 cursor-pointer transition-colors flex items-center justify-center gap-2"
 				>
 					Log In
 				</button>
 
 				<button
 					onclick={handleSignup}
-					class="w-full px-4 py-2 bg-white border border-gray-200 text-gray-900 font-medium rounded-lg hover:bg-gray-50 cursor-pointer transition-colors flex items-center justify-center gap-2"
+					class="w-full px-4 py-2 bg-white border border-gray-200 text-gray-900 font-medium text-sm rounded-lg hover:bg-gray-50 cursor-pointer transition-colors flex items-center justify-center gap-2"
 				>
 					Sign Up
 				</button>

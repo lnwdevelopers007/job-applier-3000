@@ -30,6 +30,7 @@
 		sessionStorage.removeItem('pendingSearch');
 	}
 
+	// TODO: Replace with actual API fetch from backend	
 	const stats = [
 		{ number: '500+', label: 'Active Jobs' },
 		{ number: '120+', label: 'Top Companies' },

@@ -32,6 +32,7 @@
 		sessionStorage.removeItem('pendingNavigation');
 	}
 
+	// TODO: Replace with actual API fetch from backend
 	const recentJobs = [
 		{
 			id: '1',
@@ -89,6 +90,7 @@
 		}
 	];
 
+	// TODO: Replace with actual API fetch from backend
 	const topCompanies = [
 		{ id: '1', name: 'Google', positions: 12, logoStyle: 'bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600', logo: 'G' },
 		{ id: '2', name: 'Apple', positions: 8, logoStyle: 'bg-gradient-to-br from-gray-800 to-gray-900 text-white', logo: 'A' },
@@ -160,15 +162,16 @@
 		}
 	});
 
+	// TODO: Replace with actual API fetch from backend
 	const careerPaths = [
-		{ id: '1', title: 'Software Dev', icon: Code, iconStyle: 'bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600', positions: 245 },
-		{ id: '2', title: 'Data Science', icon: ChartLine, iconStyle: 'bg-gradient-to-br from-green-100 to-green-200 text-green-600', positions: 182 },
-		{ id: '3', title: 'Design & UX', icon: Brush, iconStyle: 'bg-gradient-to-br from-purple-100 to-purple-200 text-purple-600', positions: 97 },
-		{ id: '4', title: 'Cybersecurity', icon: Shield, iconStyle: 'bg-gradient-to-br from-red-100 to-red-200 text-red-600', positions: 64 },
-		{ id: '5', title: 'Mobile Dev', icon: Smartphone, iconStyle: 'bg-gradient-to-br from-orange-100 to-orange-200 text-orange-600', positions: 73 },
-		{ id: '6', title: 'Cloud & DevOps', icon: Cloud, iconStyle: 'bg-gradient-to-br from-cyan-100 to-cyan-200 text-cyan-600', positions: 156 },
-		{ id: '7', title: 'AI & ML', icon: Bot, iconStyle: 'bg-gradient-to-br from-yellow-100 to-yellow-200 text-yellow-600', positions: 89 },
-		{ id: '8', title: 'Game Dev', icon: Gamepad2, iconStyle: 'bg-gradient-to-br from-indigo-100 to-indigo-200 text-indigo-600', positions: 42 }
+		{ id: '1', title: 'Software Dev', icon: Code, iconStyle: 'bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600', positions: 1 },
+		{ id: '2', title: 'Data Science', icon: ChartLine, iconStyle: 'bg-gradient-to-br from-green-100 to-green-200 text-green-600', positions: 2 },
+		{ id: '3', title: 'Design & UX', icon: Brush, iconStyle: 'bg-gradient-to-br from-purple-100 to-purple-200 text-purple-600', positions: 3 },
+		{ id: '4', title: 'Cybersecurity', icon: Shield, iconStyle: 'bg-gradient-to-br from-red-100 to-red-200 text-red-600', positions: 4 },
+		{ id: '5', title: 'Mobile Dev', icon: Smartphone, iconStyle: 'bg-gradient-to-br from-orange-100 to-orange-200 text-orange-600', positions: 5 },
+		{ id: '6', title: 'Cloud & DevOps', icon: Cloud, iconStyle: 'bg-gradient-to-br from-cyan-100 to-cyan-200 text-cyan-600', positions: 6 },
+		{ id: '7', title: 'AI & ML', icon: Bot, iconStyle: 'bg-gradient-to-br from-yellow-100 to-yellow-200 text-yellow-600', positions: 7 },
+		{ id: '8', title: 'Game Dev', icon: Gamepad2, iconStyle: 'bg-gradient-to-br from-indigo-100 to-indigo-200 text-indigo-600', positions: 8 }
 	];
 </script>
 
