@@ -7,7 +7,7 @@
 	import CTASection from '$lib/components/home/CTASection.svelte';
 	import Footer from '$lib/components/home/Footer.svelte';
 	import LayoutHeader from '$lib/components/LayoutHeader.svelte';
-	import { ArrowRight, Code, ChartLine, Brush, Shield, Smartphone, Cloud, Bot, Gamepad2, ChevronLeft, ChevronRight } from 'lucide-svelte';
+	import { ArrowRight, Code, ChartLine, Brush, Shield, Smartphone, Cloud, Bot, Gamepad2, ChevronLeft, ChevronRight, Briefcase } from 'lucide-svelte';
 	import { isAuthenticated } from '$lib/utils/auth';
 	import AuthModal from '$lib/components/ui/AuthModal.svelte';
 	import { goto } from '$app/navigation';
@@ -32,63 +32,64 @@
 		sessionStorage.removeItem('pendingNavigation');
 	}
 
-	// TODO: Replace with actual API fetch from backend
-	const recentJobs = [
-		{
-			id: '1',
-			company: 'Google',
-			title: 'Software Engineer, AI/ML Platform',
-			location: 'Singapore',
-			locationType: 'on-site' as const,
-			minSalary: 120000,
-			maxSalary: 180000,
-			currency: 'USD',
-			type: 'Full-time',
-			tags: ['Python', 'TensorFlow', 'Kubernetes'],
-			postedAt: 'Posted 2 hours ago',
-			badge: {
-				text: 'New',
-				type: 'new' as const
-			},
-			logoStyle: 'bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600'
-		},
-		{
-			id: '2',
-			company: 'Airbnb',
-			title: 'Senior Frontend Engineer',
-			location: 'Remote',
-			locationType: 'remote' as const,
-			minSalary: 100000,
-			maxSalary: 150000,
-			currency: 'USD',
-			type: 'Full-time',
-			tags: ['React', 'TypeScript', 'GraphQL'],
-			postedAt: 'Posted 1 day ago',
-			badge: {
-				text: 'Remote',
-				type: 'remote' as const
-			},
-			logoStyle: 'bg-gradient-to-br from-red-100 to-pink-200 text-red-500'
-		},
-		{
-			id: '3',
-			company: 'Microsoft',
-			title: 'Data Engineering Intern',
-			location: 'Bangkok, Thailand',
-			locationType: 'hybrid' as const,
-			minSalary: 30000,
-			maxSalary: 40000,
-			currency: 'USD',
-			type: 'Internship',
-			tags: ['SQL', 'Azure', 'Spark'],
-			postedAt: 'Posted 3 days ago',
-			badge: {
-				text: 'Internship',
-				type: 'internship' as const
-			},
-			logoStyle: 'bg-gradient-to-br from-purple-100 to-purple-200 text-purple-600'
+	let recentJobs = $state([]);
+	let isLoadingJobs = $state(true);
+
+	async function fetchRecentJobs() {
+		try {
+			const res = await fetch('/jobs/query');
+			if (res.ok) {
+				const data = await res.json();
+				// Get the 3 most recent jobs and map to home page format
+				recentJobs = data.slice(0, 3).map((job: any) => ({
+					id: job.id,
+					company: "Unknown Company",
+					title: job.title || "Untitled Position",
+					location: job.location || "N/A",
+					locationType: job.workArrangement?.toLowerCase() === 'remote' ? 'remote' : 
+								  job.workArrangement?.toLowerCase() === 'hybrid' ? 'hybrid' : 'on-site',
+					minSalary: job.minSalary || 0,
+					maxSalary: job.maxSalary || 0,
+					currency: job.currency || 'THB',
+					type: job.workType ? job.workType.charAt(0).toUpperCase() + job.workType.slice(1) : 'Full-time',
+					tags: job.requiredSkills 
+						? job.requiredSkills.split(',').map((skill: string) => skill.trim()).slice(0, 3)
+						: [],
+					postedAt: job.postOpenDate && job.postOpenDate !== "0001-01-01T00:00:00Z"
+						? `Posted ${Math.floor((Date.now() - new Date(job.postOpenDate).getTime()) / (1000 * 60 * 60 * 24))} days ago`
+						: 'Recently posted',
+					badge: (() => {
+						// Show "Remote" badge for remote jobs
+						if (job.workArrangement?.toLowerCase() === 'remote') {
+							return { text: 'Remote', type: 'remote' };
+						}
+						// Show "Internship" badge for internship/casual positions
+						if (job.workType?.toLowerCase().includes('intern') || job.workType?.toLowerCase() === 'casual') {
+							return { text: 'Internship', type: 'internship' };
+						}
+						// Show "New" badge for jobs posted within last 3 days
+						if (job.postOpenDate && job.postOpenDate !== "0001-01-01T00:00:00Z") {
+							const daysAgo = Math.floor((Date.now() - new Date(job.postOpenDate).getTime()) / (1000 * 60 * 60 * 24));
+							if (daysAgo <= 3) {
+								return { text: 'New', type: 'new' };
+							}
+						}
+						return null;
+					})(),
+					logoStyle: 'bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600'
+				}));
+			}
+		} catch (error) {
+			console.error('Failed to fetch recent jobs:', error);
+			// Keep empty array on error
+		} finally {
+			isLoadingJobs = false;
 		}
-	];
+	}
+
+	onMount(() => {
+		fetchRecentJobs();
+	});
 
 	// TODO: Replace with actual API fetch from backend
 	const topCompanies = [
@@ -202,9 +203,32 @@
 				</div>
 
 				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-					{#each recentJobs as job}
-						<JobCard {job} />
-					{/each}
+					{#if isLoadingJobs}
+						{#each Array(3) as _}
+							<JobCard skeleton={true} />
+						{/each}
+					{:else if recentJobs.length > 0}
+						{#each recentJobs as job}
+							<JobCard {job} />
+						{/each}
+					{:else}
+						<div class="col-span-full text-center py-8">
+							<div class="max-w-md mx-auto">
+								<div class="text-gray-400 mb-4">
+									<Briefcase class="w-16 h-16 mx-auto" />
+								</div>
+								<h3 class="text-lg font-medium text-gray-900 mb-2">No recent opportunities</h3>
+								<p class="text-gray-500 mb-4">Check back later for new job postings, or explore all available positions.</p>
+								<button 
+									onclick={handleViewAllJobs}
+									class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors"
+								>
+									Browse all jobs
+									<ArrowRight class="w-4 h-4" />
+								</button>
+							</div>
+						</div>
+					{/if}
 				</div>
 			</div>
 		</section>
