@@ -106,9 +106,6 @@ func (jc JobController) Query(c *gin.Context) {
 	filter := bson.M{}
 	salaryFilter := bson.M{}
 
-	// Loop through query params
-	fmt.Println("Query params:", c.Request.URL.Query())
-
 	for key, values := range c.Request.URL.Query() {
 		if fn, ok := allowedParams[key]; ok {
 			val, err := fn(values[0])

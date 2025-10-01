@@ -11,7 +11,7 @@ type JobSeeker struct {
 type ContactInfo struct {
 	Location string `bson:"location" json:"location" binding:"required"`
 	Phone    string `bson:"phone" json:"phone" binding:"required"`
-	LinkedIn string `bson:"linkedIn" json:"linkedIn" binding:"required"`
+	LinkedIn string `bson:"linkedIn" json:"linkedIn"`
 }
 
 type JobSeekerDenormalised struct {

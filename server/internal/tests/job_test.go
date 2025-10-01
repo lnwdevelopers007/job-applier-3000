@@ -25,7 +25,6 @@ func TestRetrieveAllJobs(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/jobs/", nil)
 	router.ServeHTTP(w, req)
-	fmt.Println(w)
 	assert.Equal(t, 200, w.Code)
 }
 
@@ -53,7 +52,7 @@ func rawJob() map[string]any {
 		"niceToHave":      "noting",
 
 		// post settings
-		"postOpenDate": now,
+		"postOpenDate":        now,
 		"applicationDeadline": now,
 		"numberOfPositions":   1,
 		"visibility":          "public",
@@ -62,7 +61,7 @@ func rawJob() map[string]any {
 	}
 }
 
-func TestCreateJob(t *testing.T) {
+func TestCreateValidJob(t *testing.T) {
 	router := setUp()
 	w := httptest.NewRecorder()
 
@@ -77,7 +76,6 @@ func TestCreateJob(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	// Debug output (optional)
-	fmt.Println("Response code:", w.Code)
 	fmt.Println("Response body:", w.Body.String())
 
 	// Assertions
@@ -102,7 +100,6 @@ func TestCreateJobWithWrongCompanyID(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	// Debug output (optional)
-	fmt.Println("Response code:", w.Code)
 	fmt.Println("Response body:", w.Body.String())
 
 	// Assertions

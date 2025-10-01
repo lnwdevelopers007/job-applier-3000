@@ -119,9 +119,6 @@ func getJobSeekers(
 		jobSeekerMap[js.ID] = js
 	}
 
-	fmt.Println(applicantIDs)
-	fmt.Println(jobSeekers)
-	fmt.Println(jobSeekerMap)
 	return jobSeekers, jobSeekerMap, err
 }
 
@@ -143,9 +140,6 @@ func getUsers(
 		resultMap[js.ID] = js
 	}
 
-	fmt.Println(userIDs)
-	fmt.Println(result)
-	fmt.Println(resultMap)
 	return result, resultMap, err
 }
 
