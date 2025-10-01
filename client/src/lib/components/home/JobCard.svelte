@@ -24,7 +24,7 @@
 		logoStyle?: string; // Placeholder styling - remove when companyLogo is implemented
 	};
 
-	let { job }: { job: Job } = $props();
+	let { job, skeleton = false }: { job?: Job; skeleton?: boolean } = $props();
 	let showAuthModal = $state(false);
 
 	const badgeColors = {
@@ -74,10 +74,51 @@
 	}
 </script>
 
+{#if skeleton}
+<div class="relative bg-white border border-gray-200 rounded-xl p-6 hover:shadow-sm transition-all duration-200 group flex flex-col h-full animate-pulse">
+	<!-- Company logo and info skeleton -->
+	<div class="flex items-start gap-4 mb-5">
+		<div class="w-12 h-12 rounded-lg bg-gray-200 flex-shrink-0"></div>
+		<div class="flex-1 min-w-0">
+			<div class="h-4 bg-gray-200 rounded mb-2 w-24"></div>
+			<div class="h-6 bg-gray-200 rounded w-48"></div>
+		</div>
+	</div>
+	
+	<!-- Location skeleton -->
+	<div class="flex items-center gap-2 mb-4">
+		<div class="w-4 h-4 bg-gray-200 rounded"></div>
+		<div class="h-4 bg-gray-200 rounded w-32"></div>
+	</div>
+	
+	<!-- Salary and type skeleton -->
+	<div class="flex items-center gap-4 mb-5">
+		<div class="h-4 bg-gray-200 rounded w-24"></div>
+		<div class="h-4 bg-gray-200 rounded w-20"></div>
+		<div class="h-4 bg-gray-200 rounded w-16"></div>
+	</div>
+	
+	<!-- Tags skeleton -->
+	<div class="flex flex-wrap gap-2 mb-4">
+		<div class="h-6 bg-gray-200 rounded w-16"></div>
+		<div class="h-6 bg-gray-200 rounded w-20"></div>
+		<div class="h-6 bg-gray-200 rounded w-14"></div>
+	</div>
+	
+	<!-- Spacer -->
+	<div class="flex-grow"></div>
+	
+	<!-- Footer skeleton -->
+	<div class="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
+		<div class="h-3 bg-gray-200 rounded w-24"></div>
+		<div class="h-9 bg-gray-200 rounded w-20"></div>
+	</div>
+</div>
+{:else}
 <div
 	class="relative bg-white border border-gray-200 rounded-xl p-6 hover:shadow-sm transition-all duration-200 group flex flex-col h-full"
 >
-	{#if job.badge}
+	{#if job?.badge}
 		<span
 			class="absolute top-4 right-4 px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded {badgeColors[
 				job.badge.type
@@ -88,7 +129,7 @@
 	{/if}
 
 	<div class="flex items-start gap-4 mb-4">
-		{#if job.companyLogo}
+		{#if job?.companyLogo}
 			<div
 				class="w-12 h-12 rounded-lg flex items-center justify-center text-xl font-semibold flex-shrink-0 {job.logoStyle ||
 					'bg-gray-100'}"
@@ -99,19 +140,19 @@
 			<div
 				class="w-12 h-12 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-600 font-semibold flex-shrink-0"
 			>
-				{getCompanyInitial(job.company)}
+				{job ? getCompanyInitial(job.company) : ''}
 			</div>
 		{/if}
 		<div class="flex-1 min-w-0">
-			<p class="text-sm font-semibold text-gray-600 mb-1">{job.company}</p>
+			<p class="text-sm font-semibold text-gray-600 mb-1">{job?.company}</p>
 			<h3 class="text-lg font-semibold text-gray-900 transition-colors">
-				{job.title}
+				{job?.title}
 			</h3>
 		</div>
 	</div>
 
 	<div class="flex items-center gap-2 mb-3 text-sm text-gray-600">
-		{#if job.locationType === 'remote'}
+		{#if job?.locationType === 'remote'}
 			<div class="flex items-center gap-1">
 				<MapPin class="w-4 h-4" />
 				<span>Remote (Worldwide)</span>
@@ -119,21 +160,21 @@
 		{:else}
 			<div class="flex items-center gap-1">
 				<MapPin class="w-4 h-4" />
-				<span>{job.location}</span>
+				<span>{job?.location}</span>
 			</div>
 		{/if}
 	</div>
 
 	<div class="flex items-center gap-4 mb-4 text-sm">
 		<span class="font-semibold text-green-600 flex items-center gap-1">
-			{formatSalary(job.minSalary, job.maxSalary, job.currency)}
+			{job ? formatSalary(job.minSalary, job.maxSalary, job.currency) : ''}
 		</span>
-		<span class="text-gray-600">• {job.type}</span>
-		<span class="text-gray-600">• {job.locationType}</span>
+		<span class="text-gray-600">• {job?.type}</span>
+		<span class="text-gray-600">• {job?.locationType}</span>
 	</div>
 
 	<div class="flex flex-wrap gap-2 mb-4">
-		{#each job.tags as tag}
+		{#each job?.tags || [] as tag}
 			<span class="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-md font-medium">
 				{tag}
 			</span>
@@ -146,7 +187,7 @@
 	<div class="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
 		<span class="text-xs text-gray-500 flex items-center gap-1">
 			<Clock class="w-3 h-3" />
-			{job.postedAt}
+			{job?.postedAt}
 		</span>
 		<button
 			onclick={handleApply}
@@ -156,6 +197,7 @@
 		</button>
 	</div>
 </div>
+{/if}
 
 <!-- Auth Modal -->
 <AuthModal
