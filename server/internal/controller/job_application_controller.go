@@ -207,3 +207,14 @@ func (jc JobApplicationController) Update(c *gin.Context) {
 func (jc JobApplicationController) Delete(c *gin.Context) {
 	jc.baseController.Delete(c)
 }
+
+// RetrieveAll fetches all job applications from the database.
+func (jc JobApplicationController) RetrieveAll(c *gin.Context) {
+	jc.baseController.RetrieveAll(c)
+}
+
+
+// RetrieveOne fetches a single job application by ID.
+func (jc JobApplicationController) RetrieveOne(c *gin.Context) {
+	jc.baseController.RetrieveOne(c)
+}

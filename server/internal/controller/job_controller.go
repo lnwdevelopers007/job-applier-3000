@@ -187,3 +187,8 @@ func (jc JobController) Update(c *gin.Context) {
 func (jc JobController) Delete(c *gin.Context) {
 	jc.baseController.Delete(c)
 }
+
+// RetrieveOne fetches a single job by ID.
+func (jc JobController) RetrieveOne(c *gin.Context) {
+	jc.baseController.RetrieveOne(c)
+}

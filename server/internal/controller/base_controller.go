@@ -138,3 +138,25 @@ func (controller BaseController[Schema]) Delete(c *gin.Context) {
 		"message": controller.displayName + " Deleted successfully",
 	})
 }
+
+// RetrieveOne retrieves a single document by ID from collectionName collection.
+func (controller BaseController[Schema]) RetrieveOne(c *gin.Context) {
+    id := c.Param("id")
+    objID, err := primitive.ObjectIDFromHex(id)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+        return
+    }
+
+    db := database.GetDatabase()
+    collection := db.Collection(controller.collectionName)
+
+    var result bson.M
+    err = collection.FindOne(context.Background(), bson.M{"_id": objID}).Decode(&result)
+    if err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": controller.displayName + " not found"})
+        return
+    }
+
+    c.JSON(http.StatusOK, result)
+}
