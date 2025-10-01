@@ -15,14 +15,18 @@
 </script>
 
 <div
-	class="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-sm hover:border-green-600 transition-all duration-200 cursor-pointer flex flex-col items-center gap-3"
+	class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm hover:border-green-600 transition-all duration-200 cursor-pointer flex flex-col gap-2"
 >
 	<div
-		class="w-14 h-14 rounded-lg flex items-center justify-center text-2xl font-semibold {company.logoStyle ||
+		class="w-12 h-12 rounded-md flex items-center justify-center text-xl font-semibold {company.logoStyle ||
 			'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600'}"
 	>
 		{company.logo || getCompanyInitial(company.name)}
 	</div>
-	<h4 class="font-semibold text-gray-900">{company.name}</h4>
-	<p class="text-sm text-gray-600 font-medium">{company.positions} positions</p>
+	<h4 class="font-medium text-gray-900 text-sm mb-5">{company.name}</h4>
+	<div class="flex">
+		<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+			{company.positions} positions
+		</span>
+	</div>
 </div>

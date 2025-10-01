@@ -2,6 +2,8 @@
 	import type { ComponentType } from 'svelte';
 	import AuthModal from '$lib/components/ui/AuthModal.svelte';
 	import { goto } from '$app/navigation';
+	import { jobSearchStore } from '$lib/stores/jobSearch';
+	import { isAuthenticated } from '$lib/utils/auth';
 
 	type CareerPath = {
 		id: string;
@@ -16,21 +18,20 @@
 	const Icon = path.icon;
 
 	function handlePathClick() {
-		const token = localStorage.getItem('access_token');
-		
-		if (token) {
-			// User is logged in - go to jobs page with career filter
-			goto(`/app/jobs?category=${encodeURIComponent(path.title)}`);
+		if (isAuthenticated()) {
+			// User is logged in - search for jobs in this category
+			jobSearchStore.setSearchQuery(path.title);
+			goto('/app/jobs');
 		} else {
 			// User not logged in - show auth modal
 			showAuthModal = true;
-			sessionStorage.setItem('pendingNavigation', `/app/jobs?category=${encodeURIComponent(path.title)}`);
+			sessionStorage.setItem('pendingSearch', path.title);
 		}
 	}
 
 	function handleAuthModalClose() {
 		showAuthModal = false;
-		sessionStorage.removeItem('pendingNavigation');
+		sessionStorage.removeItem('pendingSearch');
 	}
 </script>
 
