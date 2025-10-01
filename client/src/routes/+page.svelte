@@ -47,11 +47,12 @@
 					title: job.title || "Untitled Position",
 					location: job.location || "N/A",
 					locationType: job.workArrangement?.toLowerCase() === 'remote' ? 'remote' : 
-								  job.workArrangement?.toLowerCase() === 'hybrid' ? 'hybrid' : 'on-site',
+								  job.workArrangement?.toLowerCase() === 'hybrid' ? 'hybrid' : 
+								  job.workArrangement?.toLowerCase() === 'on-site' ? 'on-site' : null,
 					minSalary: job.minSalary || 0,
 					maxSalary: job.maxSalary || 0,
 					currency: job.currency || 'THB',
-					type: job.workType ? job.workType.charAt(0).toUpperCase() + job.workType.slice(1) : 'Full-time',
+					type: job.workType ? job.workType.charAt(0).toUpperCase() + job.workType.slice(1) : null,
 					tags: job.requiredSkills 
 						? job.requiredSkills.split(',').map((skill: string) => skill.trim()).slice(0, 3)
 						: [],
