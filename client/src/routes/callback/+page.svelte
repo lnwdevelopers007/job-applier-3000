@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { jwtDecode } from 'jwt-decode';
+	import { jobSearchStore } from '$lib/stores/jobSearch';
 	import { AlertTriangle } from 'lucide-svelte';
 
 	type TokenPayload = {
@@ -47,7 +48,34 @@
 					avatarUrl: decoded.avatarURL
 				}));
 
-				// Redirect based on user role or to dashboard
+				// Check for pending actions after login
+				const pendingSearch = sessionStorage.getItem('pendingSearch');
+				const pendingNavigation = sessionStorage.getItem('pendingNavigation');
+				const pendingJobApplication = sessionStorage.getItem('pendingJobApplication');
+
+				if (pendingSearch) {
+					sessionStorage.removeItem('pendingSearch');
+					// Set the search in the store and navigate to jobs page
+					jobSearchStore.setSearchQuery(pendingSearch);
+					await goto('/app/jobs');
+					return;
+				}
+
+				if (pendingJobApplication) {
+					sessionStorage.removeItem('pendingJobApplication');
+					// Navigate to job application page
+					await goto(`/app/jobs/${pendingJobApplication}/apply`);
+					return;
+				}
+
+				if (pendingNavigation) {
+					sessionStorage.removeItem('pendingNavigation');
+					// Navigate to the stored URL
+					await goto(pendingNavigation);
+					return;
+				}
+
+				// Otherwise, redirect based on user role
 				if (decoded.role === 'company') {
 					await goto('/company/dashboard');
 				} else if (decoded.role === 'student') {

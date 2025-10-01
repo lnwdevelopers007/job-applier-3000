@@ -2,6 +2,7 @@
 	import { MapPin, DollarSign, Clock } from 'lucide-svelte';
 	import AuthModal from '$lib/components/ui/AuthModal.svelte';
 	import { goto } from '$app/navigation';
+	import { isAuthenticated } from '$lib/utils/auth';
 
 	type Job = {
 		id: string;
@@ -35,9 +36,7 @@
 	}
 
 	function handleApply() {
-		const token = localStorage.getItem('access_token');
-		
-		if (token) {
+		if (isAuthenticated()) {
 			// User is logged in - proceed to job application
 			goto(`/app/jobs/${job.id}/apply`);
 		} else {

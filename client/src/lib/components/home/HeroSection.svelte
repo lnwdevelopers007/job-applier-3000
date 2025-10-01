@@ -2,6 +2,7 @@
 	import { Search } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
 	import { jobSearchStore } from '$lib/stores/jobSearch';
+	import { isAuthenticated } from '$lib/utils/auth';
 	import AuthModal from '$lib/components/ui/AuthModal.svelte';
 
 	let searchQuery = $state('');
@@ -10,10 +11,7 @@
 	function handleSearch() {
 		// Only proceed if there's a search query
 		if (searchQuery.trim()) {
-			// Check if user is logged in
-			const token = localStorage.getItem('access_token');
-			
-			if (token) {
+			if (isAuthenticated()) {
 				// User is logged in - proceed with search
 				jobSearchStore.setSearchQuery(searchQuery.trim());
 				goto('/app/jobs');
@@ -39,7 +37,7 @@
 	];
 </script>
 
-<section class="relative py-20 px-4 sm:px-6 lg:px-8 overflow-hidden bg-white">
+<section class="relative py-24 px-4 sm:px-6 lg:px-8 overflow-hidden bg-white">
 	<div class="absolute inset-0" style="background: radial-gradient(circle at center, #FDFFFE 0%, #EEFFF4 100%)"></div>
 	<div class="relative z-10 container mx-auto max-w-7xl">
 		<h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 text-center leading-tight mb-6">
@@ -48,7 +46,7 @@
 				<span class="font-semibold text-green-700">3000</span>
 			</div>
 		</h1>
-		<p class="text-lg sm:text-xl text-gray-600 text-center max-w-2xl mx-auto mb-10">
+		<p class="text-lg text-gray-600 text-center max-w-2xl mx-auto mb-10">
 			Connect with leading tech companies and discover opportunities tailored for KU Computer
 			Engineering students
 		</p>
@@ -63,7 +61,7 @@
 					bind:value={searchQuery}
 					type="text"
 					placeholder="Search for jobs, companies, or skills..."
-					class="block w-full pl-12 pr-32 py-4 text-lg border border-gray-200 focus:shadow focus:shadow-gray-300 rounded-xl focus:ring-0 outline-none transition-all"
+					class="block w-full pl-12 pr-32 py-4 text-md border border-gray-200 focus:shadow focus:shadow-gray-300 rounded-xl focus:ring-0 outline-none transition-all"
 					onkeydown={(e) => e.key === 'Enter' && handleSearch()}
 				/>
 			</div>
