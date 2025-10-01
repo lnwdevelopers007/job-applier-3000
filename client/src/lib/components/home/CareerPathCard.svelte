@@ -35,8 +35,8 @@
 	}
 </script>
 
-<div
-	class="bg-white border border-gray-200 rounded-xl p-6 hover:border-green-600 hover:shadow-sm transition-all duration-200 cursor-pointer h-full"
+<button
+	class="bg-white border border-gray-200 rounded-xl p-6 hover:border-green-600 hover:shadow-sm transition-all duration-200 cursor-pointer h-full w-full text-left"
 	onclick={handlePathClick}
 >
 	<div class="flex items-center gap-4">
@@ -53,7 +53,7 @@
 			<p class="text-sm text-gray-600 font-medium">{path.positions} open positions</p>
 		</div>
 	</div>
-</div>
+</button>
 
 <!-- Auth Modal -->
 <AuthModal
