@@ -37,7 +37,7 @@
 
 	async function fetchRecentJobs() {
 		try {
-			const res = await fetch('/jobs/query');
+			const res = await fetch('/jobs/query/?latest=true');
 			if (res.ok) {
 				const data = await res.json();
 				// Get the 3 most recent jobs and map to home page format
@@ -90,6 +90,7 @@
 					})(),
 					logoStyle: 'bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600'
 				}));
+				console.log(recentJobs);
 			}
 		} catch (error) {
 			console.error('Failed to fetch recent jobs:', error);
