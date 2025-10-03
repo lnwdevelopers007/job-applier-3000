@@ -45,7 +45,8 @@
 					email: decoded.email,
 					name: decoded.name,
 					role: decoded.role,
-					avatarUrl: decoded.avatarURL
+					avatarURL: decoded.avatarURL,
+					userID: decoded.userID
 				}));
 
 				// Check for pending actions after login
