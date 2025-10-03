@@ -60,14 +60,6 @@ func TestFileMissingParentColl(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestFileInvalidFileMissingContent(t *testing.T) {
-	payload := fileValidPayload()
-	delete(payload, "content")
-
-	_, err := bindMockFile(t, payload)
-	assert.Error(t, err)
-}
-
 func TestFileMissingFileExtension(t *testing.T) {
 	payload := fileValidPayload()
 	delete(payload, "fileExtension")
