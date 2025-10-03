@@ -9,6 +9,11 @@
   let filteredJobs = [];
   let selectedJob = null;
   let searchQuery = "";
+  let currentPage = 1;
+  const pageSize = 4;
+
+  $: totalPages = Math.ceil(filteredJobs.length / pageSize);
+  $: paginatedJobs = filteredJobs.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   let activeFilters = {
     type: null,
@@ -60,7 +65,7 @@
 
       filteredJobs = jobs;
       selectedJob = jobs[0] || null;
-      console.log(jobs);
+      currentPage = 1;
     } catch (err) {
       console.error("Error fetching jobs:", err);
       jobs = [];
@@ -170,39 +175,64 @@
     <div class="grid grid-cols-2 gap-6 w-full">
       <!-- Jobs List -->
       <section class="col-span-1 flex flex-col space-y-4">
-          <div class="flex-1 overflow-y-auto w-full space-y-3 p-2">
-            {#if filteredJobs.length === 0}
-              <div class="text-center text-gray-500 mt-4">
-                No jobs match your search or filters.
-              </div>
-            {:else}
-              {#each filteredJobs as job (job.id)}
-                <button
-                  onclick={() => (selectedJob = job)}
-                  class={`w-full flex flex-col cursor-pointer bg-white rounded-lg shadow ring-offset-2 hover:ring-2 hover:ring-green-300 ${selectedJob?.id === job.id ? 'ring-2 ring-green-500' : ''}`}
-                >
-                  <div class="flex items-start gap-3 p-2">
-                    <img src={job.logo} alt={job.company} class="w-12 h-12 rounded-full object-cover flex-shrink-0 mt-2" />
-                    <div class="flex flex-col text-left flex-1">
-                      <div class="font-semibold">{job.title}</div>
-                      <div class="text-sm text-gray-600">{job.company}</div>
-                      <div class="text-sm text-black flex items-center gap-2 mt-1">
-                        <MapPin class="w-4 h-4 mt-0.5" />
-                        {job.location}
-                      </div>
+        <div class="flex-1 overflow-y-auto w-full space-y-3 p-2">
+          {#if paginatedJobs.length === 0}
+            <div class="text-center text-gray-500 mt-4">
+              No jobs match your search or filters.
+            </div>
+          {:else}
+            {#each paginatedJobs as job (job.id)}
+              <button
+                onclick={() => (selectedJob = job)}
+                class={`w-full flex flex-col cursor-pointer bg-white rounded-lg shadow ring-offset-2 hover:ring-2 hover:ring-green-300 ${selectedJob?.id === job.id ? 'ring-2 ring-green-500' : ''}`}
+              >
+                <div class="flex items-start gap-3 p-2">
+                  <img src={job.logo} alt={job.company} class="w-12 h-12 rounded-full object-cover flex-shrink-0 mt-2" />
+                  <div class="flex flex-col text-left flex-1">
+                    <div class="font-semibold">{job.title}</div>
+                    <div class="text-sm text-gray-600">{job.company}</div>
+                    <div class="text-sm text-black flex items-center gap-2 mt-1">
+                      <MapPin class="w-4 h-4 mt-0.5" />
+                      {job.location}
                     </div>
                   </div>
-                  <div class="flex flex-wrap gap-2 mt-2 p-2">
-                    {#each job.tags as tag, i (i)}
-                      <span class="px-2 py-1 bg-gray-100 rounded-full text-sm">{tag}</span>
-                    {/each}
-                  </div>
-                  <div class="text-xs text-left mx-3 pb-2 text-gray-500 mt-1">{job.posted}</div>
-                </button>
-              {/each}
-            {/if}
+                </div>
+                <div class="flex flex-wrap gap-2 mt-2 p-2">
+                  {#each job.tags as tag, i (i)}
+                    <span class="px-2 py-1 bg-gray-100 rounded-full text-sm">{tag}</span>
+                  {/each}
+                </div>
+                <div class="text-xs text-left mx-3 pb-2 text-gray-500 mt-1">{job.posted}</div>
+              </button>
+            {/each}
+          {/if}
+        </div>
+
+        <!-- ✅ Pagination controls -->
+        {#if totalPages > 1}
+          <div class="flex justify-center gap-2 my-4">
+            <button
+              class="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+              onclick={() => currentPage = Math.max(1, currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              Prev
+            </button>
+
+            <span class="px-3 py-1 text-sm">
+              Page {currentPage} of {totalPages}
+            </span>
+
+            <button
+              class="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+              onclick={() => currentPage = Math.min(totalPages, currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </button>
           </div>
-        </section>
+        {/if}
+      </section>
 
       <!-- Job Detail -->
       <section class="col-span-1 bg-white p-6 rounded-lg shadow space-y-2 min-h-[400px] flex flex-col">
@@ -236,6 +266,13 @@
                 disabled
               >
                 Closed
+              </button>
+            {:else if new Date(selectedJob.posted) > new Date()}
+              <button
+                class="px-4 py-2 bg-gray-400 text-white text-sm rounded-lg cursor-not-allowed"
+                disabled
+              >
+                Not Open Yet
               </button>
             {:else}
               <button class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg">
