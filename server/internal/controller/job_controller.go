@@ -11,6 +11,7 @@ import (
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // JobController is a custom controller for JobSchema
@@ -101,11 +102,17 @@ func (jc JobController) Query(c *gin.Context) {
 				return nil, nil
 			}
 		},
+		"latest": func(v string) (interface{}, error) {
+			if v == "true" {
+				return true, nil
+			}
+			return nil, nil
+		},
 	}
 
 	filter := bson.M{}
 	salaryFilter := bson.M{}
-
+	findOptions := options.Find()
 	for key, values := range c.Request.URL.Query() {
 		if fn, ok := allowedParams[key]; ok {
 			val, err := fn(values[0])
@@ -123,6 +130,11 @@ func (jc JobController) Query(c *gin.Context) {
 					salaryFilter["$lte"] = val
 				case "postOpenDate":
 					filter["postOpenDate"] = val
+				case "latest":
+					now := time.Now()
+					filter["postOpenDate"] = bson.M{"$lte": now}
+					findOptions.SetSort(bson.D{{"postOpenDate", -1}})
+					findOptions.SetLimit(3)
 				default:
 					filter[key] = val
 				}
@@ -140,7 +152,7 @@ func (jc JobController) Query(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	cursor, err := collection.Find(ctx, filter)
+	cursor, err := collection.Find(ctx, filter, findOptions)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
