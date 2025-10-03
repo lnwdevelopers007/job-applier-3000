@@ -9,13 +9,19 @@ import (
 
 var jwtSecret = []byte(config.LoadEnv("JWT_SECRET"))
 
-func generateTokens(email, name, avatarURL string) (accessToken, refreshToken string, err error) {
+func generateTokens(email, name, avatarURL string, userID any) (accessToken, refreshToken string, err error) {
 	// Access token (15m)
+	role, err := findUserRole(userID)
+	if err != nil {
+		return
+	}
 	accessClaims := jwt.MapClaims{
 		"email":     email,
 		"name":      name,
 		"avatarURL": avatarURL,
+		"userID":    userID,
 		"exp":       time.Now().Add(15 * time.Minute).Unix(),
+		"role":      role,
 	}
 	accessToken, err = jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString(jwtSecret)
 	if err != nil {
@@ -28,8 +34,10 @@ func generateTokens(email, name, avatarURL string) (accessToken, refreshToken st
 		"email":     email,
 		"name":      name,
 		"avatarURL": avatarURL,
+		"userID":    userID,
 		"type":      "refresh",
 		"exp":       time.Now().Add(expDays * 24 * time.Hour).Unix(),
+		"role":      role,
 	}
 	refreshToken, err = jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString(jwtSecret)
 
