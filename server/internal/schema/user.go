@@ -13,6 +13,8 @@ type User struct {
 	Email     string             `bson:"email"`
 	Name      string             `bson:"name"`
 	AvatarURL string             `bson:"avatarURL"`
+	Role      string             `bson:"role"`
+	Verified  bool               `bson:"verified"`
 	UpdatedAt time.Time          `bson:"updatedAt"`
 	CreatedAt time.Time          `bson:"createdAt"`
 }
