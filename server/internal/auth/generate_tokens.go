@@ -11,7 +11,7 @@ var jwtSecret = []byte(config.LoadEnv("JWT_SECRET"))
 
 func generateTokens(email, name, avatarURL string, userID any) (accessToken, refreshToken string, err error) {
 	// Access token (15m)
-	role, err := findUserRole(userID)
+	user, err := findUser(userID)
 	if err != nil {
 		return
 	}
@@ -21,7 +21,8 @@ func generateTokens(email, name, avatarURL string, userID any) (accessToken, ref
 		"avatarURL": avatarURL,
 		"userID":    userID,
 		"exp":       time.Now().Add(15 * time.Minute).Unix(),
-		"role":      role,
+		"role":      user.Role,
+		"verified":  user.Verified,
 	}
 	accessToken, err = jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString(jwtSecret)
 	if err != nil {
@@ -37,7 +38,8 @@ func generateTokens(email, name, avatarURL string, userID any) (accessToken, ref
 		"userID":    userID,
 		"type":      "refresh",
 		"exp":       time.Now().Add(expDays * 24 * time.Hour).Unix(),
-		"role":      role,
+		"role":      user.Role,
+		"verified":  user.Verified,
 	}
 	refreshToken, err = jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString(jwtSecret)
 

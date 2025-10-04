@@ -47,26 +47,6 @@ func NewRouter() *gin.Engine {
 		applyRoutes.GET("/:id", applicationController.RetrieveOne)
 	}
 
-	jobSeeker := NewJobSeekerController()
-	jobSeekerRoutes := router.Group("/seeker")
-	{
-		jobSeekerRoutes.GET("/", jobSeeker.RetrieveAll)
-		jobSeekerRoutes.POST("/", jobSeeker.Create)
-    jobSeekerRoutes.PUT("/:id", jobSeeker.Update)
-		jobSeekerRoutes.DELETE("/:id", jobSeeker.Delete)
-		jobSeekerRoutes.GET("/:id", jobSeeker.RetrieveOne)
-	}
-
-	company := NewCompanyController()
-	companyRoutes := router.Group("/company")
-	{
-		companyRoutes.GET("/", company.RetrieveAll)
-		companyRoutes.POST("/", company.Create)
-		companyRoutes.PUT("/:id", company.Update)
-		companyRoutes.DELETE("/:id", company.Delete)
-		companyRoutes.GET("/:id", company.RetrieveOne)
-	}
-
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"ok": true})
 	})

@@ -6,21 +6,16 @@ import (
 )
 
 type CompanyController struct {
-	baseController BaseController[schema.Company]
+	baseController BaseController[schema.User]
 }
 
 func NewCompanyController() CompanyController {
 	return CompanyController{
-		baseController: BaseController[schema.Company]{
-			collectionName: "companies",
-			displayName:    "Company",
+		baseController: BaseController[schema.User]{
+			collectionName: "users",
+			displayName:    "User",
 		},
 	}
-}
-
-// Create inserts a new company into the database.
-func (jc CompanyController) Create(c *gin.Context) {
-	jc.baseController.Create(c)
 }
 
 // Update updates an existing company by ID.

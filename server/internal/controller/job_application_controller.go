@@ -49,26 +49,13 @@ func (jc JobApplicationController) Query(c *gin.Context) {
 	}
 
 	// Extract job seeker IDs from applications
-	jobSeekerIDs := extractUnique(
+	userIDs := extractUnique(
 		applications,
 		func(app schema.JobApplication) primitive.ObjectID { return app.ApplicantID },
 	)
 
-	// Query job seekers
-	jobSeekers, jobSeekerMap, err := getJobSeekers(ctx, jobSeekerIDs, "jobSeeker")
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Extract userIDs
-	userIDs := extractUnique(
-		jobSeekers,
-		func(s schema.JobSeeker) primitive.ObjectID { return s.UserID },
-	)
-
 	// query users
-	_, userMap, err := getUsers(
+	userMap, err := getUsers(
 		ctx,
 		userIDs,
 		"users",
@@ -79,21 +66,19 @@ func (jc JobApplicationController) Query(c *gin.Context) {
 		return
 	}
 
-	// Combine results
-	combinedResults := make([]schema.ApplicationWithSeekerInfo, 0, len(applications))
+	// // Combine results
+	combinedResults := make([]schema.ApplicationWithApplicant, 0, len(applications))
 	for _, app := range applications {
-		result := schema.ApplicationWithSeekerInfo{
+		result := schema.ApplicationWithApplicant{
 			JobApplication: app,
 		}
-		var jobSeekerDenormalised = schema.JobSeekerDenormalised{}
+		var applicant = schema.User{}
 
-		if jobSeeker, exists := jobSeekerMap[app.ApplicantID]; exists {
-			jobSeekerDenormalised.ID = jobSeeker.ID
-			jobSeekerDenormalised.Contact = jobSeeker.Contact
-			jobSeekerDenormalised.User = userMap[jobSeeker.UserID]
+		if user, exists := userMap[app.ApplicantID]; exists {
+			applicant = user
 		}
 
-		result.Applicant = jobSeekerDenormalised
+		result.Applicant = applicant
 
 		combinedResults = append(combinedResults, result)
 	}
@@ -101,33 +86,11 @@ func (jc JobApplicationController) Query(c *gin.Context) {
 	c.JSON(http.StatusOK, combinedResults)
 }
 
-func getJobSeekers(
-	ctx context.Context,
-	applicantIDs []primitive.ObjectID,
-	collectionName string,
-) (
-	[]schema.JobSeeker,
-	map[primitive.ObjectID]schema.JobSeeker,
-	error,
-) {
-	jobSeekerFilter := bson.M{"_id": bson.M{"$in": applicantIDs}}
-	jobSeekers, err := findAll[schema.JobSeeker](ctx, collectionName, jobSeekerFilter)
-
-	// Create a map of job seekers for easy lookup
-	jobSeekerMap := make(map[primitive.ObjectID]schema.JobSeeker)
-	for _, js := range jobSeekers {
-		jobSeekerMap[js.ID] = js
-	}
-
-	return jobSeekers, jobSeekerMap, err
-}
-
 func getUsers(
 	ctx context.Context,
 	userIDs []primitive.ObjectID,
 	collectionName string,
 ) (
-	[]schema.User,
 	map[primitive.ObjectID]schema.User,
 	error,
 ) {
@@ -140,7 +103,7 @@ func getUsers(
 		resultMap[js.ID] = js
 	}
 
-	return result, resultMap, err
+	return resultMap, err
 }
 
 func JobApplicationFilter(c *gin.Context) (bson.M, bool) {
@@ -212,7 +175,6 @@ func (jc JobApplicationController) Delete(c *gin.Context) {
 func (jc JobApplicationController) RetrieveAll(c *gin.Context) {
 	jc.baseController.RetrieveAll(c)
 }
-
 
 // RetrieveOne fetches a single job application by ID.
 func (jc JobApplicationController) RetrieveOne(c *gin.Context) {
