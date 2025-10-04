@@ -1,6 +1,6 @@
 <script>
   export let text;
-  export let userType = "login";
+  export let userType;
   
   function handleGoogleOAuth() {
     window.location.href = `${import.meta.env.VITE_BACKEND}/auth/google?role=${userType}`;
