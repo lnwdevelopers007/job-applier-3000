@@ -24,6 +24,7 @@
   function handleLogin() {
     console.log('Login:', { email, password, rememberMe });
   }
+
 </script>
 
 <AuthLayout>
@@ -57,7 +58,8 @@
   </form>
 
   <OrDivider />
-  <GoogleOAuthButton text="Continue with Google" />
+  
+  <GoogleOAuthButton text="Continue with Google" userType="login" />
   
   <p class="text-center text-sm text-gray-600 mt-8">
     Don't have an account?

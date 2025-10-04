@@ -45,7 +45,8 @@
 					email: decoded.email,
 					name: decoded.name,
 					role: decoded.role,
-					avatarUrl: decoded.avatarURL
+					avatarURL: decoded.avatarURL,
+					userID: decoded.userID
 				}));
 
 				// Check for pending actions after login
@@ -78,10 +79,10 @@
 				// Otherwise, redirect based on user role
 				if (decoded.role === 'company') {
 					await goto('/company/dashboard');
-				} else if (decoded.role === 'student') {
+				} else if (decoded.role === 'jobSeeker') {
 					await goto('/app/jobs');
 				} else {
-					await goto('/app/jobs');
+					await goto('/app/unverified');
 				}
 			} catch (err) {
 				console.error('Failed to process token:', err);
