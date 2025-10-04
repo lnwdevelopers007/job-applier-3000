@@ -11,6 +11,7 @@ import (
 	"github.com/markbates/goth"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -28,13 +29,28 @@ func addProvider(c *gin.Context) {
 }
 
 // upsertUser update or insert user into the database.
-func upsertUser(user goth.User) (any, error) {
+// "role" can only have 3 values: company, jobSeeker, login.
+func upsertUser(user goth.User, role string) (any, error) {
 	db := database.GetDatabase()
 	usersCollection := db.Collection("users")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	filter := bson.M{"userID": user.UserID}
+
+	// Check if user already exists
+	var existingUser bson.M
+	err := usersCollection.FindOne(ctx, filter).Decode(&existingUser)
+	if err != nil && err != mongo.ErrNoDocuments {
+		return nil, fmt.Errorf("failed to query existing user: %w", err)
+	}
+
+	// If the user does not exist and is trying to login, throw error.
+	if role == "login" {
+		if existingUser == nil {
+			return nil, fmt.Errorf("please register first before using our service")
+		}
+	}
 
 	update := bson.M{
 		"$set": bson.M{
@@ -46,6 +62,8 @@ func upsertUser(user goth.User) (any, error) {
 		},
 		"$setOnInsert": bson.M{
 			"createdAt": time.Now(),
+			"role":      role,
+			"verified":  false,
 		},
 	}
 
@@ -53,16 +71,12 @@ func upsertUser(user goth.User) (any, error) {
 
 	res, err := usersCollection.UpdateOne(ctx, filter, update, opts)
 	if err != nil {
-		return "", err
+		return nil, fmt.Errorf("failed to upsert user: %w", err)
 	}
 	if res.UpsertedID != nil {
 		return res.UpsertedID, nil
 	}
 
-	var existingUser bson.M
-	if err := usersCollection.FindOne(ctx, filter).Decode(&existingUser); err != nil {
-		return "", err
-	}
 	return existingUser["_id"], nil
 }
 

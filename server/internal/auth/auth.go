@@ -39,13 +39,15 @@ func init() {
 // OAuthCallback is a callback function after user login.
 func OAuthCallback(c *gin.Context) {
 	addProvider(c)
+	role := c.Query("state")
+	fmt.Println(role)
 	user, err := gothic.CompleteUserAuth(c.Writer, c.Request)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	res, err := upsertUser(user)
+	res, err := upsertUser(user, role)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -78,6 +80,10 @@ func OAuthCallback(c *gin.Context) {
 // Login log user in via OAuth.
 func Login(c *gin.Context) {
 	addProvider(c)
+	role := c.Query("role")
+	q := c.Request.URL.Query()
+	q.Set("state", role)
+	c.Request.URL.RawQuery = q.Encode()
 	gothic.BeginAuthHandler(c.Writer, c.Request)
 }
 

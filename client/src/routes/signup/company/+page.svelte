@@ -75,7 +75,7 @@
     </form>
 
     <OrDivider />
-    <GoogleOAuthButton text="Continue with Google" />
+    <GoogleOAuthButton text="Continue with Google" userType="company" />
 
     <p class="text-center text-sm text-gray-500 mt-8">
       Already have an account?
