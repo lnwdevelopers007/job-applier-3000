@@ -40,11 +40,22 @@ func NewRouter() *gin.Engine {
 	applyRoutes := router.Group("/apply")
 	{
 		applyRoutes.GET("/query", applicationController.Query)
-		applyRoutes.GET("/", applicationController.RetrieveAll)
+		applyRoutes.GET("/", applicationController.Query)
 		applyRoutes.POST("/", applicationController.Create)
 		applyRoutes.PUT("/:id", applicationController.Update)
 		applyRoutes.DELETE("/:id", applicationController.Delete)
 		applyRoutes.GET("/:id", applicationController.RetrieveOne)
+	}
+
+	userController := NewUserController()
+	userRoutes := router.Group("/users")
+	{
+		userRoutes.GET("/", userController.RetrieveAll)
+		userRoutes.POST("/", userController.Create)
+		userRoutes.PUT("/:id", userController.Update)
+		userRoutes.DELETE("/:id", userController.Delete)
+		userRoutes.GET("/:id", userController.RetrieveOne)
+
 	}
 
 	router.GET("/health", func(c *gin.Context) {
