@@ -1,3 +1,57 @@
+<script>
+  import { Download, MapPin, Eye, EllipsisVertical } from 'lucide-svelte';
+  import { isAuthenticated, getUserInfo} from '$lib/utils/auth';
+  let activities = [
+    {
+      time: "Today, 10:30 AM",
+      title: "Interview Scheduled",
+      description:
+        "Video interview with Agoda for Software Developer position scheduled for Dec 28, 2:00 PM",
+    },
+    {
+      time: "Yesterday, 3:45 PM",
+      title: "Application Viewed",
+      description:
+        "Your application for Google Software Engineer position was viewed by the hiring team",
+    },
+    {
+      time: "Dec 20, 11:00 AM",
+      title: "Offer Received",
+      description:
+        "Microsoft extended an internship offer for Data Engineer position",
+    },
+  ];
+  let applications = [
+    {
+      id: 1,
+      companyLogo: 'https://logo.clearbit.com/google.com',
+      jobTitle: 'Frontend Developer',
+      companyName: 'Google',
+      location: 'Bangkok, Thailand',
+      daysAgo: 3,
+      status: 'IN REVIEW',
+    },
+    {
+      id: 2,
+      companyLogo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRbx0J4R5cqy54hvPd9lNP8ywO5kGWl5JlO9A&s',
+      jobTitle: 'Backend Engineer',
+      companyName: 'Agoda',
+      location: 'Beijing, China',
+      daysAgo: 5,
+      status: 'ACCEPTED',
+    },
+    {
+      id: 3,
+      companyLogo: 'https://logo.clearbit.com/kasikornbank.com',
+      jobTitle: 'UI/UX Designer',
+      companyName: 'Kasikorn Bank',
+      location: 'Chiang Mai, Thailand',
+      daysAgo: 1,
+      status: 'REJECTED',
+    },
+  ];
+</script>
+
 <div class="p-2 bg-slate-50">
   <h1 class="text-2xl font-bold text-gray-900">
     My Applications
@@ -126,55 +180,3 @@
   </div>
 
 </div>
-<script>
-  import { Download, MapPin, Eye, EllipsisVertical } from 'lucide-svelte';
-  let activities = [
-    {
-      time: "Today, 10:30 AM",
-      title: "Interview Scheduled",
-      description:
-        "Video interview with Agoda for Software Developer position scheduled for Dec 28, 2:00 PM",
-    },
-    {
-      time: "Yesterday, 3:45 PM",
-      title: "Application Viewed",
-      description:
-        "Your application for Google Software Engineer position was viewed by the hiring team",
-    },
-    {
-      time: "Dec 20, 11:00 AM",
-      title: "Offer Received",
-      description:
-        "Microsoft extended an internship offer for Data Engineer position",
-    },
-  ];
-  let applications = [
-    {
-      id: 1,
-      companyLogo: 'https://logo.clearbit.com/google.com',
-      jobTitle: 'Frontend Developer',
-      companyName: 'Google',
-      location: 'Bangkok, Thailand',
-      daysAgo: 3,
-      status: 'IN REVIEW',
-    },
-    {
-      id: 2,
-      companyLogo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRbx0J4R5cqy54hvPd9lNP8ywO5kGWl5JlO9A&s',
-      jobTitle: 'Backend Engineer',
-      companyName: 'Agoda',
-      location: 'Beijing, China',
-      daysAgo: 5,
-      status: 'ACCEPTED',
-    },
-    {
-      id: 3,
-      companyLogo: 'https://logo.clearbit.com/kasikornbank.com',
-      jobTitle: 'UI/UX Designer',
-      companyName: 'Kasikorn Bank',
-      location: 'Chiang Mai, Thailand',
-      daysAgo: 1,
-      status: 'REJECTED',
-    },
-  ];
-</script>

@@ -4,6 +4,7 @@
   import { onMount } from 'svelte';
   import { jobSearchStore } from '$lib/stores/jobSearch';
   import { get } from 'svelte/store';
+  import { isAuthenticated, getUserInfo} from '$lib/utils/auth';
 
   let jobs = [];
   let filteredJobs = [];
@@ -12,6 +13,9 @@
   let currentPage = 1;
   const pageSize = 4;
 
+  let userInfo = null;
+  let isLoggedIn = false;
+  let appliedJobs = {};
   $: totalPages = Math.ceil(filteredJobs.length / pageSize);
   $: paginatedJobs = filteredJobs.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
@@ -48,6 +52,7 @@
         id: job.id,
         title: job.title,
         company: job.company || "Unknown Company",
+        companyID: job.companyID,
         location: job.location || "N/A",
         type: job.workType || "Full-time",
         tags: job.requiredSkills
@@ -74,6 +79,54 @@
     }
   }
 
+  async function applyJob(job) {
+    try {
+      console.log(localStorage);
+      console.log(isLoggedIn, userInfo);
+      if (!isLoggedIn || !userInfo?.userID) {
+        alert("❌ You must be logged in to apply.");
+        return;
+      }
+
+      if (appliedJobs.has(job.id)) {
+        alert("⚠️ You have already applied to this job.");
+        return;
+      }
+
+      const payload = {
+        applicantID: userInfo.userID,
+        jobID: job.id,
+        companyID: job.companyID,
+        status: "pending",
+        createdAt: new Date().toISOString(),
+      };
+
+      const res = await fetch("/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        if (res.status === 409) {
+          alert("⚠️ You already applied to this job.");
+        } else {
+          throw new Error(`Failed to apply: ${res.status}`);
+        }
+        return;
+      }
+
+      const result = await res.json();
+      appliedJobs.add(job.id);
+      alert(`✅ Successfully applied to ${job.title}`);
+      console.log("Application result:", result);
+
+    } catch (err) {
+      console.error("Error applying to job:", err);
+      alert("❌ Failed to apply. Please try again.");
+    }
+  }
+
   function toggleCycle(field) {
     if (field === "type") {
       let idx = typeCycle.indexOf(activeFilters.type);
@@ -97,15 +150,15 @@
   }
 
   onMount(() => {
-    // Subscribe to the job search store
+    isLoggedIn = isAuthenticated();
+    if (isLoggedIn) {
+      userInfo = getUserInfo();
+    }
     const unsubscribe = jobSearchStore.subscribe(state => {
       if (state.shouldFetch) {
         console.log('Search triggered from hero/career:', state.query);
-        // Set the search query from the store
         searchQuery = state.query;
-        // Fetch jobs with the search query
         fetchJobs(state.query, activeFilters).then(() => {
-          // Clear the fetch flag after successful fetch
           jobSearchStore.clearFetchFlag();
         });
       }
@@ -208,7 +261,7 @@
           {/if}
         </div>
 
-        <!-- ✅ Pagination controls -->
+        <!-- Pagination controls -->
         {#if totalPages > 1}
           <div class="flex justify-center gap-2 my-4">
             <button
@@ -275,7 +328,9 @@
                 Not Open Yet
               </button>
             {:else}
-              <button class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg">
+              <button class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg"
+              onclick={() => applyJob(selectedJob)}
+              >
                 Apply
               </button>
             {/if}
