@@ -2,7 +2,7 @@ package schema
 
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
-type Company struct {
+type CompanyInfo struct {
 	ID          primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 	Name        string             `bson:"name" json:"name" binding:"required"`
 	UserID      primitive.ObjectID `bson:"userID" json:"userID" binding:"required"`
