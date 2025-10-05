@@ -54,6 +54,14 @@ func upsertUser(user goth.User, role string) (any, error) {
 		}
 	}
 
+	// if the user existed as role A and s/he clicks sign up again and click role B,
+	// throw the error and tell to use login instead
+	if !existingUser.ID.IsZero() {
+		if role != existingUser.Role {
+			return nil, fmt.Errorf("please go log in")
+		}
+	}
+
 	update := bson.M{
 		"$set": bson.M{
 			"provider":  user.Provider,
