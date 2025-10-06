@@ -10,15 +10,16 @@
   import PostSettingForm from '$lib/components/job-post-creation/forms/PostSettingForm.svelte';
   import PreviewDrawer from '$lib/components/job-post-creation/PreviewDrawer.svelte';
   import FormSidebar from '$lib/components/job-post-creation/FormSidebar.svelte';
+	import { getUserInfo, isAuthenticated } from '$lib/utils/auth';
 
   let jobId = $derived($page.params.id);
   let isPreviewOpen = $state(false);
   let activeSection = $state('basic-info');
-
+  const userInfo = getUserInfo();
   let formData = $state({
     // Basic Info
     jobTitle: '',
-    companyID: '',
+    companyID: userInfo.userID,
     location: '',
     category: '',
     workType: 'full-time',

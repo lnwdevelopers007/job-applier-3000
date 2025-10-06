@@ -1,3 +1,69 @@
+<script>
+  import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
+  import { getUserInfo, isAuthenticated } from '$lib/utils/auth';
+
+  let jobs = [];
+  let selectedJob = null;
+
+  function selectRow(index) {
+    selectedJob = selectedJob === index ? null : index;
+  }
+
+  function handleAction(action, job) {
+    if (action.label === 'Edit') {
+      goto(`/company/edit/${job.id}`);
+    }
+    if (action.label === 'View') {
+      console.log("View this posting");
+    }
+    if (action.label === 'Manage') {
+      console.log("Manage this posting");
+    }
+  }
+
+  onMount(async () => {
+    try {
+      if (!isAuthenticated()) {
+        goto('/login');
+        return;
+      }
+
+      const user = getUserInfo();
+      if (!user?.userID) {
+        console.error("User not found in localStorage");
+        goto('/login');
+        return;
+      }
+      const companyID = user.userID;
+      const res = await fetch(`/jobs/query?companyID=${companyID}`);
+      if (!res.ok) throw new Error(`Failed to load jobs: ${res.status}`);
+      const data = await res.json();
+
+      jobs = data.map(job => ({
+        id: job.id,
+        title: job.title,
+        status: job.status || 'Active',
+        applicants: job.applicants || 0,
+        views: job.views || 0,
+        posted: job.postOpenDate
+          ? new Date(job.postOpenDate).toLocaleDateString()
+          : "None",
+        expires: job.applicationDeadline
+          ? new Date(job.applicationDeadline).toLocaleDateString()
+          : "None",
+        actions: [
+          { label: 'View', disabled: false },
+          { label: 'Edit', disabled: false },
+          { label: 'Manage', disabled: false }
+        ]
+      }));
+    } catch (err) {
+      console.error("Error fetching jobs:", err);
+    }
+  });
+</script>
+
 <div class="p-2 bg-slate-50">
   <h1 class="text-2xl font-bold text-gray-900">
     Company Dashboard
@@ -83,55 +149,3 @@
     </table>
   </div>
 </div>
-<script>
-  import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
-
-  let jobs = [];
-  let selectedJob = null;
-
-  function selectRow(index) {
-    selectedJob = selectedJob === index ? null : index;
-  }
-
-  function handleAction(action, job) {
-    if (action.label === 'Edit') {
-      goto(`/company/edit/${job.id}`);
-    }
-    if (action.label === 'View') {
-      console.log("View this posting");
-    }
-    if (action.label === 'Manage') {
-      console.log("Manage this posting");
-    }
-  }
-
-  onMount(async () => {
-    try {
-      const res = await fetch('/jobs');
-      if (!res.ok) throw new Error(`Failed to load jobs: ${res.status}`);
-      const data = await res.json();
-
-      jobs = data.map(job => ({
-        id: job._id,
-        title: job.title,
-        status: job.status || 'Active',
-        applicants: job.applicants || 0,
-        views: job.views || 0,
-        posted: job.postOpenDate
-          ? new Date(job.postOpenDate).toLocaleDateString()
-          : "None",
-        expires: job.applicationDeadline
-          ? new Date(job.applicationDeadline).toLocaleDateString()
-          : "None",
-        actions: [
-          { label: 'View', disabled: false },
-          { label: 'Edit', disabled: false },
-          { label: 'Manage', disabled: false }
-        ]
-      }));
-    } catch (err) {
-      console.error("Error fetching jobs:", err);
-    }
-  });
-</script>
