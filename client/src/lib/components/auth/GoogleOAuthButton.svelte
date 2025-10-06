@@ -1,8 +1,9 @@
 <script>
-  export let text = 'Continue with Google';
+  export let text;
+  export let userType;
   
   function handleGoogleOAuth() {
-    window.location.href = `${import.meta.env.VITE_BACKEND}/auth/google`;
+    window.location.href = `${import.meta.env.VITE_BACKEND}/auth/google?role=${userType}`;
   }
 </script>
 

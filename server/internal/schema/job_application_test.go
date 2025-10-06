@@ -14,7 +14,6 @@ func jobApplicationValidPayload() map[string]any {
 		"id":          primitive.NewObjectID(),
 		"applicantID": primitive.NewObjectID(),
 		"jobID":       primitive.NewObjectID(),
-		"companyID":   primitive.NewObjectID(),
 		"status":      "waiting for approval",
 		"createdAt":   now,
 	}
@@ -43,14 +42,6 @@ func TestJobApplicationMissingApplicationID(t *testing.T) {
 func TestJobApplicationMissingJobID(t *testing.T) {
 	payload := jobApplicationValidPayload()
 	delete(payload, "jobID")
-	_, err := bindMockJobApplication(t, payload)
-	assert.Error(t, err)
-}
-
-// error when missing company id
-func TestJobApplicationMissingCompanyID(t *testing.T) {
-	payload := jobApplicationValidPayload()
-	delete(payload, "companyID")
 	_, err := bindMockJobApplication(t, payload)
 	assert.Error(t, err)
 }
