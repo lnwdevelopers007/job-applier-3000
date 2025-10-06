@@ -1,6 +1,9 @@
 package schema
 
-import "fmt"
+import (
+	"fmt"
+	"mime/multipart"
+)
 
 // Validation constants
 const (
@@ -14,22 +17,24 @@ const (
 	RoleCompany   = "company"
 )
 
-// ValidateWithUserRole validates file based on user role
-func (f *File) ValidateWithUserRole(userRole string) error {
-	// Basic file validation
-	if f.Size > MaxFileSize {
-		return fmt.Errorf("file size exceeds maximum allowed size of 10MB")
+// ValidateUploadedFile validates a file from multipart form before processing
+func ValidateUploadedFile(header *multipart.FileHeader) error {
+	// Validate file size
+	if header.Size > MaxFileSize {
+		return fmt.Errorf("file size exceeds 10MB limit")
 	}
 
-	if f.ContentType != AllowedMimeType {
+	// Validate content type
+	contentType := header.Header.Get("Content-Type")
+	if contentType != AllowedMimeType {
 		return fmt.Errorf("only PDF files are allowed")
 	}
 
-	if f.FileExtension != "pdf" {
-		return fmt.Errorf("only PDF file extension is allowed")
-	}
+	return nil
+}
 
-	// Role-based category validation
+// ValidateFileCategory validates if the category is valid for the given user role
+func ValidateFileCategory(category FileCategory, userRole string) error {
 	jobSeekerCategories := map[FileCategory]bool{
 		CategoryResume:        true,
 		CategoryCoverLetter:   true,
@@ -38,16 +43,16 @@ func (f *File) ValidateWithUserRole(userRole string) error {
 
 	companyCategories := map[FileCategory]bool{
 		CategoryVerification:  true,
-		CategoryCertification: true, // Companies can also have certifications
+		CategoryCertification: true,
 	}
 
 	switch userRole {
 	case RoleJobSeeker:
-		if !jobSeekerCategories[f.Category] {
+		if !jobSeekerCategories[category] {
 			return fmt.Errorf("job seekers can only upload resume, cover_letter, or certification files")
 		}
 	case RoleCompany:
-		if !companyCategories[f.Category] {
+		if !companyCategories[category] {
 			return fmt.Errorf("companies can only upload verification or certification files")
 		}
 	default:
@@ -57,29 +62,34 @@ func (f *File) ValidateWithUserRole(userRole string) error {
 	return nil
 }
 
-// Validate performs basic validation without role checking
-func (f *File) Validate() error {
-	if f.Size > MaxFileSize {
+// ValidateFileExtension validates if the file extension is allowed
+func ValidateFileExtension(extension string) error {
+	if extension != "pdf" {
+		return fmt.Errorf("only PDF file extension is allowed")
+	}
+	return nil
+}
+
+// ValidateFile performs comprehensive validation on a File struct
+func ValidateFile(file *File, userRole string) error {
+	// Validate file size
+	if file.Size > MaxFileSize {
 		return fmt.Errorf("file size exceeds maximum allowed size of 10MB")
 	}
 
-	if f.ContentType != AllowedMimeType {
+	// Validate content type
+	if file.ContentType != AllowedMimeType {
 		return fmt.Errorf("only PDF files are allowed")
 	}
 
-	if f.FileExtension != "pdf" {
-		return fmt.Errorf("only PDF file extension is allowed")
+	// Validate file extension
+	if err := ValidateFileExtension(file.FileExtension); err != nil {
+		return err
 	}
 
-	validCategories := map[FileCategory]bool{
-		CategoryResume:        true,
-		CategoryCoverLetter:   true,
-		CategoryCertification: true,
-		CategoryVerification:  true,
-	}
-
-	if !validCategories[f.Category] {
-		return fmt.Errorf("invalid file category")
+	// Validate category for user role
+	if err := ValidateFileCategory(file.Category, userRole); err != nil {
+		return err
 	}
 
 	return nil
