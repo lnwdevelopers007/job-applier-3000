@@ -27,7 +27,12 @@ export default defineConfig(({ mode }) => {
 					target: env.VITE_BACKEND,
 					changeOrigin: true,
 					secure: false
-				}
+				},
+				'/users': {
+					target: env.VITE_BACKEND,
+					changeOrigin: true,
+					secure: false
+				},
 			}
 		},
 		test: {

@@ -67,26 +67,49 @@
       if (!res.ok) throw new Error(`Failed to load jobs: ${res.status}`);
       const data = await res.json();
 
-      jobs = data.map(job => ({
-        id: job.id,
-        title: job.title,
-        company: job.company || "Unknown Company",
-        companyID: job.companyID,
-        location: job.location || "N/A",
-        type: job.workType || "Full-time",
-        tags: job.requiredSkills
-          ? job.requiredSkills.split(",").map(skill => skill.trim())
-          : [],
-        posted: job.postOpenDate
-          ? new Date(job.postOpenDate).toLocaleDateString()
-          : "Unknown",
-        closeDate: job.applicationDeadline
-          ? new Date(job.applicationDeadline).toLocaleDateString()
-          : "Unknown",
-        description: job.jobDescription || "No description provided.",
-        logo: "https://images.unsplash.com/photo-1534237710431-e2fc698436d0?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8YnVpbGRpbmd8ZW58MHx8MHx8fDA%3D"
-      }));
+      const jobPromises = data.map(async (job) => {
+        let companyName = "Unknown Company";
+        let companyLogo =
+          "https://images.unsplash.com/photo-1534237710431-e2fc698436d0?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8YnVpbGRpbmd8ZW58MHx8MHx8fDA%3D";
 
+        if (job.companyID) {
+          try {
+            const companyRes = await fetch(`/users/query?id=${job.companyID}`);
+            if (companyRes.ok) {
+              const companyData = await companyRes.json();
+              console.log(companyData);
+              if (Array.isArray(companyData) && companyData.length > 0) {
+                companyName = companyData[0].Name || companyName;
+                companyLogo = companyData[0].AvatarURL || companyLogo;
+              }
+            }
+          } catch (err) {
+            console.warn(`Failed to load company info for ID ${job.companyID}:`, err);
+          }
+        }
+
+        return {
+          id: job.id,
+          title: job.title,
+          company: companyName,
+          companyID: job.companyID,
+          location: job.location || "N/A",
+          type: job.workType || "Full-time",
+          tags: job.requiredSkills
+            ? job.requiredSkills.split(",").map((skill) => skill.trim())
+            : [],
+          posted: job.postOpenDate
+            ? new Date(job.postOpenDate).toLocaleDateString()
+            : "Unknown",
+          closeDate: job.applicationDeadline
+            ? new Date(job.applicationDeadline).toLocaleDateString()
+            : "Unknown",
+          description: job.jobDescription || "No description provided.",
+          logo: companyLogo,
+        };
+      });
+
+      jobs = await Promise.all(jobPromises);
       filteredJobs = jobs;
       selectedJob = jobs[0] || null;
       currentPage = 1;

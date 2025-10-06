@@ -24,7 +24,6 @@
     const token = localStorage.getItem('access_token');
 
     try {
-      // Backend query
       const queryParams = new URLSearchParams({ applicantID: user.userID });
       if (status !== 'All') queryParams.append('status', status.toUpperCase());
 
@@ -35,38 +34,57 @@
       if (!res.ok) throw new Error('Failed to fetch applications');
       const appData = await res.json();
 
-      // Fetch job details
-      const jobPromises = appData.map(async (app) => {
+      const appPromises = appData.map(async (app) => {
+        // Fetch job details
         const jobRes = await fetch(`/jobs/query?id=${app.jobApplication.jobID}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!jobRes.ok) throw new Error('Failed to fetch job');
-        const job = await jobRes.json();
+        if (!jobRes.ok) throw new Error('Failed to fetch job details');
+        const jobData = await jobRes.json();
+        const job = jobData[0];
 
-        const companyName = 'Unknown Company';
-        const companyLogo =
+        // Default values
+        let companyName = 'Unknown Company';
+        let companyLogo =
           'https://images.unsplash.com/photo-1534237710431-e2fc698436d0?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8YnVpbGRpbmd8ZW58MHx8MHx8fDA%3D';
 
-        const created = new Date(app.jobApplication.createdAt);
-        const diffDays = Math.floor((Date.now() - created.getTime()) / (1000 * 60 * 60 * 24));
+        // Fetch company details
+        if (job?.companyID) {
+          try {
+            const companyRes = await fetch(`/users/query?id=${job.companyID}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (companyRes.ok) {
+              const companyData = await companyRes.json();
+              if (Array.isArray(companyData) && companyData.length > 0) {
+                companyName = companyData[0].Name || companyName;
+                companyLogo = companyData[0].AvatarURL || companyLogo;
+              }
+            }
+          } catch (err) {
+            console.warn(`Failed to load company info for ID ${job.companyID}:`, err);
+          }
+        }
 
-        const title = job[0].title;
-        const location = job[0].location;
+        const created = new Date(app.jobApplication.createdAt);
+        const diffDays = Math.floor(
+          (Date.now() - created.getTime()) / (1000 * 60 * 60 * 24)
+        );
 
         return {
           id: app.id,
           companyLogo,
-          jobTitle: title,
+          jobTitle: job?.title || 'Unknown Position',
           companyName,
-          location,
+          location: job?.location || 'N/A',
           daysAgo: diffDays,
           status: app.jobApplication.status.toUpperCase(),
         };
       });
 
-      const apps = await Promise.all(jobPromises);
+      const apps = await Promise.all(appPromises);
 
-      // Update activities
+      // Update activity timeline
       activities = apps.map((app) => ({
         time: app.daysAgo === 0 ? 'Today' : `${app.daysAgo} days ago`,
         title: app.jobTitle,
@@ -75,7 +93,7 @@
 
       return apps;
     } catch (err) {
-      console.error(err);
+      console.error('Error fetching applications:', err);
       return [];
     }
   }
