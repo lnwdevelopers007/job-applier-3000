@@ -15,7 +15,7 @@
 
   let userInfo = null;
   let isLoggedIn = false;
-  let appliedJobs = {};
+  let appliedJobs = new Set();
   $: totalPages = Math.ceil(filteredJobs.length / pageSize);
   $: paginatedJobs = filteredJobs.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
@@ -81,9 +81,7 @@
 
   async function applyJob(job) {
     try {
-      console.log(localStorage);
-      console.log(isLoggedIn, userInfo);
-      if (!isLoggedIn || !userInfo?.userID) {
+      if (!isLoggedIn || !userInfo.userID) {
         alert("❌ You must be logged in to apply.");
         return;
       }
@@ -97,7 +95,7 @@
         applicantID: userInfo.userID,
         jobID: job.id,
         companyID: job.companyID,
-        status: "pending",
+        status: "PENDING",
         createdAt: new Date().toISOString(),
       };
 
@@ -119,7 +117,7 @@
       const result = await res.json();
       appliedJobs.add(job.id);
       alert(`✅ Successfully applied to ${job.title}`);
-      console.log("Application result:", result);
+      // console.log("Application result:", result);
 
     } catch (err) {
       console.error("Error applying to job:", err);
@@ -156,15 +154,12 @@
     }
     const unsubscribe = jobSearchStore.subscribe(state => {
       if (state.shouldFetch) {
-        console.log('Search triggered from hero/career:', state.query);
         searchQuery = state.query;
         fetchJobs(state.query, activeFilters).then(() => {
           jobSearchStore.clearFetchFlag();
         });
       }
     });
-
-    // Initial fetch if no search from hero
     const currentState = get(jobSearchStore);
     if (!currentState.shouldFetch) {
       fetchJobs();
