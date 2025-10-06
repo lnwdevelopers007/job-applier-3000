@@ -335,7 +335,7 @@
 						</div>
 					{:else}
 						<div class="max-h-[600px] space-y-3 overflow-y-auto">
-							{#each uploadedFiles as file}
+							{#each uploadedFiles as file (file.id)}
 								<div
 									class="rounded-lg border border-gray-200 p-4 transition-shadow hover:shadow-md"
 								>
