@@ -28,6 +28,25 @@
   const typeCycle = ["Full-time", "Part-time", "Contract", "Casual"];
   const arrangementCycle = ["On-site", "Remote", "Hybrid"];
 
+  async function fetchAppliedJobs() {
+    if (!isLoggedIn || !userInfo?.userID) return;
+
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch(`/apply/query?applicantID=${userInfo.userID}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      if (!res.ok) throw new Error('Failed to fetch applied jobs');
+      const data = await res.json();
+
+      appliedJobs = new Set(data.map(app => app.jobApplication.jobID));
+    } catch (err) {
+      console.error('Error fetching applied jobs:', err);
+      appliedJobs = new Set();
+    }
+  }
+
   async function fetchJobs(query = "", filters = {}) {
     try {
       const params = new URLSearchParams();
@@ -151,6 +170,7 @@
     isLoggedIn = isAuthenticated();
     if (isLoggedIn) {
       userInfo = getUserInfo();
+      fetchAppliedJobs();
     }
     const unsubscribe = jobSearchStore.subscribe(state => {
       if (state.shouldFetch) {
