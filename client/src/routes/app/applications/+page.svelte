@@ -89,7 +89,7 @@
         time: app.daysAgo === 0 ? 'Today' : `${app.daysAgo} days ago`,
         title: app.jobTitle,
         description: `Your application to ${app.companyName} for ${app.jobTitle} is ${app.status}`,
-      }));
+      })).slice(0, 3);
 
       return apps;
     } catch (err) {
