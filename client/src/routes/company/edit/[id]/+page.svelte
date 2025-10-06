@@ -10,7 +10,7 @@
   import PostSettingForm from '$lib/components/job-post-creation/forms/PostSettingForm.svelte';
   import PreviewDrawer from '$lib/components/job-post-creation/PreviewDrawer.svelte';
   import FormSidebar from '$lib/components/job-post-creation/FormSidebar.svelte';
-	import { getUserInfo, isAuthenticated } from '$lib/utils/auth';
+	import { getUserInfo} from '$lib/utils/auth';
 
   let jobId = $derived($page.params.id);
   let isPreviewOpen = $state(false);
