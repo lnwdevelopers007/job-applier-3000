@@ -16,14 +16,12 @@ const (
 
 type File struct {
 	ID            primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
-	ParentID      primitive.ObjectID `bson:"parentID" json:"parentID" binding:"required"`
-	ParentColl    string             `bson:"parentColl" json:"parentColl" binding:"required"`
-	Filename      string             `bson:"filename" json:"filename" binding:"required"`
-	Content       []byte             `bson:"content" json:"-"`
-	ContentType   string             `bson:"contentType" json:"contentType" binding:"required"`
+	UserID        primitive.ObjectID `bson:"userID" json:"userID" binding:"required"`
+	Content       []byte             `bson:"content" json:"-"` // Don't expose in JSON
 	FileExtension string             `bson:"fileExtension" json:"fileExtension" binding:"required"`
-	Size          int64        		 `bson:"size" json:"size" binding:"required"`
-	Category      FileCategory 		 `bson:"category" json:"category" binding:"required"`
-	UploadDate    time.Time    `bson:"uploadDate" json:"uploadDate"`
-
+	Filename      string             `bson:"filename" json:"filename" binding:"required"`
+	ContentType   string             `bson:"contentType" json:"contentType" binding:"required"`
+	Size          int64              `bson:"size" json:"size" binding:"required"`
+	Category      FileCategory       `bson:"category" json:"category" binding:"required"`
+	UploadDate    time.Time          `bson:"uploadDate" json:"uploadDate"`
 }
