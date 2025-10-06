@@ -1,11 +1,16 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-
 	let selectedFile: File | null = null;
 	let category = 'resume';
 	let userID = ''; // Test user ObjectID
 	let userRole = 'jobSeeker'; // or 'company'
-	let uploadedFiles: any[] = [];
+	interface UploadedFile {
+		id: string;
+		filename: string;
+		size: number;
+		category: string;
+		uploadDate: string;
+	}
+	let uploadedFiles: UploadedFile[] = [];
 	let uploading = false;
 	let error = '';
 	let success = '';
@@ -67,8 +72,12 @@
 			// Reset file input
 			const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
 			if (fileInput) fileInput.value = '';
-		} catch (err: any) {
-			error = err.message;
+		} catch (err) {
+			if (err instanceof Error) {
+				error = err.message;
+			} else {
+				error = String(err);
+			}
 		} finally {
 			uploading = false;
 		}
@@ -94,8 +103,14 @@
 			window.URL.revokeObjectURL(url);
 
 			success = `File "${filename}" downloaded successfully!`;
-		} catch (err: any) {
-			error = err.message;
+		} catch (err) {
+			if (err instanceof Error) {
+				error = err.message;
+			} else {
+				error = String(err);
+			}
+		} finally {
+			uploading = false;
 		}
 	}
 
@@ -113,11 +128,14 @@
 
 			const data = await response.json();
 			uploadedFiles = data.files || [];
-		} catch (err: any) {
-			error = err.message;
+		} catch (err) {
+			if (err instanceof Error) {
+				error = err.message;
+			} else {
+				error = String(err);
+			}
 		}
 	}
-
 	async function deleteFile(fileId: string, filename: string) {
 		if (!confirm(`Are you sure you want to delete "${filename}"?`)) return;
 
@@ -136,8 +154,12 @@
 
 			uploadedFiles = uploadedFiles.filter((f) => f.id !== fileId);
 			success = `File "${filename}" deleted successfully!`;
-		} catch (err: any) {
-			error = err.message;
+		} catch (err) {
+			if (err instanceof Error) {
+				error = err.message;
+			} else {
+				error = String(err);
+			}
 		}
 	}
 
@@ -159,34 +181,34 @@
 </script>
 
 <div class="min-h-screen bg-gray-50 py-8">
-	<div class="container mx-auto px-4 max-w-6xl">
-		<h1 class="text-4xl font-bold mb-2 text-gray-800">File Upload Test Page</h1>
-		<p class="text-gray-600 mb-8">Test MongoDB file storage with role-based validation</p>
+	<div class="container mx-auto max-w-6xl px-4">
+		<h1 class="mb-2 text-4xl font-bold text-gray-800">File Upload Test Page</h1>
+		<p class="mb-8 text-gray-600">Test MongoDB file storage with role-based validation</p>
 
 		<!-- Alerts -->
 		{#if error}
-			<div class="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded mb-6">
+			<div class="mb-6 rounded border-l-4 border-red-500 bg-red-50 px-4 py-3 text-red-700">
 				<p class="font-medium">Error</p>
 				<p class="text-sm">{error}</p>
 			</div>
 		{/if}
 
 		{#if success}
-			<div class="bg-green-50 border-l-4 border-green-500 text-green-700 px-4 py-3 rounded mb-6">
+			<div class="mb-6 rounded border-l-4 border-green-500 bg-green-50 px-4 py-3 text-green-700">
 				<p class="font-medium">Success</p>
 				<p class="text-sm">{success}</p>
 			</div>
 		{/if}
 
-		<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+		<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
 			<!-- Upload Form -->
-			<div class="bg-white shadow-lg rounded-lg overflow-hidden">
-				<div class="bg-blue-600 text-white px-6 py-4">
+			<div class="overflow-hidden rounded-lg bg-white shadow-lg">
+				<div class="bg-blue-600 px-6 py-4 text-white">
 					<h2 class="text-xl font-semibold">Upload File</h2>
 				</div>
-				<div class="p-6 space-y-4">
+				<div class="space-y-4 p-6">
 					<div>
-						<label for="user-id-input" class="block text-gray-700 text-sm font-bold mb-2">
+						<label for="user-id-input" class="mb-2 block text-sm font-bold text-gray-700">
 							User ID (ObjectID) *
 						</label>
 						<input
@@ -194,15 +216,13 @@
 							type="text"
 							bind:value={userID}
 							placeholder="e.g., 507f1f77bcf86cd799439011"
-							class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+							class="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 						/>
-						<p class="text-xs text-gray-500 mt-1">
-							Enter a valid MongoDB ObjectID for testing
-						</p>
+						<p class="mt-1 text-xs text-gray-500">Enter a valid MongoDB ObjectID for testing</p>
 					</div>
 
 					<div>
-						<label for="user-role-select" class="block text-gray-700 text-sm font-bold mb-2">
+						<label for="user-role-select" class="mb-2 block text-sm font-bold text-gray-700">
 							User Role
 						</label>
 						<select
@@ -216,7 +236,7 @@
 									category = 'verification';
 								}
 							}}
-							class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+							class="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 						>
 							<option value="jobSeeker">Job Seeker</option>
 							<option value="company">Company</option>
@@ -224,11 +244,13 @@
 					</div>
 
 					<div>
-						<label for="category-select" class="block text-gray-700 text-sm font-bold mb-2">Category</label>
+						<label for="category-select" class="mb-2 block text-sm font-bold text-gray-700"
+							>Category</label
+						>
 						<select
 							id="category-select"
 							bind:value={category}
-							class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+							class="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 						>
 							{#if userRole === 'jobSeeker'}
 								<option value="resume">Resume</option>
@@ -239,7 +261,7 @@
 								<option value="certification">Certification</option>
 							{/if}
 						</select>
-						<p class="text-xs text-gray-500 mt-1">
+						<p class="mt-1 text-xs text-gray-500">
 							{#if userRole === 'jobSeeker'}
 								Job seekers can upload: Resume, Cover Letter, Certification
 							{:else}
@@ -249,7 +271,7 @@
 					</div>
 
 					<div>
-						<label for="file-input" class="block text-gray-700 text-sm font-bold mb-2">
+						<label for="file-input" class="mb-2 block text-sm font-bold text-gray-700">
 							Select PDF File (Max 10MB)
 						</label>
 						<input
@@ -257,12 +279,12 @@
 							type="file"
 							accept=".pdf,application/pdf"
 							on:change={handleFileSelect}
-							class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+							class="w-full text-sm text-gray-500 file:mr-4 file:rounded file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-100"
 						/>
 					</div>
 
 					{#if selectedFile}
-						<div class="bg-gray-50 p-3 rounded text-sm text-gray-700">
+						<div class="rounded bg-gray-50 p-3 text-sm text-gray-700">
 							<p class="font-medium">Selected File:</p>
 							<p>{selectedFile.name}</p>
 							<p class="text-gray-500">{formatFileSize(selectedFile.size)}</p>
@@ -272,7 +294,7 @@
 					<button
 						on:click={uploadFile}
 						disabled={!selectedFile || !userID || uploading}
-						class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+						class="w-full rounded bg-blue-600 px-4 py-3 font-bold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
 					>
 						{uploading ? 'Uploading...' : 'Upload File'}
 					</button>
@@ -280,7 +302,7 @@
 					<button
 						on:click={loadUserFiles}
 						disabled={!userID}
-						class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+						class="w-full rounded bg-gray-600 px-4 py-3 font-bold text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
 					>
 						Load My Files
 					</button>
@@ -288,15 +310,15 @@
 			</div>
 
 			<!-- Files List -->
-			<div class="bg-white shadow-lg rounded-lg overflow-hidden">
-				<div class="bg-green-600 text-white px-6 py-4">
+			<div class="overflow-hidden rounded-lg bg-white shadow-lg">
+				<div class="bg-green-600 px-6 py-4 text-white">
 					<h2 class="text-xl font-semibold">My Files ({uploadedFiles.length})</h2>
 				</div>
 				<div class="p-6">
 					{#if uploadedFiles.length === 0}
-						<div class="text-center py-8 text-gray-500">
+						<div class="py-8 text-center text-gray-500">
 							<svg
-								class="mx-auto h-12 w-12 text-gray-400 mb-4"
+								class="mx-auto mb-4 h-12 w-12 text-gray-400"
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"
@@ -308,18 +330,18 @@
 									d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
 								/>
 							</svg>
-							<p class="text-lg mb-2">No files uploaded yet</p>
+							<p class="mb-2 text-lg">No files uploaded yet</p>
 							<p class="text-sm">Upload a file or load your files</p>
 						</div>
 					{:else}
-						<div class="space-y-3 max-h-[600px] overflow-y-auto">
+						<div class="max-h-[600px] space-y-3 overflow-y-auto">
 							{#each uploadedFiles as file}
 								<div
-									class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+									class="rounded-lg border border-gray-200 p-4 transition-shadow hover:shadow-md"
 								>
-									<div class="flex items-start justify-between mb-3">
+									<div class="mb-3 flex items-start justify-between">
 										<div class="flex-1">
-											<div class="flex items-center gap-2 mb-2">
+											<div class="mb-2 flex items-center gap-2">
 												<svg
 													class="h-5 w-5 text-red-500"
 													fill="none"
@@ -335,10 +357,10 @@
 												</svg>
 												<p class="font-semibold text-gray-800">{file.filename}</p>
 											</div>
-											<div class="text-xs text-gray-600 space-y-1 ml-7">
+											<div class="ml-7 space-y-1 text-xs text-gray-600">
 												<div class="flex items-center gap-4">
 													<span
-														class="inline-block px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800"
+														class="inline-block rounded bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800"
 													>
 														{getCategoryLabel(file.category)}
 													</span>
@@ -348,7 +370,7 @@
 													<span class="font-medium">Uploaded:</span>
 													{new Date(file.uploadDate).toLocaleString()}
 												</p>
-												<p class="text-gray-400 truncate text-[10px]">
+												<p class="truncate text-[10px] text-gray-400">
 													<span class="font-medium">ID:</span>
 													{file.id}
 												</p>
@@ -358,14 +380,9 @@
 									<div class="flex gap-2">
 										<button
 											on:click={() => downloadFile(file.id, file.filename)}
-											class="flex-1 bg-green-500 hover:bg-green-600 text-white text-sm font-bold py-2 px-3 rounded transition-colors flex items-center justify-center gap-2"
+											class="flex flex-1 items-center justify-center gap-2 rounded bg-green-500 px-3 py-2 text-sm font-bold text-white transition-colors hover:bg-green-600"
 										>
-											<svg
-												class="h-4 w-4"
-												fill="none"
-												stroke="currentColor"
-												viewBox="0 0 24 24"
-											>
+											<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 												<path
 													stroke-linecap="round"
 													stroke-linejoin="round"
@@ -377,14 +394,9 @@
 										</button>
 										<button
 											on:click={() => deleteFile(file.id, file.filename)}
-											class="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-2 px-3 rounded transition-colors flex items-center justify-center gap-2"
+											class="flex flex-1 items-center justify-center gap-2 rounded bg-red-500 px-3 py-2 text-sm font-bold text-white transition-colors hover:bg-red-600"
 										>
-											<svg
-												class="h-4 w-4"
-												fill="none"
-												stroke="currentColor"
-												viewBox="0 0 24 24"
-											>
+											<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 												<path
 													stroke-linecap="round"
 													stroke-linejoin="round"
@@ -404,10 +416,10 @@
 		</div>
 
 		<!-- Info Boxes -->
-		<div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+		<div class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
 			<!-- Testing Instructions -->
-			<div class="bg-blue-50 border border-blue-200 rounded-lg p-5">
-				<h3 class="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+			<div class="rounded-lg border border-blue-200 bg-blue-50 p-5">
+				<h3 class="mb-3 flex items-center gap-2 font-semibold text-blue-900">
 					<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path
 							stroke-linecap="round"
@@ -418,7 +430,7 @@
 					</svg>
 					Testing Instructions
 				</h3>
-				<ol class="text-sm text-blue-800 space-y-2 list-decimal list-inside">
+				<ol class="list-inside list-decimal space-y-2 text-sm text-blue-800">
 					<li>Enter a valid MongoDB ObjectID for the User ID field</li>
 					<li>Select user role (Job Seeker or Company)</li>
 					<li>Available categories will update based on role</li>
@@ -431,8 +443,8 @@
 			</div>
 
 			<!-- Role-Based Rules -->
-			<div class="bg-purple-50 border border-purple-200 rounded-lg p-5">
-				<h3 class="font-semibold text-purple-900 mb-3 flex items-center gap-2">
+			<div class="rounded-lg border border-purple-200 bg-purple-50 p-5">
+				<h3 class="mb-3 flex items-center gap-2 font-semibold text-purple-900">
 					<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path
 							stroke-linecap="round"
@@ -443,53 +455,53 @@
 					</svg>
 					Role-Based Validation Rules
 				</h3>
-				<div class="text-sm text-purple-800 space-y-3">
+				<div class="space-y-3 text-sm text-purple-800">
 					<div>
-						<p class="font-semibold mb-1">👤 Job Seeker can upload:</p>
-						<ul class="list-disc list-inside ml-2 space-y-1">
+						<p class="mb-1 font-semibold">👤 Job Seeker can upload:</p>
+						<ul class="ml-2 list-inside list-disc space-y-1">
 							<li>Resume</li>
 							<li>Cover Letter</li>
 							<li>Certification</li>
 						</ul>
 					</div>
 					<div>
-						<p class="font-semibold mb-1">🏢 Company can upload:</p>
-						<ul class="list-disc list-inside ml-2 space-y-1">
+						<p class="mb-1 font-semibold">🏢 Company can upload:</p>
+						<ul class="ml-2 list-inside list-disc space-y-1">
 							<li>Verification</li>
 							<li>Certification</li>
 						</ul>
 					</div>
-					<div class="bg-purple-100 p-2 rounded mt-2">
+					<div class="mt-2 rounded bg-purple-100 p-2">
 						<p class="font-medium">🔒 Authorization:</p>
-						<p class="text-xs mt-1">Users can only access their own files</p>
+						<p class="mt-1 text-xs">Users can only access their own files</p>
 					</div>
 				</div>
 			</div>
 		</div>
 
 		<!-- Technical Details -->
-		<div class="mt-6 bg-gray-100 border border-gray-300 rounded-lg p-5">
-			<h3 class="font-semibold text-gray-900 mb-3">Technical Implementation Details</h3>
-			<div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+		<div class="mt-6 rounded-lg border border-gray-300 bg-gray-100 p-5">
+			<h3 class="mb-3 font-semibold text-gray-900">Technical Implementation Details</h3>
+			<div class="grid grid-cols-1 gap-4 text-sm md:grid-cols-3">
 				<div>
-					<p class="font-medium text-gray-700 mb-1">Storage:</p>
-					<ul class="text-gray-600 space-y-1">
+					<p class="mb-1 font-medium text-gray-700">Storage:</p>
+					<ul class="space-y-1 text-gray-600">
 						<li>• Binary storage ([]byte)</li>
 						<li>• Max 10MB per file</li>
 						<li>• PDF only</li>
 					</ul>
 				</div>
 				<div>
-					<p class="font-medium text-gray-700 mb-1">Schema:</p>
-					<ul class="text-gray-600 space-y-1">
+					<p class="mb-1 font-medium text-gray-700">Schema:</p>
+					<ul class="space-y-1 text-gray-600">
 						<li>• Linked to users collection</li>
 						<li>• Role-based validation</li>
 						<li>• Metadata included</li>
 					</ul>
 				</div>
 				<div>
-					<p class="font-medium text-gray-700 mb-1">Security:</p>
-					<ul class="text-gray-600 space-y-1">
+					<p class="mb-1 font-medium text-gray-700">Security:</p>
+					<ul class="space-y-1 text-gray-600">
 						<li>• Owner-only access</li>
 						<li>• Auth middleware ready</li>
 						<li>• File type validation</li>
