@@ -133,10 +133,8 @@
         return;
       }
 
-      const result = await res.json();
       appliedJobs.add(job.id);
       alert(`✅ Successfully applied to ${job.title}`);
-      // console.log("Application result:", result);
 
     } catch (err) {
       console.error("Error applying to job:", err);

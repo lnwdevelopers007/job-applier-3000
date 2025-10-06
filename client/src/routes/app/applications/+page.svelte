@@ -6,8 +6,6 @@
 
   let applications = [];
   let activities = [];
-  let isLoading = true;
-  let error: string | null = null;
   let filterStatus = 'All';
 
   async function fetchApplications(status: string = 'All') {
@@ -26,7 +24,7 @@
     const token = localStorage.getItem('access_token');
 
     try {
-      // Backend query with optional status filter
+      // Backend query
       const queryParams = new URLSearchParams({ applicantID: user.userID });
       if (status !== 'All') queryParams.append('status', status.toUpperCase());
 
@@ -78,27 +76,20 @@
       return apps;
     } catch (err) {
       console.error(err);
-      error = 'Failed to load your applications.';
       return [];
     }
   }
 
   onMount(async () => {
-    isLoading = true;
     applications = await fetchApplications('All');
-    isLoading = false;
   });
 
   // When user clicks a status filter button
   async function handleFilter(status: string) {
     filterStatus = status;
-    isLoading = true;
     applications = await fetchApplications(status);
-    isLoading = false;
   }
 </script>
-
-
 
 <div class="p-2 bg-slate-50">
   <h1 class="text-2xl font-bold text-gray-900">
@@ -134,7 +125,7 @@
   </div>
   <div class="flex justify-between py-4">
     <div class="flex gap-2">
-      {#each ['All', 'Pending', 'In Review', 'Accepted', 'Rejected'] as status}
+      {#each ['All', 'Pending', 'In Review', 'Accepted', 'Rejected'] as status, i (i)}
         <button
           class={`px-3 py-1 rounded-full text-sm border border-gray-300 transition
             ${filterStatus === status
