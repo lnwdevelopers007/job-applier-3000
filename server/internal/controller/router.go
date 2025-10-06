@@ -50,6 +50,7 @@ func NewRouter() *gin.Engine {
 	userController := NewUserController()
 	userRoutes := router.Group("/users")
 	{
+		userRoutes.GET("/query", userController.Query)
 		userRoutes.GET("/", userController.RetrieveAll)
 		userRoutes.POST("/", userController.Create)
 		userRoutes.PUT("/:id", userController.Update)
