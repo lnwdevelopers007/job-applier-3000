@@ -1,4 +1,5 @@
 <script lang="ts">
+    const Backend_URL = import.meta.env.VITE_BACKEND;
 	let selectedFile: File | null = null;
 	let category = 'resume';
 	let userID = ''; // Test user ObjectID
@@ -54,7 +55,7 @@
 		formData.append('userRole', userRole);
 
 		try {
-			const response = await fetch('http://localhost:8080/files/upload', {
+			const response = await fetch('${Backend_URL}/files/upload', {
 				method: 'POST',
 				body: formData
 			});
@@ -86,7 +87,7 @@
 	async function downloadFile(fileId: string, filename: string) {
 		try {
 			const response = await fetch(
-				`http://localhost:8080/files/download/${fileId}?requestingUserID=${userID}`
+				`${Backend_URL}/files/download/${fileId}?requestingUserID=${userID}`
 			);
 
 			if (!response.ok) {
@@ -119,7 +120,7 @@
 
 		try {
 			const response = await fetch(
-				`http://localhost:8080/files/user/${userID}?requestingUserID=${userID}`
+				`${Backend_URL}/files/user/${userID}?requestingUserID=${userID}`
 			);
 			if (!response.ok) {
 				const errorData = await response.json();
@@ -141,7 +142,7 @@
 
 		try {
 			const response = await fetch(
-				`http://localhost:8080/files/${fileId}?requestingUserID=${userID}`,
+				`${Backend_URL}/files/${fileId}?requestingUserID=${userID}`,
 				{
 					method: 'DELETE'
 				}
