@@ -10,6 +10,7 @@ import (
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // JobApplicationController handles JobApplication CRUD operations
@@ -36,8 +37,8 @@ func (jc JobApplicationController) Query(c *gin.Context) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-
-	applications, err := findAll[schema.JobApplication](ctx, jc.baseController.collectionName, jobApplicationFilter)
+	findOpts := options.Find().SetSort(bson.D{{Key: "createdAt", Value: -1}})
+	applications, err := findAll[schema.JobApplication](ctx, jc.baseController.collectionName, jobApplicationFilter, findOpts)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

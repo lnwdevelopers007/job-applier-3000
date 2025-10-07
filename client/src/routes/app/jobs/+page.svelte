@@ -4,6 +4,7 @@
   import { onMount } from 'svelte';
   import { jobSearchStore } from '$lib/stores/jobSearch';
   import { get } from 'svelte/store';
+  import { isAuthenticated, getUserInfo} from '$lib/utils/auth';
 
   let jobs = [];
   let filteredJobs = [];
@@ -12,6 +13,9 @@
   let currentPage = 1;
   const pageSize = 4;
 
+  let userInfo = null;
+  let isLoggedIn = false;
+  let appliedJobs = new Set();
   $: totalPages = Math.ceil(filteredJobs.length / pageSize);
   $: paginatedJobs = filteredJobs.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
@@ -23,6 +27,25 @@
 
   const typeCycle = ["Full-time", "Part-time", "Contract", "Casual"];
   const arrangementCycle = ["On-site", "Remote", "Hybrid"];
+
+  async function fetchAppliedJobs() {
+    if (!isLoggedIn || !userInfo?.userID) return;
+
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch(`/apply/query?applicantID=${userInfo.userID}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      if (!res.ok) throw new Error('Failed to fetch applied jobs');
+      const data = await res.json();
+
+      appliedJobs = new Set(data.map(app => app.jobApplication.jobID));
+    } catch (err) {
+      console.error('Error fetching applied jobs:', err);
+      appliedJobs = new Set();
+    }
+  }
 
   async function fetchJobs(query = "", filters = {}) {
     try {
@@ -44,25 +67,49 @@
       if (!res.ok) throw new Error(`Failed to load jobs: ${res.status}`);
       const data = await res.json();
 
-      jobs = data.map(job => ({
-        id: job.id,
-        title: job.title,
-        company: job.company || "Unknown Company",
-        location: job.location || "N/A",
-        type: job.workType || "Full-time",
-        tags: job.requiredSkills
-          ? job.requiredSkills.split(",").map(skill => skill.trim())
-          : [],
-        posted: job.postOpenDate
-          ? new Date(job.postOpenDate).toLocaleDateString()
-          : "Unknown",
-        closeDate: job.applicationDeadline
-          ? new Date(job.applicationDeadline).toLocaleDateString()
-          : "Unknown",
-        description: job.jobDescription || "No description provided.",
-        logo: "https://images.unsplash.com/photo-1534237710431-e2fc698436d0?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8YnVpbGRpbmd8ZW58MHx8MHx8fDA%3D"
-      }));
+      const jobPromises = data.map(async (job) => {
+        let companyName = "Unknown Company";
+        let companyLogo =
+          "https://images.unsplash.com/photo-1534237710431-e2fc698436d0?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8YnVpbGRpbmd8ZW58MHx8MHx8fDA%3D";
 
+        if (job.companyID) {
+          try {
+            const companyRes = await fetch(`/users/query?id=${job.companyID}`);
+            if (companyRes.ok) {
+              const companyData = await companyRes.json();
+              console.log(companyData);
+              if (Array.isArray(companyData) && companyData.length > 0) {
+                companyName = companyData[0].Name || companyName;
+                companyLogo = companyData[0].AvatarURL || companyLogo;
+              }
+            }
+          } catch (err) {
+            console.warn(`Failed to load company info for ID ${job.companyID}:`, err);
+          }
+        }
+
+        return {
+          id: job.id,
+          title: job.title,
+          company: companyName,
+          companyID: job.companyID,
+          location: job.location || "N/A",
+          type: job.workType || "Full-time",
+          tags: job.requiredSkills
+            ? job.requiredSkills.split(",").map((skill) => skill.trim())
+            : [],
+          posted: job.postOpenDate
+            ? new Date(job.postOpenDate).toLocaleDateString()
+            : "Unknown",
+          closeDate: job.applicationDeadline
+            ? new Date(job.applicationDeadline).toLocaleDateString()
+            : "Unknown",
+          description: job.jobDescription || "No description provided.",
+          logo: companyLogo,
+        };
+      });
+
+      jobs = await Promise.all(jobPromises);
       filteredJobs = jobs;
       selectedJob = jobs[0] || null;
       currentPage = 1;
@@ -71,6 +118,50 @@
       jobs = [];
       filteredJobs = [];
       selectedJob = null;
+    }
+  }
+
+  async function applyJob(job) {
+    try {
+      if (!isLoggedIn || !userInfo.userID) {
+        alert("❌ You must be logged in to apply.");
+        return;
+      }
+
+      if (appliedJobs.has(job.id)) {
+        alert("⚠️ You have already applied to this job.");
+        return;
+      }
+
+      const payload = {
+        applicantID: userInfo.userID,
+        jobID: job.id,
+        companyID: job.companyID,
+        status: "PENDING",
+        createdAt: new Date().toISOString(),
+      };
+
+      const res = await fetch("/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        if (res.status === 409) {
+          alert("⚠️ You already applied to this job.");
+        } else {
+          throw new Error(`Failed to apply: ${res.status}`);
+        }
+        return;
+      }
+
+      appliedJobs.add(job.id);
+      alert(`✅ Successfully applied to ${job.title}`);
+
+    } catch (err) {
+      console.error("Error applying to job:", err);
+      alert("❌ Failed to apply. Please try again.");
     }
   }
 
@@ -97,21 +188,19 @@
   }
 
   onMount(() => {
-    // Subscribe to the job search store
+    isLoggedIn = isAuthenticated();
+    if (isLoggedIn) {
+      userInfo = getUserInfo();
+      fetchAppliedJobs();
+    }
     const unsubscribe = jobSearchStore.subscribe(state => {
       if (state.shouldFetch) {
-        console.log('Search triggered from hero/career:', state.query);
-        // Set the search query from the store
         searchQuery = state.query;
-        // Fetch jobs with the search query
         fetchJobs(state.query, activeFilters).then(() => {
-          // Clear the fetch flag after successful fetch
           jobSearchStore.clearFetchFlag();
         });
       }
     });
-
-    // Initial fetch if no search from hero
     const currentState = get(jobSearchStore);
     if (!currentState.shouldFetch) {
       fetchJobs();
@@ -208,7 +297,7 @@
           {/if}
         </div>
 
-        <!-- ✅ Pagination controls -->
+        <!-- Pagination controls -->
         {#if totalPages > 1}
           <div class="flex justify-center gap-2 my-4">
             <button
@@ -275,7 +364,9 @@
                 Not Open Yet
               </button>
             {:else}
-              <button class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg">
+              <button class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg"
+              onclick={() => applyJob(selectedJob)}
+              >
                 Apply
               </button>
             {/if}

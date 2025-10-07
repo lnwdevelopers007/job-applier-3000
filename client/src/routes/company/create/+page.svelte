@@ -8,11 +8,12 @@
   import RequirementForm from '$lib/components/job-post-creation/forms/RequirementForm.svelte';
   import PostSettingForm from '$lib/components/job-post-creation/forms/PostSettingForm.svelte';
   import PreviewDrawer from '$lib/components/job-post-creation/PreviewDrawer.svelte';
+  import { getUserInfo } from '$lib/utils/auth';
 
   let currentStep = $state(1); // Current step (1-4)
   let isPreviewOpen = $state(false);
   let stepper;
-  
+  const userInfo = getUserInfo();
   const steps = [
     { id: 1, name: 'Basic Info' },
     { id: 2, name: 'Description' },
@@ -23,7 +24,7 @@
   let formData = $state({
     // Basic Info
     jobTitle: '',
-    companyID: '64f0c44a27b1c27f4d92e9a2',
+    companyID: userInfo.userID,
     location: '',
     workType: 'full-time',
     workArrangement: 'on-site',
