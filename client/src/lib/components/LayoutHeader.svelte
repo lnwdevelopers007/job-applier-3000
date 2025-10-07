@@ -106,7 +106,7 @@
           <button
             onclick={() => {
               isDropdownOpen = false;
-              goto(userInfo?.role === 'company' ? '/company/profile' : '/profile');
+              goto(userInfo?.role === 'company' ? '/company/settings' : '/app/settings');
             }}
             class="w-full flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 hover:cursor-pointer transition-colors"
           >
