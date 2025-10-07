@@ -46,6 +46,7 @@
 				{#if iconComponent}
 					<svelte:component this={iconComponent} class="h-5 w-5 text-gray-400" />
 				{:else if icon}
+					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 					{@html icon}
 				{/if}
 			</div>

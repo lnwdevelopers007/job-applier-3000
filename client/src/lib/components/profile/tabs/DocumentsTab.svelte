@@ -1,7 +1,7 @@
 <script>
 	let {
-		documents = $bindable([]),
-		onSave = () => {}
+		documents = $bindable([])
+		// onSave = () => {} // Unused - saving handled by parent
 	} = $props();
 	
 	function handleDocumentUpload(event) {
@@ -41,7 +41,7 @@
 			<div class="col-span-2">
 				<div class="space-y-4">
 					{#if documents && documents.length > 0}
-						{#each documents as doc, index}
+						{#each documents as doc, index (index)}
 							<div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
 								<div class="flex items-center gap-4">
 									<div class="w-12 h-12 bg-{doc.color || 'gray'}-100 rounded-lg flex items-center justify-center">

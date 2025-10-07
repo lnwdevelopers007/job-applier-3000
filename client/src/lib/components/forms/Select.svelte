@@ -24,7 +24,7 @@
 		class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-transparent transition-all {error ? 'border-red-300' : ''}"
 	>
 		<option value="" disabled selected>{placeholder}</option>
-		{#each options as option}
+		{#each options as option, i (i)}
 			{#if typeof option === 'string'}
 				<option value={option}>{option}</option>
 			{:else}

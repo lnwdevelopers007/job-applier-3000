@@ -1,6 +1,6 @@
 <script>
 	import TextInput from '$lib/components/forms/TextInput.svelte';
-	import Select from '$lib/components/forms/Select.svelte';
+	// import Select from '$lib/components/forms/Select.svelte';
 	import Textarea from '$lib/components/forms/Textarea.svelte';
 	import { Globe } from 'lucide-svelte';
 	

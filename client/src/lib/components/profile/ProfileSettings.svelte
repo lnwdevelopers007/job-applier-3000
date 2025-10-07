@@ -46,7 +46,7 @@
 		headquarters?: string;
 		companyLinkedin?: string;
 		// Documents
-		documents?: any[];
+		documents?: unknown[];
 		// File uploads
 		avatarFile?: File;
 		companyLogoFile?: File;
@@ -93,7 +93,7 @@
 	// Utility functions
 	function createCleanCopy(data: UserData): UserData {
 		const copy = { ...data };
-		EXCLUDED_FIELDS.forEach(field => delete (copy as any)[field]);
+		EXCLUDED_FIELDS.forEach(field => delete (copy as Record<string, unknown>)[field]);
 		return copy;
 	}
 	
@@ -109,7 +109,7 @@
 		initialData = JSON.parse(JSON.stringify(userData));
 	}
 	
-	function buildUserInfoPayload(): any {
+	function buildUserInfoPayload(): Record<string, string> {
 		if (userType === 'seeker') {
 			return {
 				fullName: userData.fullName || '',
@@ -221,7 +221,7 @@
 		
 		fieldsToInit.forEach(field => {
 			if (userData[field as keyof UserData] === undefined) {
-				(userData as any)[field] = field === 'documents' ? [] : '';
+				(userData as Record<string, unknown>)[field] = field === 'documents' ? [] : '';
 			}
 		});
 		
@@ -239,7 +239,9 @@
 		const newChangedFields = new Set<string>();
 		
 		for (const field of TRACKABLE_FIELDS) {
-			if ((currentData as any)[field] !== (initData as any)[field]) {
+			const currentValue = (currentData as Record<string, unknown>)[field];
+			const initValue = (initData as Record<string, unknown>)[field];
+			if (currentValue !== initValue) {
 				newChangedFields.add(field);
 			}
 		}
@@ -278,7 +280,7 @@
 		
 		<!-- Tabs -->
 		<nav class="flex border-b border-gray-200 -mb-px">
-			{#each tabs as tab}
+			{#each tabs as tab (tab.id)}
 				<button
 					onclick={() => handleTabChange(tab.id)}
 					class="px-4 py-3 text-sm font-medium border-b-2 transition-all cursor-pointer {activeTab === tab.id ? 'border-green-600 text-green-700' : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'}"

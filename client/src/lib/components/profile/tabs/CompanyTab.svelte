@@ -6,8 +6,8 @@
 	import { Globe } from 'lucide-svelte';
 	
 	let {
-		companyData = $bindable({}),
-		onSave = () => {}
+		companyData = $bindable({})
+		// onSave = () => {} // Unused - saving handled by parent
 	} = $props();
 </script>
 

@@ -10,7 +10,7 @@ export interface BaseUserData {
 	role?: string;
 	verified?: boolean;
 	googleConnected?: boolean;
-	documents?: any[];
+	documents?: unknown[];
 }
 
 export interface SeekerUserData extends BaseUserData {
@@ -162,7 +162,7 @@ export class SettingsService {
 	// Map backend user data to frontend format
 	static mapUserToUserData<T extends UserData>(user: User, userType: 'seeker' | 'company'): T {
 		const baseData: BaseUserData = {
-			id: user.id || (user as any)._id,
+			id: user.id || (user as Record<string, unknown>)._id as string,
 			name: user.name || '',
 			email: user.email || '',
 			avatar: user.avatarURL || '',
@@ -223,16 +223,16 @@ export class SettingsService {
 			throw new Error('User ID not found');
 		}
 
-		const payload = userService.transformToBackendFormat(userData, userType, changedFields);
+		const payload = userService.transformToBackendFormat(userData as Record<string, unknown>, userType, changedFields);
 		
 		// Handle file uploads for company logo
-		if (userType === 'company' && (userData as any).companyLogoFile) {
+		if (userType === 'company' && (userData as CompanyUserData & { companyLogoFile?: File }).companyLogoFile) {
 			return new Promise((resolve, reject) => {
 				const reader = new FileReader();
 				reader.onload = async (e) => {
 					try {
 						if (payload.userInfo && e.target?.result) {
-							(payload.userInfo as any).logo = e.target.result as string;
+							(payload.userInfo as Record<string, unknown>).logo = e.target.result as string;
 						}
 						const result = await userService.updateUser(userId, payload);
 						resolve(result);
@@ -241,7 +241,7 @@ export class SettingsService {
 					}
 				};
 				reader.onerror = () => reject(new Error('Failed to read file'));
-				reader.readAsDataURL((userData as any).companyLogoFile);
+				reader.readAsDataURL((userData as CompanyUserData & { companyLogoFile: File }).companyLogoFile);
 			});
 		}
 
@@ -265,8 +265,10 @@ export class SettingsService {
 				const seekerData = userData as SeekerUserData;
 				Object.entries(SEEKER_FIELD_MAPPING).forEach(([key]) => {
 					const backendKey = key === 'linkedin' ? 'linkedIn' : key;
-					if ((info as any)[backendKey] !== undefined) {
-						(seekerData as any)[key] = (info as any)[backendKey];
+					const infoRecord = info as unknown as Record<string, unknown>;
+					const seekerRecord = seekerData as unknown as Record<string, unknown>;
+					if (infoRecord[backendKey] !== undefined) {
+						seekerRecord[key] = infoRecord[backendKey];
 					}
 				});
 			} else if (userType === 'company') {
@@ -282,8 +284,10 @@ export class SettingsService {
 					else if (key === 'companyLogo') backendKey = 'logo';
 					else if (key === 'companyLinkedin') backendKey = 'linkedIn';
 
-					if ((info as any)[backendKey] !== undefined) {
-						(companyData as any)[key] = (info as any)[backendKey];
+					const infoRecord = info as unknown as Record<string, unknown>;
+					const companyRecord = companyData as unknown as Record<string, unknown>;
+					if (infoRecord[backendKey] !== undefined) {
+						companyRecord[key] = infoRecord[backendKey];
 					}
 				});
 			}

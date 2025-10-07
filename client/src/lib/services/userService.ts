@@ -165,63 +165,63 @@ class UserService {
 	
 	// Helper to transform frontend data to backend format
 	// Only send changed fields while always preserving userID and provider
-	transformToBackendFormat(userData: any, userType: string, changedFields?: string[]): UpdateUserPayload {
+	transformToBackendFormat(userData: Record<string, unknown>, userType: string, changedFields?: string[]): UpdateUserPayload {
 		const payload: UpdateUserPayload = {};
 		
 		// Always preserve userID and provider fields (needed for OAuth disconnect)
-		payload.provider = userData.provider || '';
-		payload.userID = userData.userID || '';
+		payload.provider = (userData.provider as string) || '';
+		payload.userID = (userData.userID as string) || '';
 		
 		// If no changedFields specified, send all fields (backwards compatibility)
 		if (!changedFields) {
-			payload.name = userData.name || '';
-			payload.email = userData.email || '';
-			payload.avatarURL = userData.avatar || '';
-			payload.role = userData.role || (userType === 'seeker' ? 'jobSeeker' : 'company');
-			payload.verified = userData.verified || false;
+			payload.name = (userData.name as string) || '';
+			payload.email = (userData.email as string) || '';
+			payload.avatarURL = (userData.avatar as string) || '';
+			payload.role = (userData.role as string) || (userType === 'seeker' ? 'jobSeeker' : 'company');
+			payload.verified = (userData.verified as boolean) || false;
 			
 			// Build userInfo object based on user type
 			if (userType === 'seeker' || userType === 'jobSeeker') {
 				payload.userInfo = {
-					fullName: userData.fullName || '',
-					location: userData.location || '',
-					phone: userData.phone || '',
-					linkedIn: userData.linkedin || '',
-					desiredRole: userData.desiredRole || '',
-					aboutMe: userData.aboutMe || '',
-					dateOfBirth: userData.dateOfBirth || '',
-					portfolio: userData.portfolio || '',
-					github: userData.github || ''
+					fullName: (userData.fullName as string) || '',
+					location: (userData.location as string) || '',
+					phone: (userData.phone as string) || '',
+					linkedIn: (userData.linkedin as string) || '',
+					desiredRole: (userData.desiredRole as string) || '',
+					aboutMe: (userData.aboutMe as string) || '',
+					dateOfBirth: (userData.dateOfBirth as string) || '',
+					portfolio: (userData.portfolio as string) || '',
+					github: (userData.github as string) || ''
 				};
 			} else if (userType === 'company') {
 				payload.userInfo = {
-					name: userData.companyName || '',
-					aboutUs: userData.aboutCompany || '',
-					industry: userData.industry || '',
-					size: userData.companySize || '',
-					website: userData.companyWebsite || '',
-					logo: userData.companyLogo || '',
-					foundedYear: userData.foundedYear || '',
-					headquarters: userData.headquarters || '',
-					linkedIn: userData.companyLinkedin || ''
+					name: (userData.companyName as string) || '',
+					aboutUs: (userData.aboutCompany as string) || '',
+					industry: (userData.industry as string) || '',
+					size: (userData.companySize as string) || '',
+					website: (userData.companyWebsite as string) || '',
+					logo: (userData.companyLogo as string) || '',
+					foundedYear: (userData.foundedYear as string) || '',
+					headquarters: (userData.headquarters as string) || '',
+					linkedIn: (userData.companyLinkedin as string) || ''
 				};
 			}
 		} else {
 			// Only include fields that have changed
 			if (changedFields.includes('name') && userData.name !== undefined) {
-				payload.name = userData.name;
+				payload.name = userData.name as string;
 			}
 			if (changedFields.includes('email') && userData.email !== undefined) {
-				payload.email = userData.email;
+				payload.email = userData.email as string;
 			}
 			if (changedFields.includes('avatar') && userData.avatar !== undefined) {
-				payload.avatarURL = userData.avatar;
+				payload.avatarURL = userData.avatar as string;
 			}
 			if (changedFields.includes('role') && userData.role !== undefined) {
-				payload.role = userData.role;
+				payload.role = userData.role as string;
 			}
 			if (changedFields.includes('verified') && userData.verified !== undefined) {
-				payload.verified = userData.verified;
+				payload.verified = userData.verified as boolean;
 			}
 			
 			// Handle userInfo fields - Always send all fields since BSON can't use omitempty
@@ -239,15 +239,15 @@ class UserService {
 				// If any userInfo field changed, send ALL userInfo fields
 				if (hasUserInfoChanges) {
 					payload.userInfo = {
-						fullName: userData.fullName || '',
-						location: userData.location || '',
-						phone: userData.phone || '',
-						linkedIn: userData.linkedin || '',
-						desiredRole: userData.desiredRole || '',
-						aboutMe: userData.aboutMe || '',
-						dateOfBirth: userData.dateOfBirth || '',
-						portfolio: userData.portfolio || '',
-						github: userData.github || ''
+						fullName: (userData.fullName as string) || '',
+						location: (userData.location as string) || '',
+						phone: (userData.phone as string) || '',
+						linkedIn: (userData.linkedin as string) || '',
+						desiredRole: (userData.desiredRole as string) || '',
+						aboutMe: (userData.aboutMe as string) || '',
+						dateOfBirth: (userData.dateOfBirth as string) || '',
+						portfolio: (userData.portfolio as string) || '',
+						github: (userData.github as string) || ''
 					};
 				}
 			} else if (userType === 'company') {
@@ -264,15 +264,15 @@ class UserService {
 				// If any userInfo field changed, send ALL userInfo fields
 				if (hasUserInfoChanges) {
 					payload.userInfo = {
-						name: userData.companyName || '',
-						aboutUs: userData.aboutCompany || '',
-						industry: userData.industry || '',
-						size: userData.companySize || '',
-						website: userData.companyWebsite || '',
-						logo: userData.companyLogo || '',
-						foundedYear: userData.foundedYear || '',
-						headquarters: userData.headquarters || '',
-						linkedIn: userData.companyLinkedin || ''
+						name: (userData.companyName as string) || '',
+						aboutUs: (userData.aboutCompany as string) || '',
+						industry: (userData.industry as string) || '',
+						size: (userData.companySize as string) || '',
+						website: (userData.companyWebsite as string) || '',
+						logo: (userData.companyLogo as string) || '',
+						foundedYear: (userData.foundedYear as string) || '',
+						headquarters: (userData.headquarters as string) || '',
+						linkedIn: (userData.companyLinkedin as string) || ''
 					};
 				}
 			}
@@ -282,8 +282,8 @@ class UserService {
 	}
 	
 	// Helper to transform backend data to frontend format
-	transformToFrontendFormat(user: User): any {
-		const frontendData: any = {
+	transformToFrontendFormat(user: User): Record<string, unknown> {
+		const frontendData: Record<string, unknown> = {
 			id: user.id,
 			fullName: user.name || '',
 			email: user.email || '',
