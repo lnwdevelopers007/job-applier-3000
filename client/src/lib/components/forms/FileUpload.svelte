@@ -42,7 +42,7 @@
 			<button 
 				onclick={() => fileInput.click()}
 				type="button"
-				class="text-sm font-medium text-gray-700 hover:text-gray-900"
+				class="text-sm font-medium text-gray-700 hover:text-gray-900 hover:cursor-pointer"
 			>
 				Click to upload
 			</button>
