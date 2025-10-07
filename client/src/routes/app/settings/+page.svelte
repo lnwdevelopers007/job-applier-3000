@@ -1,245 +1,81 @@
 <script lang="ts">
 	import ProfileSettings from '$lib/components/profile/ProfileSettings.svelte';
-	import { userService } from '$lib/services/userService';
+	import { SettingsService, SEEKER_TABS, INITIAL_SEEKER_DATA, type SeekerUserData } from '$lib/services/settingsService';
+	import { LoaderCircle } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 	
-	let activeTab = $state('user');
-	// Combined user and profile data for ProfileSettings component
-	let userData = $state({
-		// User account data
-		id: '',
-		name: '',
-		email: '',
-		avatar: '',
-		provider: '',
-		userID: '',
-		role: '',
-		verified: false,
-		currentPassword: '',
-		newPassword: '',
-		confirmPassword: '',
-		googleConnected: false,
-		// Profile data
-		fullName: '',
-		location: '',
-		phone: '',
-		linkedin: '',
-		desiredRole: '',
-		aboutMe: '',
-		dateOfBirth: '',
-		gender: '',
-		portfolio: '',
-		github: '',
-		// Documents
-		documents: [] as any[]
-	});
+	// State using Svelte 5 runes
+	let userData = $state<SeekerUserData>({ ...INITIAL_SEEKER_DATA });
 	let loading = $state(true);
-	let error = $state(null);
-	let successMessage = $state('');
+	let error = $state<string | null>(null);
+	let activeTab = $state('user');
 	
-	const tabs = [
-		{
-			id: 'user',
-			label: 'User',
-			title: 'User info',
-			description: 'Update your photo and user details here.'
-		},
-		{
-			id: 'personal',
-			label: 'Personal Info',
-			title: 'Personal Info',
-			description: 'Manage your personal information that will be shared with employers.'
-		},
-		{
-			id: 'documents',
-			label: 'Documents',
-			title: 'Documents',
-			description: 'Upload and manage your documents and files.'
-		}
-	];
+	// Utility functions
+	function showError(message: string): void {
+		error = message;
+	}
 	
-	onMount(async () => {
-		await loadUserData();
-	});
+	function clearMessages(): void {
+		error = null;
+	}
 	
-	async function loadUserData() {
+	// Main functions
+	async function loadUserData(): Promise<void> {
 		try {
 			loading = true;
-			error = null;
+			clearMessages();
 			
-			const user = await userService.getCurrentUser();
+			userData = await SettingsService.loadUserData<SeekerUserData>('seeker');
 			
-			// Combine all data into userData
-			userData = {
-				// User account data
-				id: user.id || user._id,
-				name: user.name || '',
-				email: user.email || '',
-				avatar: user.avatarURL || '',
-				provider: user.provider || '',
-				userID: user.userID || '',
-				role: user.role || 'jobSeeker',
-				verified: user.verified || false,
-				currentPassword: '',
-				newPassword: '',
-				confirmPassword: '',
-				googleConnected: user.provider === 'google',
-				// Profile data - default empty strings
-				fullName: '',
-				location: '',
-				phone: '',
-				linkedin: '',
-				desiredRole: '',
-				aboutMe: '',
-				dateOfBirth: '',
-				gender: '',
-				portfolio: '',
-				github: '',
-				documents: []
-			};
-			
-			// Merge userInfo if it exists
-			if (user.userInfo) {
-				const info = user.userInfo as any;
-				userData.fullName = info.fullName || '';
-				userData.location = info.location || '';
-				userData.phone = info.phone || '';
-				userData.linkedin = info.linkedIn || '';
-				userData.desiredRole = info.desiredRole || '';
-				userData.aboutMe = info.aboutMe || '';
-				userData.dateOfBirth = info.dateOfBirth || '';
-				userData.gender = info.gender || '';
-				userData.portfolio = info.portfolio || '';
-				userData.github = info.github || '';
-			}
-		} catch (err: any) {
-			console.error('Failed to load user data:', err);
-			error = 'Failed to load profile data. Please try again.';
-			
-			// Fallback to mock data for development
-			if (import.meta.env.DEV) {
-				const { mockSeekerData } = await import('$lib/stores/mockData.js');
-				const mockData = { ...mockSeekerData };
-				userData.name = mockData.fullName || '';
-				userData.email = mockData.email || '';
-				userData.avatar = mockData.avatar || '';
-				userData.googleConnected = mockData.googleConnected || false;
-				userData.fullName = mockData.fullName || '';
-				userData.location = mockData.location || '';
-				userData.phone = mockData.phone || '';
-				userData.documents = mockData.documents || [];
-			}
+		} catch (err: unknown) {
+			const errorMessage = err instanceof Error ? err.message : 'Failed to load profile data. Please try again.';
+			showError(errorMessage);
 		} finally {
 			loading = false;
 		}
 	}
 	
-	async function handleSave(data: any, changedFields?: string[]) {
-		try {
-			error = null;
-			successMessage = '';
-			
-			// Get user ID from stored data
-			const userId = userData.id;
-			if (!userId) {
-				throw new Error('User ID not found');
-			}
-			
-			// Transform data to backend format with optional changed fields
-			const payload = userService.transformToBackendFormat(data, 'seeker', changedFields);
-			
-			// Handle password update separately
-			if (data.newPassword && data.currentPassword) {
-				await userService.updatePassword(data.currentPassword, data.newPassword);
-				// Clear password fields
-				userData.currentPassword = '';
-				userData.newPassword = '';
-				userData.confirmPassword = '';
-			}
-			
-			// Update user profile
-			const updatedUser = await userService.updateUser(userId, payload);
-			
-			// Update userData with the response
-			if (updatedUser.name) userData.name = updatedUser.name;
-			if (updatedUser.avatarURL) userData.avatar = updatedUser.avatarURL;
-			
-			if (updatedUser.userInfo) {
-				const info = updatedUser.userInfo as any;
-				if (info.fullName) userData.fullName = info.fullName;
-				if (info.location) userData.location = info.location;
-				if (info.phone) userData.phone = info.phone;
-				if (info.linkedIn) userData.linkedin = info.linkedIn;
-				// Update other profile fields as needed
-			}
-			
-			successMessage = 'Profile saved successfully!';
-			setTimeout(() => successMessage = '', 3000);
-		} catch (err: any) {
-			console.error('Failed to save profile:', err);
-			error = err.message || 'Failed to save profile. Please try again.';
-		}
+	async function handleSave(data: SeekerUserData, changedFields?: string[]): Promise<void> {
+		const updatedUser = await SettingsService.saveUserData(data, 'seeker', changedFields);
+		SettingsService.updateLocalData(userData, updatedUser, 'seeker');
 	}
 	
-	async function handleDocumentSave(data: any) {
-		try {
-			error = null;
-			successMessage = '';
-			
-			// Upload new documents with files
-			const documentsToUpload = data.documents?.filter((doc: any) => doc.file) || [];
-			for (const doc of documentsToUpload) {
-				try {
-					const uploadedDoc = await userService.uploadDocument(doc.file);
-					// Update document with server response
-					doc.id = uploadedDoc.id;
-					doc.url = uploadedDoc.url;
-					delete doc.file;
-				} catch (uploadErr) {
-					console.error('Failed to upload document:', uploadErr);
-				}
-			}
-			
-			// Update user with new documents list
-			const userId = userData.id;
-			if (userId) {
-				const payload = { documents: data.documents };
-				await userService.updateUser(userId, payload);
-			}
-			
-			userData.documents = data.documents;
-			successMessage = 'Documents saved successfully!';
-			setTimeout(() => successMessage = '', 3000);
-		} catch (err: any) {
-			console.error('Failed to save documents:', err);
-			error = err.message || 'Failed to save documents. Please try again.';
-		}
+	async function handleDocumentSave(data: SeekerUserData): Promise<void> {
+		await SettingsService.saveDocuments(data);
+		userData.documents = data.documents;
 	}
+	
+	function setActiveTab(tab: string): void {
+		activeTab = tab;
+	}
+	
+	// Lifecycle
+	onMount(() => {
+		loadUserData();
+	});
 </script>
 
+<!-- Loading State -->
 {#if loading}
-	<div class="flex items-center justify-center min-h-[400px]">
-		<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+	<div class="flex items-center justify-center min-h-[900px]">
+		<LoaderCircle class="animate-spin text-gray-300" size="48" strokeWidth="2" />
 	</div>
 {:else}
+	<!-- Error Message -->
 	{#if error}
-		<div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+		<div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
 			{error}
 		</div>
 	{/if}
 	
-	{#if successMessage}
-		<div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg">
-			{successMessage}
-		</div>
-	{/if}
-	
+	<!-- Profile Settings Component -->
 	<ProfileSettings 
-		{tabs}
+		tabs={SEEKER_TABS}
 		bind:activeTab
-		bind:userData={userData}
+		bind:userData
 		onSave={activeTab === 'documents' ? handleDocumentSave : handleSave}
 		userType="seeker"
 		title="Profile Settings"
+		onTabChange={setActiveTab}
 	/>
 {/if}

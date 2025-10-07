@@ -4,6 +4,8 @@
 	import CompanyTab from './tabs/CompanyTab.svelte';
 	import DocumentsTab from './tabs/DocumentsTab.svelte';
 	import { userService } from '$lib/services/userService';
+	import { Plus, LoaderCircle } from 'lucide-svelte';
+	import { toast } from 'svelte-french-toast';
 	
 	interface Tab {
 		id: string;
@@ -22,9 +24,6 @@
 		userID?: string;
 		role?: string;
 		verified?: boolean;
-		currentPassword?: string;
-		newPassword?: string;
-		confirmPassword?: string;
 		googleConnected?: boolean;
 		// Profile data (seeker)
 		fullName?: string;
@@ -34,7 +33,6 @@
 		desiredRole?: string;
 		aboutMe?: string;
 		dateOfBirth?: string;
-		gender?: string;
 		portfolio?: string;
 		github?: string;
 		// Company data
@@ -54,66 +52,66 @@
 		companyLogoFile?: File;
 	}
 	
+	type SaveHandler = (data: UserData, changedFields?: string[]) => Promise<void>;
+	
 	let {
 		tabs = [] as Tab[],
 		activeTab = $bindable(''),
 		userData = $bindable({} as UserData),
-		onSave = (data: UserData, changedFields?: string[]) => Promise.resolve(),
+		onSave,
 		title = 'Settings',
-		userType = 'seeker' as 'seeker' | 'company'
+		userType = 'seeker' as 'seeker' | 'company',
+		onTabChange
+	}: {
+		tabs: Tab[];
+		activeTab: string;
+		userData: UserData;
+		onSave: SaveHandler;
+		title: string;
+		userType: 'seeker' | 'company';
+		onTabChange?: (tabId: string) => void;
 	} = $props();
 	
-	// Track if tab has unsaved changes
+	// State management
 	let hasChanges = $state(false);
 	let isSaving = $state(false);
 	let initialData = $state({} as UserData);
 	let isInitialized = $state(false);
 	let changedFields = $state(new Set<string>());
 	
-	// Handle tab-level save - different logic for each tab
-	async function handleTabSave() {
-		isSaving = true;
-		try {
-			if (activeTab === 'user') {
-				// User tab - save account-level fields
-				await handleUserTabSave();
-			} else if (activeTab === 'personal' || activeTab === 'company') {
-				// Profile tabs - save through transform function with changed fields
-				await onSave(userData, Array.from(changedFields));
-			} else if (activeTab === 'documents') {
-				// Documents tab - handle document operations
-				await onSave(userData);
-			}
-			
-			hasChanges = false;
-			// Clear changed fields after successful save
-			changedFields.clear();
-			// Update initial data after successful save
-			initialData = JSON.parse(JSON.stringify(userData));
-		} catch (error) {
-			console.error('Save failed:', error);
-		} finally {
-			isSaving = false;
-		}
+	// Constants
+	const TRACKABLE_FIELDS = [
+		'name', 'email', 'avatar', 'role', 'verified',
+		'fullName', 'location', 'phone', 'linkedin', 'desiredRole', 'aboutMe', 
+		'dateOfBirth', 'portfolio', 'github',
+		'companyName', 'aboutCompany', 'industry', 'companySize', 'companyWebsite',
+		'companyLogo', 'foundedYear', 'headquarters', 'companyLinkedin'
+	] as const;
+	
+	const EXCLUDED_FIELDS = ['currentPassword', 'newPassword', 'confirmPassword'] as const;
+	
+	// Utility functions
+	function createCleanCopy(data: UserData): UserData {
+		const copy = { ...data };
+		EXCLUDED_FIELDS.forEach(field => delete (copy as any)[field]);
+		return copy;
 	}
 	
-	// Handle user tab save - account level fields
-	async function handleUserTabSave() {
-		// Send complete user object to avoid losing any data
-		const payload: any = {
-			name: userData.name || '',
-			email: userData.email || '',
-			avatarURL: userData.avatar || '',
-			provider: userData.provider || '',
-			userID: userData.userID || '',
-			role: userData.role || 'jobSeeker',
-			verified: userData.verified || false,
-			userInfo: {}
-		};
-		
-		// Include complete userInfo to preserve it
+	function resetChanges(): void {
+		userData = JSON.parse(JSON.stringify(initialData));
+		hasChanges = false;
+		changedFields.clear();
+	}
+	
+	function updateInitialData(): void {
+		hasChanges = false;
+		changedFields.clear();
+		initialData = JSON.parse(JSON.stringify(userData));
+	}
+	
+	function buildUserInfoPayload(): any {
 		if (userType === 'seeker') {
-			payload.userInfo = {
+			return {
 				fullName: userData.fullName || '',
 				location: userData.location || '',
 				phone: userData.phone || '',
@@ -121,12 +119,13 @@
 				desiredRole: userData.desiredRole || '',
 				aboutMe: userData.aboutMe || '',
 				dateOfBirth: userData.dateOfBirth || '',
-				gender: userData.gender || '',
 				portfolio: userData.portfolio || '',
 				github: userData.github || ''
 			};
-		} else if (userType === 'company') {
-			payload.userInfo = {
+		}
+		
+		if (userType === 'company') {
+			return {
 				name: userData.companyName || '',
 				aboutUs: userData.aboutCompany || '',
 				industry: userData.industry || '',
@@ -139,107 +138,146 @@
 			};
 		}
 		
-		// Call userService directly for user account updates
+		return {};
+	}
+	
+	// Save handlers
+	async function saveUserTab(): Promise<void> {
+		if (!userData.id) throw new Error('User ID not found');
+		
+		const payload = {
+			name: userData.name || '',
+			email: userData.email || '',
+			avatarURL: userData.avatar || '',
+			provider: userData.provider || '',
+			userID: userData.userID || '',
+			role: userData.role || 'jobSeeker',
+			verified: userData.verified || false,
+			userInfo: buildUserInfoPayload()
+		};
+		
 		await userService.updateUser(userData.id, payload);
 	}
 	
-	
-	// Handle direct saves (like disconnect) that bypass the transform function
-	function handleDirectSave() {
-		hasChanges = false;
-		// Clear changed fields
-		changedFields.clear();
-		// Update initial data to reflect current userData
-		initialData = JSON.parse(JSON.stringify(userData));
+	async function saveProfileTab(): Promise<void> {
+		await onSave(userData, Array.from(changedFields));
 	}
 	
-	// Track changes to userData (only after initialization, excluding password fields)
-	$effect(() => {
-		if (isInitialized) {
-			// Create copies without password fields for comparison
-			const currentData = { ...userData };
-			const initData = { ...initialData };
-			
-			// Remove password fields from comparison
-			const currentAny = currentData as any;
-			const initAny = initData as any;
-			if (currentAny.currentPassword !== undefined) delete currentAny.currentPassword;
-			if (currentAny.newPassword !== undefined) delete currentAny.newPassword; 
-			if (currentAny.confirmPassword !== undefined) delete currentAny.confirmPassword;
-			if (initAny.currentPassword !== undefined) delete initAny.currentPassword;
-			if (initAny.newPassword !== undefined) delete initAny.newPassword;
-			if (initAny.confirmPassword !== undefined) delete initAny.confirmPassword;
-			
-			// Track specific field changes
-			const newChangedFields = new Set<string>();
-			
-			// List of all trackable fields
-			const trackableFields = [
-				'name', 'email', 'avatar', 'role', 'verified',
-				'fullName', 'location', 'phone', 'linkedin', 'desiredRole', 'aboutMe', 
-				'dateOfBirth', 'gender', 'portfolio', 'github',
-				'companyName', 'aboutCompany', 'industry', 'companySize', 'companyWebsite',
-				'companyLogo', 'foundedYear', 'headquarters', 'companyLinkedin'
-			];
-			
-			for (const field of trackableFields) {
-				if (currentAny[field] !== initAny[field]) {
-					newChangedFields.add(field);
+	async function saveDocumentsTab(): Promise<void> {
+		await onSave(userData);
+	}
+	
+	// Main save handler
+	async function handleSave(): Promise<void> {
+		if (isSaving) return;
+		
+		const savePromise = (async () => {
+			isSaving = true;
+			try {
+				switch (activeTab) {
+					case 'user':
+						await saveUserTab();
+						break;
+					case 'personal':
+					case 'company':
+						await saveProfileTab();
+						break;
+					case 'documents':
+						await saveDocumentsTab();
+						break;
+					default:
+						throw new Error(`Unknown tab: ${activeTab}`);
 				}
+				updateInitialData();
+			} finally {
+				isSaving = false;
 			}
-			
-			changedFields = newChangedFields;
-			hasChanges = newChangedFields.size > 0;
-			
-			// Debug: Log changed fields (only in development)
-			if (import.meta.env.DEV && newChangedFields.size > 0) {
-				console.log('Changed fields:', Array.from(newChangedFields));
+		})();
+
+		toast.promise(savePromise, {
+			loading: 'Saving changes...',
+			success: 'Profile saved successfully!',
+			error: 'Failed to save changes. Please try again.'
+		});
+	}
+	
+	// Direct save handler for operations like OAuth disconnect
+	function handleDirectSave(): void {
+		updateInitialData();
+	}
+	
+	// Tab change handler
+	function handleTabChange(tabId: string): void {
+		activeTab = tabId;
+		onTabChange?.(tabId);
+	}
+	
+	// Initialize fields to prevent undefined binding errors
+	function initializeFields(): void {
+		const fieldsToInit = [
+			'documents', 'fullName', 'location', 'desiredRole', 'aboutMe', 'phone',
+			'dateOfBirth', 'linkedin', 'portfolio', 'github', 'name', 'email'
+		];
+		
+		fieldsToInit.forEach(field => {
+			if (userData[field as keyof UserData] === undefined) {
+				(userData as any)[field] = field === 'documents' ? [] : '';
+			}
+		});
+		
+		// Set derived fields
+		userData.googleConnected = userData.provider === 'google';
+	}
+	
+	// Track field changes
+	function trackChanges(): void {
+		if (!isInitialized) return;
+		
+		const currentData = createCleanCopy(userData);
+		const initData = createCleanCopy(initialData);
+		
+		const newChangedFields = new Set<string>();
+		
+		for (const field of TRACKABLE_FIELDS) {
+			if ((currentData as any)[field] !== (initData as any)[field]) {
+				newChangedFields.add(field);
 			}
 		}
-	});
+		
+		changedFields = newChangedFields;
+		hasChanges = newChangedFields.size > 0;
+		
+		// Debug logging in development
+		if (import.meta.env.DEV && newChangedFields.size > 0) {
+			console.log('Changed fields:', Array.from(newChangedFields));
+		}
+	}
 	
-	// Initialize nested objects and arrays if they don't exist
+	// Effects
 	$effect(() => {
-		if (!userData.documents) userData.documents = [];
+		initializeFields();
 		
-		// Initialize profile fields to prevent undefined binding errors
-		if (userData.fullName === undefined) userData.fullName = '';
-		if (userData.location === undefined) userData.location = '';
-		if (userData.desiredRole === undefined) userData.desiredRole = '';
-		if (userData.aboutMe === undefined) userData.aboutMe = '';
-		if (userData.phone === undefined) userData.phone = '';
-		if (userData.dateOfBirth === undefined) userData.dateOfBirth = '';
-		if (userData.gender === undefined) userData.gender = '';
-		if (userData.linkedin === undefined) userData.linkedin = '';
-		if (userData.portfolio === undefined) userData.portfolio = '';
-		if (userData.github === undefined) userData.github = '';
-		
-		// Initialize user fields
-		if (userData.name === undefined) userData.name = '';
-		if (userData.email === undefined) userData.email = '';
-		
-		// Set googleConnected based on provider field
-		userData.googleConnected = userData.provider === 'google';
-		
-		// After initialization, set initial data and mark as initialized
 		if (!isInitialized) {
 			initialData = JSON.parse(JSON.stringify(userData));
 			isInitialized = true;
 		}
 	});
 	
-	function handleTabChange(tabId: string) {
-		activeTab = tabId;
-	}
+	$effect(() => {
+		trackChanges();
+	});
 	
+	// Derived values
 	const activeTabData = $derived(tabs.find((tab: Tab) => tab.id === activeTab));
 </script>
 
-<div class="bg-white rounded-lg border border-gray-200 p-6 min-h-[1000px]">
-	<h1 class="text-2xl font-semibold text-gray-900 p-3">{title}</h1>
-	
-	<div class="border-b border-gray-200">
-		<nav class="flex -mb-px">
+<div class="">
+	<!-- Header -->
+	<div class="p-2">
+		<h1 class="text-2xl font-semibold text-gray-900 mb-6">{title}</h1>
+		
+		<!-- Tabs -->
+		<nav class="flex border-b border-gray-200 -mb-px">
 			{#each tabs as tab}
 				<button
 					onclick={() => handleTabChange(tab.id)}
@@ -251,37 +289,39 @@
 		</nav>
 	</div>
 	
-	<div class="flex justify-between items-start px-8 py-6 border-b border-gray-200">
+	<!-- Tab header with actions -->
+	<div class="flex justify-between items-start border-b border-gray-200 px-6 py-4">
 		<div>
 			<h2 class="text-lg font-medium text-gray-900">{activeTabData?.title || ''}</h2>
 			<p class="text-sm text-gray-500 mt-1">{activeTabData?.description || ''}</p>
 		</div>
+		
 		{#if activeTab === 'documents'}
 			<button
 				onclick={() => document.getElementById('file-upload')?.click()}
-				class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors hover:cursor-pointer"
+				class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors flex items-center gap-2"
 			>
+				<Plus class="w-4 h-4" />
 				Add Documents
 			</button>
 		{:else if hasChanges}
 			<div class="flex items-center gap-3">
 				<button
-					onclick={handleTabSave}
+					onclick={handleSave}
 					disabled={isSaving}
-					class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 disabled:opacity-50 transition-colors hover:cursor-pointer"
+					class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center gap-2 hover:cursor-pointer"
 				>
-					{isSaving ? 'Saving...' : 'Save Changes'}
+					{#if isSaving}
+						<LoaderCircle class="w-4 h-4 animate-spin" />
+						Saving...
+					{:else}
+						Save Changes
+					{/if}
 				</button>
 				<button
-					onclick={() => {
-						// Revert userData back to initial state
-						userData = JSON.parse(JSON.stringify(initialData));
-						hasChanges = false;
-						// Clear changed fields
-						changedFields.clear();
-					}}
+					onclick={resetChanges}
 					disabled={isSaving}
-					class="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50 disabled:opacity-50 transition-colors hover:cursor-pointer"
+					class="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50 disabled:opacity-50 transition-colors flex items-center gap-2 hover:cursor-pointer"
 				>
 					Cancel
 				</button>
@@ -289,9 +329,10 @@
 		{/if}
 	</div>
 	
-	<div class="tab-content">
+	<!-- Tab content -->
+	<div>
 		{#if activeTab === 'user'}
-			<UserTab bind:userData={userData} {onSave} onDirectSave={handleDirectSave} />
+			<UserTab bind:userData onDirectSave={handleDirectSave} />
 		{:else if activeTab === 'personal' && userType === 'seeker'}
 			<PersonalInfoTab bind:profileData={userData} />
 		{:else if activeTab === 'company' && userType === 'company'}

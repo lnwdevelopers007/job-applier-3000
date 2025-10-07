@@ -133,32 +133,15 @@ class UserService {
 		return updatedUser;
 	}
 	
-	// Upload document
-	async uploadDocument(file: File): Promise<Document> {
-		const formData = new FormData();
-		formData.append('file', file);
-		
-		const response = await apiFetch(`${API_BASE}/users/documents`, {
-			method: 'POST',
-			body: formData
-		});
-		
-		if (!response.ok) {
-			throw new Error('Failed to upload document');
-		}
-		
-		return await response.json();
+	// Upload document (Not implemented - console log only)
+	async uploadDocument(file: File): Promise<Record<string, unknown>> {
+		console.log('📤 Document upload not implemented yet for:', file.name);
+		return {};
 	}
 	
-	// Delete document
+	// Delete document (Not implemented - console log only)
 	async deleteDocument(documentId: string): Promise<void> {
-		const response = await apiFetch(`${API_BASE}/users/documents/${documentId}`, {
-			method: 'DELETE'
-		});
-		
-		if (!response.ok) {
-			throw new Error('Failed to delete document');
-		}
+		console.log('🗑️ Document delete not implemented yet for ID:', documentId);
 	}
 	
 	// Update password
@@ -207,7 +190,6 @@ class UserService {
 					desiredRole: userData.desiredRole || '',
 					aboutMe: userData.aboutMe || '',
 					dateOfBirth: userData.dateOfBirth || '',
-					gender: userData.gender || '',
 					portfolio: userData.portfolio || '',
 					github: userData.github || ''
 				};
@@ -242,76 +224,56 @@ class UserService {
 				payload.verified = userData.verified;
 			}
 			
-			// Handle userInfo fields
-			const userInfoFields = [];
+			// Handle userInfo fields - Always send all fields since BSON can't use omitempty
 			if (userType === 'seeker' || userType === 'jobSeeker') {
-				const fieldMappings = {
-					'fullName': 'fullName',
-					'location': 'location',
-					'phone': 'phone',
-					'linkedin': 'linkedIn',
-					'desiredRole': 'desiredRole',
-					'aboutMe': 'aboutMe',
-					'dateOfBirth': 'dateOfBirth',
-					'gender': 'gender',
-					'portfolio': 'portfolio',
-					'github': 'github'
-				};
+				const userInfoFieldNames = [
+					'fullName', 'location', 'phone', 'linkedin', 'desiredRole', 
+					'aboutMe', 'dateOfBirth', 'portfolio', 'github'
+				];
 				
-				for (const [frontendField, backendField] of Object.entries(fieldMappings)) {
-					if (changedFields.includes(frontendField)) {
-						userInfoFields.push(backendField);
-					}
-				}
+				// Check if any userInfo field has changed
+				const hasUserInfoChanges = userInfoFieldNames.some(field => 
+					changedFields.includes(field)
+				);
 				
-				if (userInfoFields.length > 0) {
-					payload.userInfo = {};
-					for (const field of userInfoFields) {
-						if (field === 'linkedIn') {
-							payload.userInfo[field] = userData.linkedin || '';
-						} else {
-							payload.userInfo[field] = userData[field] || '';
-						}
-					}
+				// If any userInfo field changed, send ALL userInfo fields
+				if (hasUserInfoChanges) {
+					payload.userInfo = {
+						fullName: userData.fullName || '',
+						location: userData.location || '',
+						phone: userData.phone || '',
+						linkedIn: userData.linkedin || '',
+						desiredRole: userData.desiredRole || '',
+						aboutMe: userData.aboutMe || '',
+						dateOfBirth: userData.dateOfBirth || '',
+						portfolio: userData.portfolio || '',
+						github: userData.github || ''
+					};
 				}
 			} else if (userType === 'company') {
-				const fieldMappings = {
-					'companyName': 'name',
-					'aboutCompany': 'aboutUs',
-					'industry': 'industry',
-					'companySize': 'size',
-					'companyWebsite': 'website',
-					'companyLogo': 'logo',
-					'foundedYear': 'foundedYear',
-					'headquarters': 'headquarters',
-					'companyLinkedin': 'linkedIn'
-				};
+				const userInfoFieldNames = [
+					'companyName', 'aboutCompany', 'industry', 'companySize', 
+					'companyWebsite', 'companyLogo', 'foundedYear', 'headquarters', 'companyLinkedin'
+				];
 				
-				for (const [frontendField, backendField] of Object.entries(fieldMappings)) {
-					if (changedFields.includes(frontendField)) {
-						userInfoFields.push(backendField);
-					}
-				}
+				// Check if any userInfo field has changed
+				const hasUserInfoChanges = userInfoFieldNames.some(field => 
+					changedFields.includes(field)
+				);
 				
-				if (userInfoFields.length > 0) {
-					payload.userInfo = {};
-					for (const field of userInfoFields) {
-						if (field === 'name') {
-							payload.userInfo[field] = userData.companyName || '';
-						} else if (field === 'aboutUs') {
-							payload.userInfo[field] = userData.aboutCompany || '';
-						} else if (field === 'size') {
-							payload.userInfo[field] = userData.companySize || '';
-						} else if (field === 'website') {
-							payload.userInfo[field] = userData.companyWebsite || '';
-						} else if (field === 'logo') {
-							payload.userInfo[field] = userData.companyLogo || '';
-						} else if (field === 'linkedIn') {
-							payload.userInfo[field] = userData.companyLinkedin || '';
-						} else {
-							payload.userInfo[field] = userData[field] || '';
-						}
-					}
+				// If any userInfo field changed, send ALL userInfo fields
+				if (hasUserInfoChanges) {
+					payload.userInfo = {
+						name: userData.companyName || '',
+						aboutUs: userData.aboutCompany || '',
+						industry: userData.industry || '',
+						size: userData.companySize || '',
+						website: userData.companyWebsite || '',
+						logo: userData.companyLogo || '',
+						foundedYear: userData.foundedYear || '',
+						headquarters: userData.headquarters || '',
+						linkedIn: userData.companyLinkedin || ''
+					};
 				}
 			}
 		}
