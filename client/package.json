@@ -53,6 +53,7 @@
 		"@tiptap/starter-kit": "^3.3.0",
 		"dompurify": "^3.2.7",
 		"jwt-decode": "^4.0.0",
-		"lucide-svelte": "^0.541.0"
+		"lucide-svelte": "^0.541.0",
+		"svelte-french-toast": "^1.2.0"
 	}
 }
