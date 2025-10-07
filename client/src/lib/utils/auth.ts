@@ -4,7 +4,7 @@ export type UserInfo = {
 	name: string;
 	email: string;
 	role: string;
-	avatarUrl?: string;
+	avatarURL?: string;
 };
 
 export function isAuthenticated(): boolean {
@@ -20,7 +20,7 @@ export function getUserInfo(): UserInfo | null {
 				name: parsed.name || 'Guest',
 				email: parsed.email || '',
 				role: parsed.role || 'User',
-				avatarUrl: parsed.avatarUrl
+				avatarURL: parsed.avatarURL
 			};
 		} catch (err) {
 			console.error('Failed to parse stored user info:', err);

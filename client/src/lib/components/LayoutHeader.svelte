@@ -25,7 +25,7 @@
     if (!role) return 'User';
     
     const roleMap: Record<string, string> = {
-      'student': 'Student',
+      'jobSeeker': 'Job Seeker',
       'company': 'Recruiter',
       'admin': 'Administrator',
     };
@@ -81,7 +81,7 @@
         onclick={toggleDropdown}
         class="flex items-center space-x-3 hover:cursor-pointer focus:outline-gray-300 focus:outline  focus:transition-colors rounded-full"
       >
-        <img src={userInfo?.avatarUrl || userAvatar} alt="Avatar" class="w-9 h-9 rounded-full object-cover" />
+        <img src={userInfo?.avatarURL || userAvatar} alt="Avatar" class="w-9 h-9 rounded-full object-cover" />
       </button>
 
       {#if isDropdownOpen}
@@ -92,7 +92,7 @@
         <!-- User info section -->
         <div class="px-4 py-3 border-b border-gray-100 mb-1">
           <div class="flex items-center space-x-3">
-            <img src={userInfo?.avatarUrl || userAvatar} alt="Avatar" class="w-10 h-10 rounded-full object-cover" />
+            <img src={userInfo?.avatarURL || userAvatar} alt="Avatar" class="w-10 h-10 rounded-full object-cover" />
             <div>
               <p class="text-sm font-semibold text-gray-900">{userInfo?.name || 'Guest'}</p>
               <p class="text-xs text-gray-500">{userInfo?.email || ''}</p>
