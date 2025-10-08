@@ -4,7 +4,7 @@ export type UserInfo = {
 	name: string;
 	email: string;
 	role: string;
-	avatarUrl?: string;
+	avatarURL?: string;
 	userID: string;
 };
 
@@ -21,7 +21,7 @@ export function getUserInfo(): UserInfo | null {
 				name: parsed.name || 'Guest',
 				email: parsed.email || '',
 				role: parsed.role || 'User',
-				avatarUrl: parsed.avatarUrl,
+				avatarURL: parsed.avatarURL,
 				userID: parsed.userID
 			};
 		} catch (err) {

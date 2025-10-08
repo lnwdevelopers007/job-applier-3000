@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-slate-50 flex flex-col mx-auto">
+<div class="min-h-screen bg-slate-50/50 flex flex-col mx-auto">
 
   <LayoutHeader />
 
