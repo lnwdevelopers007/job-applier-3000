@@ -55,7 +55,7 @@
 		formData.append('userRole', userRole);
 
 		try {
-			const response = await fetch('${Backend_URL}/files/upload', {
+			const response = await fetch(`${Backend_URL}/files/upload`, {
 				method: 'POST',
 				body: formData
 			});
