@@ -3,6 +3,7 @@ package schema
 import (
 	"encoding/base64"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -13,17 +14,22 @@ import (
 func fileValidPayload() map[string]any {
 	data := []byte("hello world")
 	return map[string]any{
-		"parentID":      primitive.NewObjectID(),
-		"parentColl":    "jobs",
-		"content":       base64.StdEncoding.EncodeToString(data), // JSON string → []byte
+		"userID":        primitive.NewObjectID(),
+		"content":       base64.StdEncoding.EncodeToString(data),
 		"fileExtension": "pdf",
+		"filename":      "resume.pdf",
+		"contentType":   "application/pdf",
+		"size":          int64(len(data)),
+		"category":      "resume",
+		"uploadDate":    time.Now(),
 	}
 }
+
 func bindMockFile(t *testing.T, payload map[string]any) (File, error) {
 	return bindMockRequest[File](t, payload)
 }
 
-// --- valid case ---
+// --- valid binding cases ---
 
 func TestValidFile(t *testing.T) {
 	payload := fileValidPayload()
@@ -31,27 +37,11 @@ func TestValidFile(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-// --- invalid cases ---
+// --- missing required fields ---
 
-func TestFileMissingParentID(t *testing.T) {
+func TestFileMissingUserID(t *testing.T) {
 	payload := fileValidPayload()
-	delete(payload, "parentID")
-
-	_, err := bindMockFile(t, payload)
-	assert.Error(t, err)
-}
-
-func TestFileMissingParentColl(t *testing.T) {
-	payload := fileValidPayload()
-	delete(payload, "parentColl")
-
-	_, err := bindMockFile(t, payload)
-	assert.Error(t, err)
-}
-
-func TestFileInvalidFileMissingContent(t *testing.T) {
-	payload := fileValidPayload()
-	delete(payload, "content")
+	delete(payload, "userID")
 
 	_, err := bindMockFile(t, payload)
 	assert.Error(t, err)
@@ -60,6 +50,38 @@ func TestFileInvalidFileMissingContent(t *testing.T) {
 func TestFileMissingFileExtension(t *testing.T) {
 	payload := fileValidPayload()
 	delete(payload, "fileExtension")
+
+	_, err := bindMockFile(t, payload)
+	assert.Error(t, err)
+}
+
+func TestFileMissingFilename(t *testing.T) {
+	payload := fileValidPayload()
+	delete(payload, "filename")
+
+	_, err := bindMockFile(t, payload)
+	assert.Error(t, err)
+}
+
+func TestFileMissingContentType(t *testing.T) {
+	payload := fileValidPayload()
+	delete(payload, "contentType")
+
+	_, err := bindMockFile(t, payload)
+	assert.Error(t, err)
+}
+
+func TestFileMissingSize(t *testing.T) {
+	payload := fileValidPayload()
+	delete(payload, "size")
+
+	_, err := bindMockFile(t, payload)
+	assert.Error(t, err)
+}
+
+func TestFileMissingCategory(t *testing.T) {
+	payload := fileValidPayload()
+	delete(payload, "category")
 
 	_, err := bindMockFile(t, payload)
 	assert.Error(t, err)
