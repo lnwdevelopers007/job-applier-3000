@@ -79,8 +79,8 @@
               const companyData = await companyRes.json();
               console.log(companyData);
               if (Array.isArray(companyData) && companyData.length > 0) {
-                companyName = companyData[0].Name || companyName;
-                companyLogo = companyData[0].AvatarURL || companyLogo;
+                companyName = companyData[0].name || companyName;
+                companyLogo = companyData[0].avatarURL || companyLogo;
               }
             }
           } catch (err) {
