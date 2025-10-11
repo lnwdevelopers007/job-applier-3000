@@ -3,6 +3,7 @@ package controller
 import (
 	"io"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -24,18 +25,52 @@ func NewFileController() FileController {
 		},
 	}
 }
+// getUserFromContext extracts user info from context (set by auth middleware)
+func getUserFromContext(c *gin.Context) (userID primitive.ObjectID, role string, err error) {
+	enableAuth := os.Getenv("ENABLE_AUTH") == "true"
+
+	if enableAuth {
+		// Get from context (set by auth middleware)
+		userIDStr, exists := c.Get("userID")
+		if !exists {
+			err = http.ErrNotSupported
+			return
+		}
+		
+		userID, err = primitive.ObjectIDFromHex(userIDStr.(string))
+		if err != nil {
+			return
+		}
+
+		roleVal, _ := c.Get("role")
+		role = roleVal.(string)
+	} else {
+		// Fallback for testing (when auth is disabled)
+		userIDStr := c.PostForm("userID")
+		if userIDStr == "" {
+			userIDStr = c.Query("requestingUserID")
+		}
+		
+		userID, err = primitive.ObjectIDFromHex(userIDStr)
+		if err != nil {
+			return
+		}
+
+		role = c.PostForm("userRole")
+		if role == "" {
+			role = "jobSeeker" // default for testing
+		}
+	}
+
+	return
+}
 
 // Upload handles file upload
 func (fc FileController) Upload(c *gin.Context) {
-	// TODO: Get authenticated user from context (after auth middleware is implemented)
-	// For now, accept userID from form
-	userIDStr := c.PostForm("userID")
-	userRole := c.PostForm("userRole") // "jobSeeker" or "company"
-
-	// Validate userID
-	userID, err := primitive.ObjectIDFromHex(userIDStr)
+	// Get authenticated user
+	userID, userRole, err := getUserFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid userID"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
 		return
 	}
 
@@ -114,17 +149,10 @@ func (fc FileController) Download(c *gin.Context) {
 		return
 	}
 
-	// TODO: Get authenticated user from context (after auth middleware)
-	// For now, accept userID from query param for testing
-	requestingUserID := c.Query("requestingUserID")
-	if requestingUserID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
-
-	requestingUserObjectID, err := primitive.ObjectIDFromHex(requestingUserID)
+	// Get authenticated user
+	requestingUserID, _, err := getUserFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid requesting user ID"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
 		return
 	}
 
@@ -139,7 +167,7 @@ func (fc FileController) Download(c *gin.Context) {
 	}
 
 	// Authorization check: User can only download their own files
-	if fileDoc.UserID != requestingUserObjectID {
+	if fileDoc.UserID != requestingUserID {
 		c.JSON(http.StatusForbidden, gin.H{
 			"error": "you do not have permission to access this file",
 		})
@@ -152,6 +180,7 @@ func (fc FileController) Download(c *gin.Context) {
 	c.Data(http.StatusOK, fileDoc.ContentType, fileDoc.Content)
 }
 
+
 // ListByUser lists all files for a specific user
 func (fc FileController) ListByUser(c *gin.Context) {
 	userID := c.Param("userId")
@@ -161,22 +190,15 @@ func (fc FileController) ListByUser(c *gin.Context) {
 		return
 	}
 
-	// TODO: Authorization check - user can only list their own files
-	// For now, accept requestingUserID from query param
-	requestingUserID := c.Query("requestingUserID")
-	if requestingUserID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
-
-	requestingUserObjectID, err := primitive.ObjectIDFromHex(requestingUserID)
+	// Get authenticated user
+	requestingUserID, _, err := getUserFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid requesting user ID"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
 		return
 	}
 
 	// Check if requesting user is trying to access their own files
-	if objectID != requestingUserObjectID {
+	if objectID != requestingUserID {
 		c.JSON(http.StatusForbidden, gin.H{
 			"error": "you can only access your own files",
 		})
@@ -232,17 +254,10 @@ func (fc FileController) Delete(c *gin.Context) {
 		return
 	}
 
-	// TODO: Get authenticated user from context (after auth middleware)
-	// For now, accept userID from query param
-	requestingUserID := c.Query("requestingUserID")
-	if requestingUserID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
-
-	requestingUserObjectID, err := primitive.ObjectIDFromHex(requestingUserID)
+	// Get authenticated user
+	requestingUserID, _, err := getUserFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid requesting user ID"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
 		return
 	}
 
@@ -258,7 +273,7 @@ func (fc FileController) Delete(c *gin.Context) {
 	}
 
 	// Authorization check
-	if fileDoc.UserID != requestingUserObjectID {
+	if fileDoc.UserID != requestingUserID {
 		c.JSON(http.StatusForbidden, gin.H{
 			"error": "you do not have permission to delete this file",
 		})
