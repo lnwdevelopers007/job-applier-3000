@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/database"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -26,7 +27,7 @@ func (controller BaseController[Schema]) Create(c *gin.Context) {
 	collection := db.Collection(controller.collectionName)
 
 	var raw Schema
-	if err := c.ShouldBindJSON(&raw); err != nil {
+	if err := c.ShouldBindBodyWith(&raw, binding.JSON); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -48,20 +49,14 @@ func (controller BaseController[Schema]) Create(c *gin.Context) {
 // RetrieveAll retrieves all documents (row) and all of its attirbutes
 // from collectionName collection
 func (controller BaseController[Schema]) RetrieveAll(c *gin.Context) {
-	db := database.GetDatabase()
-	collection := db.Collection(controller.collectionName)
-	cursor, err := collection.Find(context.Background(), bson.D{{}})
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	res, err := findAll[Schema](ctx, controller.collectionName, bson.M{})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
-	var jobs []bson.M
-	if err = cursor.All(context.Background(), &jobs); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, jobs)
+	c.JSON(http.StatusOK, res)
 }
 
 // Update() updates a resource by ID.
@@ -147,16 +142,12 @@ func (controller BaseController[Schema]) RetrieveOne(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
 		return
 	}
-
-	db := database.GetDatabase()
-	collection := db.Collection(controller.collectionName)
-
-	var result bson.M
-	err = collection.FindOne(context.Background(), bson.M{"_id": objID}).Decode(&result)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	res, err := findOne[Schema](ctx, controller.collectionName, objID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": controller.displayName + " not found"})
 		return
 	}
-
-	c.JSON(http.StatusOK, result)
+	c.JSON(http.StatusOK, res)
 }

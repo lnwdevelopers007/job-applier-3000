@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/email"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -159,7 +161,36 @@ func JobApplicationFilter(c *gin.Context) (bson.M, bool) {
 
 // Create adds a new job application
 func (jc JobApplicationController) Create(c *gin.Context) {
+	shouldReturn := jc.sendEmail(c)
+	if shouldReturn {
+		return
+	}
 	jc.baseController.Create(c)
+}
+
+func (jc JobApplicationController) sendEmail(c *gin.Context) bool {
+	var raw schema.JobApplication
+	if err := c.ShouldBindBodyWith(&raw, binding.JSON); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return true
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	job, jobErr := findOne[schema.Job](ctx, "jobs", raw.JobID)
+	if jobErr != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": jobErr.Error()})
+		return true
+	}
+	if !job.EmailNotifications {
+		return false
+	}
+	company, companyErr := findOne[schema.User](ctx, "users", job.CompanyID)
+	if companyErr != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": companyErr.Error()})
+		return true
+	}
+	email.Send(company.Email, "New applicant applied", "yay")
+	return false
 }
 
 // Update updates a job application by ID
