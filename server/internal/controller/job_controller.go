@@ -133,7 +133,7 @@ func (jc JobController) Query(c *gin.Context) {
 				case "latest":
 					now := time.Now()
 					filter["postOpenDate"] = bson.M{"$lte": now}
-					findOptions.SetSort(bson.D{{"postOpenDate", -1}})
+					findOptions.SetSort(bson.D{{Key: "postOpenDate", Value: -1}})
 					findOptions.SetLimit(3)
 				default:
 					filter[key] = val
