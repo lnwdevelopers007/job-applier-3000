@@ -96,3 +96,26 @@ func Logout(c *gin.Context) {
 	c.SetCookie("refresh_token", "", -1, "/", c.Request.URL.Hostname(), false, true)
 	c.Redirect(http.StatusPermanentRedirect, config.LoadEnv("FRONTEND"))
 }
+
+// Me returns the current authenticated user's information from JWT
+func Me(c *gin.Context) {
+	// This endpoint should be called with auth middleware
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "not authenticated"})
+		return
+	}
+
+	role, _ := c.Get("role")
+	email, _ := c.Get("email")
+	name, _ := c.Get("name")
+
+	c.JSON(http.StatusOK, gin.H{
+		"userID": userID,
+		"role":   role,
+		"email":  email,
+		"name":   name,
+		// Note: 'verified' status is managed by admin and stored in database
+		// Query user document if you need verification status
+	})
+}
