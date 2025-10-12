@@ -57,8 +57,12 @@
             if (companyRes.ok) {
               const companyData = await companyRes.json();
               if (Array.isArray(companyData) && companyData.length > 0) {
-                companyName = companyData[0].name || companyName;
-                companyLogo = companyData[0].avatarURL || companyLogo;
+                const company = companyData[0];
+                const infoArray = company.userInfo || [];
+                const info = Object.fromEntries(infoArray.map(item => [item.Key, item.Value]));
+
+                companyName = info.name || company.name || companyName;
+                companyLogo = info.logo || company.avatarURL || companyLogo;
               }
             }
           } catch (err) {
