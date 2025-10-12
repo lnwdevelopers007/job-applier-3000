@@ -90,7 +90,6 @@
 					})(),
 					logoStyle: 'bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600'
 				}));
-				console.log(recentJobs);
 			}
 		} catch (error) {
 			console.error('Failed to fetch recent jobs:', error);
