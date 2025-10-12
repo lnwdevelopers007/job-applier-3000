@@ -7,7 +7,8 @@ import (
 	"github.com/lnwdevelopers007/job-applier-3000/server/config"
 )
 
-func Send(target, subject, body string) {
+// Send sends email to an address with a specified subject and body.
+func Send(to, subject, body string) {
 
 	from := config.LoadEnv("EMAIL")
 	pass := config.LoadEnv("EMAIL_PASSWORD")
@@ -23,7 +24,7 @@ func Send(target, subject, body string) {
 
 	auth := smtp.PlainAuth("", from, pass, smtpHost)
 
-	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, []string{target}, msg)
+	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, []string{to}, msg)
 	if err != nil {
 		log.Fatal("Failed to send email:", err)
 	}
