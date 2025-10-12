@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/database"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -22,6 +23,26 @@ func extractUnique[Schema any, ValueType comparable](items []Schema, getValue fu
 		}
 	}
 	return uniqueSlice
+}
+
+// getUsersFromID returns a map of users from a slice of IDs.
+func getUsersFromID(
+	ctx context.Context,
+	userIDs []primitive.ObjectID,
+) (
+	map[primitive.ObjectID]schema.User,
+	error,
+) {
+	filter := bson.M{"_id": bson.M{"$in": userIDs}}
+	result, err := findAll[schema.User](ctx, "users", filter)
+
+	// Create a map of job seekers for easy lookup
+	resultMap := make(map[primitive.ObjectID]schema.User)
+	for _, js := range result {
+		resultMap[js.ID] = js
+	}
+
+	return resultMap, err
 }
 
 // findAll finds all document which matched the filter from a collection.
