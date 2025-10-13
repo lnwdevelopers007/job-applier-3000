@@ -38,7 +38,6 @@
       }
       const companyID = user.userID;
       
-      // Fetch jobs for this company using userID as companyID
       const res = await apiFetch(`/jobs/query?companyID=${companyID}`);
       
       if (!res.ok) {
@@ -69,8 +68,7 @@
           { label: 'Manage', disabled: false }
         ]
       }));
-    } catch (err) {
-      // Handle error silently or show user-friendly message
+    } catch {
       jobs = [];
     }
   }
