@@ -31,7 +31,21 @@
 		sessionStorage.removeItem('pendingNavigation');
 	}
 
-	let recentJobs = $state<any[]>([]);
+	let recentJobs = $state<Array<{
+		id: string;
+		company: string;
+		title: string;
+		location: string;
+		locationType: string | null;
+		minSalary: number;
+		maxSalary: number;
+		currency: string;
+		type: string | null;
+		tags: string[];
+		postedAt: string;
+		badge: { text: string; type: string } | null;
+		logoStyle: string;
+	}>>([]);
 	let isLoadingJobs = $state(true);
 
 	async function fetchRecentJobs() {
