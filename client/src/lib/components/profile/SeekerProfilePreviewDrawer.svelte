@@ -161,7 +161,7 @@
 			</h2>
 			
 			<div class="flex flex-wrap gap-2">
-				{#each skills() as skill}
+				{#each skills() as skill (skill)}
 					<span class="px-3 py-1 bg-gray-100 text-gray-700 text-sm border border-gray-200 rounded">
 						{skill}
 					</span>
@@ -177,7 +177,7 @@
 			
 			{#if documents().length > 0}
 				<div class="space-y-3">
-					{#each documents() as doc}
+					{#each documents() as doc (doc.name)}
 						<div class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded">
 							<div class="flex items-center gap-3">
 								<div class="w-8 h-8 bg-red-500 rounded flex items-center justify-center">

@@ -13,7 +13,6 @@ const publicRoutes = [
 	'/unverified'
 ];
 
-// JWT payload type based on your Go backend
 type JWTPayload = {
 	email?: string;
 	name?: string;
@@ -27,16 +26,13 @@ type JWTPayload = {
 export const handle: Handle = async ({ event, resolve }) => {
 	const path = event.url.pathname;
 	
-	// Check if this is a public route
 	const isPublicRoute = publicRoutes.some(route => 
 		path === route || path.startsWith(route + '/')
 	);
 
-	// Try to get token from cookie
 	const accessToken = event.cookies.get('access_token');
 	const refreshToken = event.cookies.get('refresh_token');
 
-	// Handle authentication
 	if (accessToken) {
 		let decoded: JWTPayload | null = null;
 		try {
@@ -63,11 +59,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 					if (refreshResponse.ok) {
 						const data = await refreshResponse.json();
-						// Decode new access token
 						const newDecoded = jwtDecode<JWTPayload>(data.access_token);
 						const jwtExpiresIn = newDecoded.exp ? Math.max(0, newDecoded.exp - Math.floor(Date.now() / 1000)) : 60 * 60 * 24;
 						
-						// Set new access token cookie with JWT expiration
 						event.cookies.set('access_token', data.access_token, {
 							path: '/',
 							httpOnly: true,
@@ -77,7 +71,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 						});
 						
 						if (newDecoded) {
-							// Normalize role for consistency
 							const normalizedRole = normalizeRole(newDecoded.role);
 							
 							// Set user in locals
