@@ -1,4 +1,6 @@
 import { apiFetch } from '$lib/utils/api';
+import { getUserInfo, isAuthenticated } from '$lib/utils/auth';
+import { authStore } from '$lib/stores/auth.svelte';
 
 const API_BASE = import.meta.env.VITE_BACKEND || 'http://localhost:8080';
 
@@ -70,17 +72,16 @@ export interface UpdateUserPayload {
 class UserService {
 	// Get current user profile
 	async getCurrentUser(): Promise<User> {
-		const userStr = localStorage.getItem('user');
-		if (!userStr) {
+		if (!isAuthenticated()) {
 			throw new Error('No user data found');
 		}
 		
-		const userData = JSON.parse(userStr);
-		const userId = userData.id || userData._id || userData.userID;
-		
-		if (!userId) {
+		const userInfo = getUserInfo();
+		if (!userInfo?.userID) {
 			throw new Error('User ID not found');
 		}
+		
+		const userId = userInfo.userID;
 		
 		const response = await apiFetch(`${API_BASE}/users/${userId}`);
 		if (!response.ok) {
@@ -119,29 +120,32 @@ class UserService {
 			updatedUser.id = updatedUser._id;
 		}
 		
-		// Update localStorage with new user data, but only update specific fields
-		const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-		localStorage.setItem('user', JSON.stringify({
-			...currentUser,
-			name: updatedUser.name || currentUser.name,
-			email: updatedUser.email || currentUser.email,
-			role: updatedUser.role || currentUser.role,
-			avatarURL: updatedUser.avatarURL || currentUser.avatarURL,
-			userID: currentUser.userID // Keep the original userID
-		}));
+		// Update auth store with new user data
+		if (authStore.user) {
+			authStore.updateUser({
+				name: updatedUser.name || authStore.user.name,
+				email: updatedUser.email || authStore.user.email,
+				role: (updatedUser.role || authStore.user.role) as 'jobSeeker' | 'company' | 'admin',
+				avatarURL: updatedUser.avatarURL || authStore.user.avatarURL,
+				userID: authStore.user.userID, // Keep the original userID
+				verified: authStore.user.verified
+			});
+		}
 		
 		return updatedUser;
 	}
 	
-	// Upload document (Not implemented - console log only)
-	async uploadDocument(file: File): Promise<Record<string, unknown>> {
-		console.log('📤 Document upload not implemented yet for:', file.name);
+	// Upload document (Not implemented yet)
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	async uploadDocument(_file: File): Promise<Record<string, unknown>> {
+		// TODO: Implement document upload functionality
 		return {};
 	}
 	
-	// Delete document (Not implemented - console log only)
-	async deleteDocument(documentId: string): Promise<void> {
-		console.log('🗑️ Document delete not implemented yet for ID:', documentId);
+	// Delete document (Not implemented yet)
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	async deleteDocument(_documentId: string): Promise<void> {
+		// TODO: Implement document deletion functionality
 	}
 	
 	// Update password

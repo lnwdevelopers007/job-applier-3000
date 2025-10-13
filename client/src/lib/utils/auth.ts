@@ -1,40 +1,28 @@
 import { goto } from '$app/navigation';
-
-export type UserInfo = {
-	name: string;
-	email: string;
-	role: string;
-	avatarURL?: string;
-	userID: string;
-};
+import { authStore, type UserInfo } from '$lib/stores/auth.svelte';
 
 export function isAuthenticated(): boolean {
-	return !!localStorage.getItem('access_token');
+	return authStore.isAuthenticated;
 }
 
 export function getUserInfo(): UserInfo | null {
-	const storedUser = localStorage.getItem('user');
-	if (storedUser) {
-		try {
-			const parsed = JSON.parse(storedUser);
-			return {
-				name: parsed.name || 'Guest',
-				email: parsed.email || '',
-				role: parsed.role || 'User',
-				avatarURL: parsed.avatarURL,
-				userID: parsed.userID
-			};
-		} catch (err) {
-			console.error('Failed to parse stored user info:', err);
-		}
+	// Add a small retry mechanism for timing issues
+	const user = authStore.user;
+	if (user && user.userID) { // Make sure we have essential data
+		return {
+			name: user.name || 'Guest',
+			email: user.email || '',
+			role: user.role || 'jobSeeker',
+			avatarURL: user.avatarURL,
+			userID: user.userID,
+			verified: user.verified
+		};
 	}
 	return null;
 }
 
 export function logout() {
-	localStorage.removeItem('access_token');
-	localStorage.removeItem('refresh_token');
-	localStorage.removeItem('user');
+	authStore.logout();
 }
 
 export function requireAuth(callback: () => void, pendingAction?: { key: string; value: string }) {
@@ -52,6 +40,17 @@ export function requireAuth(callback: () => void, pendingAction?: { key: string;
 }
 
 export function navigateWithAuth(path: string, pendingAction?: { key: string; value: string }) {
-	const authSuccess = requireAuth(() => goto(path), pendingAction);
+	const authSuccess = requireAuth(() => {
+		// Check verification before navigation
+		const user = authStore.user;
+		if (user && !user.verified && path !== '/unverified' && path !== '/') {
+			// Check if trying to access protected routes
+			if (path.startsWith('/app/') || path.startsWith('/company/') || path.startsWith('/admin/')) {
+				goto('/unverified');
+				return;
+			}
+		}
+		goto(path);
+	}, pendingAction);
 	return authSuccess;
 }
