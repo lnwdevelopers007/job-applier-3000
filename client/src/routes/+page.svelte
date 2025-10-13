@@ -8,9 +8,8 @@
 	import Footer from '$lib/components/home/Footer.svelte';
 	import LayoutHeader from '$lib/components/LayoutHeader.svelte';
 	import { ArrowRight, Code, ChartLine, Brush, Shield, Smartphone, Cloud, Bot, Gamepad2, ChevronLeft, ChevronRight, Briefcase } from 'lucide-svelte';
-	import { isAuthenticated } from '$lib/utils/auth';
+	import { isAuthenticated, navigateWithAuth } from '$lib/utils/auth';
 	import AuthModal from '$lib/components/ui/AuthModal.svelte';
-	import { goto } from '$app/navigation';
 
 	let showAuthModal = $state(false);
 	let authModalTitle = $state('Sign in required');
@@ -18,7 +17,7 @@
 
 	function handleViewAllJobs() {
 		if (isAuthenticated()) {
-			goto('/app/jobs');
+			navigateWithAuth('/app/jobs');
 		} else {
 			authModalTitle = 'Sign in to view all jobs';
 			authModalDescription = 'Please log in or sign up to browse all available job opportunities';
@@ -32,7 +31,7 @@
 		sessionStorage.removeItem('pendingNavigation');
 	}
 
-	let recentJobs = $state([]);
+	let recentJobs = $state<any[]>([]);
 	let isLoadingJobs = $state(true);
 
 	async function fetchRecentJobs() {

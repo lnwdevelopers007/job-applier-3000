@@ -1,7 +1,7 @@
 <script lang="ts">
 	import ProfileSettings from '$lib/components/profile/ProfileSettings.svelte';
 	import { SettingsService, COMPANY_TABS, INITIAL_COMPANY_DATA, type CompanyUserData } from '$lib/services/settingsService';
-	import { onMount } from 'svelte';
+	import { authStore } from '$lib/stores/auth.svelte';
 	import { LoaderCircle } from 'lucide-svelte';
 	
 	// State using Svelte 5 runes
@@ -49,9 +49,11 @@
 		activeTab = tab;
 	}
 	
-	// Lifecycle
-	onMount(() => {
-		loadUserData();
+	// Lifecycle - wait for auth to be ready
+	$effect(() => {
+		if (authStore.isAuthenticated && authStore.user) {
+			loadUserData();
+		}
 	});
 </script>
 

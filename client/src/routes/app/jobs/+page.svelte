@@ -45,9 +45,8 @@
     if (!isLoggedIn || !userInfo?.userID) return;
 
     try {
-      const token = localStorage.getItem('access_token');
       const res = await fetch(`/apply/query?applicantID=${userInfo.userID}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to fetch applied jobs');
 
