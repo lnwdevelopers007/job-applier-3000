@@ -23,6 +23,7 @@ export interface SeekerUserData extends BaseUserData {
 	dateOfBirth?: string;
 	portfolio?: string;
 	github?: string;
+	skills?: string[];
 }
 
 export interface CompanyUserData extends BaseUserData {
@@ -56,7 +57,18 @@ const SEEKER_FIELD_MAPPING = {
 	aboutMe: (info: JobSeekerInfo) => info.aboutMe || '',
 	dateOfBirth: (info: JobSeekerInfo) => info.dateOfBirth || '',
 	portfolio: (info: JobSeekerInfo) => info.portfolio || '',
-	github: (info: JobSeekerInfo) => info.github || ''
+	github: (info: JobSeekerInfo) => info.github || '',
+	skills: (info: JobSeekerInfo) => {
+		if (info.skills) {
+			// Handle both string and array formats
+			if (typeof info.skills === 'string') {
+				return info.skills.split(',').map(s => s.trim()).filter(s => s.length > 0);
+			} else if (Array.isArray(info.skills)) {
+				return info.skills;
+			}
+		}
+		return [];
+	}
 } as const;
 
 const COMPANY_FIELD_MAPPING = {
@@ -133,6 +145,7 @@ export const INITIAL_SEEKER_DATA: SeekerUserData = {
 	dateOfBirth: '',
 	portfolio: '',
 	github: '',
+	skills: [],
 	documents: []
 };
 
