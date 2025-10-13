@@ -3,8 +3,9 @@
 	import PersonalInfoTab from './tabs/PersonalInfoTab.svelte';
 	import CompanyTab from './tabs/CompanyTab.svelte';
 	import DocumentsTab from './tabs/DocumentsTab.svelte';
+	import SeekerProfilePreviewDrawer from './SeekerProfilePreviewDrawer.svelte';
 	import { userService } from '$lib/services/userService';
-	import { Plus, LoaderCircle } from 'lucide-svelte';
+	import { Plus, LoaderCircle, Eye } from 'lucide-svelte';
 	import { toast } from 'svelte-french-toast';
 	
 	interface Tab {
@@ -35,6 +36,7 @@
 		dateOfBirth?: string;
 		portfolio?: string;
 		github?: string;
+		skills?: string[];
 		// Company data
 		companyName?: string;
 		aboutCompany?: string;
@@ -78,12 +80,13 @@
 	let initialData = $state({} as UserData);
 	let isInitialized = $state(false);
 	let changedFields = $state(new Set<string>());
+	let isPreviewOpen = $state(false);
 	
 	// Constants
 	const TRACKABLE_FIELDS = [
 		'name', 'email', 'avatar', 'role', 'verified',
 		'fullName', 'location', 'phone', 'linkedin', 'desiredRole', 'aboutMe', 
-		'dateOfBirth', 'portfolio', 'github',
+		'dateOfBirth', 'portfolio', 'github', 'skills',
 		'companyName', 'aboutCompany', 'industry', 'companySize', 'companyWebsite',
 		'companyLogo', 'foundedYear', 'headquarters', 'companyLinkedin'
 	] as const;
@@ -120,7 +123,8 @@
 				aboutMe: userData.aboutMe || '',
 				dateOfBirth: userData.dateOfBirth || '',
 				portfolio: userData.portfolio || '',
-				github: userData.github || ''
+				github: userData.github || '',
+				skills: userData.skills ? userData.skills.join(', ') : ''
 			};
 		}
 		
@@ -197,7 +201,13 @@
 		toast.promise(savePromise, {
 			loading: 'Saving changes...',
 			success: 'Profile saved successfully!',
-			error: 'Failed to save changes. Please try again.'
+			error: (err) => {
+				// Extract meaningful error message
+				if (err instanceof Error) {
+					return err.message;
+				}
+				return 'Failed to save changes. Please try again.';
+			}
 		});
 	}
 	
@@ -212,16 +222,25 @@
 		onTabChange?.(tabId);
 	}
 	
+	// Preview handler
+	function handlePreview(): void {
+		isPreviewOpen = true;
+	}
+	
 	// Initialize fields to prevent undefined binding errors
 	function initializeFields(): void {
 		const fieldsToInit = [
 			'documents', 'fullName', 'location', 'desiredRole', 'aboutMe', 'phone',
-			'dateOfBirth', 'linkedin', 'portfolio', 'github', 'name', 'email'
+			'dateOfBirth', 'linkedin', 'portfolio', 'github', 'name', 'email', 'skills'
 		];
 		
 		fieldsToInit.forEach(field => {
 			if (userData[field as keyof UserData] === undefined) {
-				(userData as Record<string, unknown>)[field] = field === 'documents' ? [] : '';
+				if (field === 'documents' || field === 'skills') {
+					(userData as Record<string, unknown>)[field] = [];
+				} else {
+					(userData as Record<string, unknown>)[field] = '';
+				}
 			}
 		});
 		
@@ -241,8 +260,22 @@
 		for (const field of TRACKABLE_FIELDS) {
 			const currentValue = (currentData as Record<string, unknown>)[field];
 			const initValue = (initData as Record<string, unknown>)[field];
-			if (currentValue !== initValue) {
-				newChangedFields.add(field);
+			
+			// Special handling for arrays (like skills)
+			if (field === 'skills') {
+				const currentSkills = Array.isArray(currentValue) ? currentValue : [];
+				const initSkills = Array.isArray(initValue) ? initValue : [];
+				
+				// Compare array contents
+				if (currentSkills.length !== initSkills.length || 
+					!currentSkills.every((skill, index) => skill === initSkills[index])) {
+					newChangedFields.add(field);
+				}
+			} else {
+				// Regular comparison for other fields
+				if (currentValue !== initValue) {
+					newChangedFields.add(field);
+				}
 			}
 		}
 		
@@ -276,7 +309,17 @@
 <div class="">
 	<!-- Header -->
 	<div class="p-2">
-		<h1 class="text-2xl font-semibold text-gray-900 mb-6">{title}</h1>
+		<div class="flex justify-between items-center mb-6">
+			<h1 class="text-2xl font-semibold text-gray-900">{title}</h1>
+			{#if userType === 'seeker'}
+				<button
+					onclick={handlePreview}
+					class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors flex items-center gap-2 hover:cursor-pointer"
+				>
+					Preview Profile
+				</button>
+			{/if}
+		</div>
 		
 		<!-- Tabs -->
 		<nav class="flex border-b border-gray-200 -mb-px">
@@ -298,16 +341,16 @@
 			<p class="text-sm text-gray-500 mt-1">{activeTabData?.description || ''}</p>
 		</div>
 		
-		{#if activeTab === 'documents'}
-			<button
-				onclick={() => document.getElementById('file-upload')?.click()}
-				class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors flex items-center gap-2"
-			>
-				<Plus class="w-4 h-4" />
-				Add Documents
-			</button>
-		{:else if hasChanges}
-			<div class="flex items-center gap-3">
+		<div class="flex items-center gap-3">
+			{#if activeTab === 'documents'}
+				<button
+					onclick={() => document.getElementById('file-upload')?.click()}
+					class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors flex items-center gap-2"
+				>
+					<Plus class="w-4 h-4" />
+					Add Documents
+				</button>
+			{:else if hasChanges}
 				<button
 					onclick={handleSave}
 					disabled={isSaving}
@@ -327,8 +370,8 @@
 				>
 					Cancel
 				</button>
-			</div>
-		{/if}
+			{/if}
+		</div>
 	</div>
 	
 	<!-- Tab content -->
@@ -344,3 +387,8 @@
 		{/if}
 	</div>
 </div>
+
+<!-- Preview Drawer for Seeker Profile -->
+{#if userType === 'seeker'}
+	<SeekerProfilePreviewDrawer bind:isOpen={isPreviewOpen} {userData} />
+{/if}

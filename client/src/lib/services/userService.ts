@@ -29,6 +29,7 @@ export interface JobSeekerInfo {
 	gender?: string;
 	portfolio?: string;
 	github?: string;
+	skills?: string | string[];  // Can be either format from backend
 }
 
 export interface CompanyInfo {
@@ -195,7 +196,8 @@ class UserService {
 					aboutMe: (userData.aboutMe as string) || '',
 					dateOfBirth: (userData.dateOfBirth as string) || '',
 					portfolio: (userData.portfolio as string) || '',
-					github: (userData.github as string) || ''
+					github: (userData.github as string) || '',
+					skills: Array.isArray(userData.skills) ? userData.skills.join(', ') : (userData.skills as string) || ''
 				};
 			} else if (userType === 'company') {
 				payload.userInfo = {
@@ -232,7 +234,7 @@ class UserService {
 			if (userType === 'seeker' || userType === 'jobSeeker') {
 				const userInfoFieldNames = [
 					'fullName', 'location', 'phone', 'linkedin', 'desiredRole', 
-					'aboutMe', 'dateOfBirth', 'portfolio', 'github'
+					'aboutMe', 'dateOfBirth', 'portfolio', 'github', 'skills'
 				];
 				
 				// Check if any userInfo field has changed
@@ -251,7 +253,8 @@ class UserService {
 						aboutMe: (userData.aboutMe as string) || '',
 						dateOfBirth: (userData.dateOfBirth as string) || '',
 						portfolio: (userData.portfolio as string) || '',
-						github: (userData.github as string) || ''
+						github: (userData.github as string) || '',
+						skills: Array.isArray(userData.skills) ? userData.skills.join(', ') : (userData.skills as string) || ''
 					};
 				}
 			} else if (userType === 'company') {
@@ -311,6 +314,7 @@ class UserService {
 			frontendData.gender = '';
 			frontendData.portfolio = '';
 			frontendData.github = '';
+			frontendData.skills = [];
 			
 			// Override with actual values if they exist
 			if (user.userInfo) {
@@ -325,6 +329,14 @@ class UserService {
 				frontendData.gender = info.gender || '';
 				frontendData.portfolio = info.portfolio || '';
 				frontendData.github = info.github || '';
+				// Parse skills - handle both string and array formats
+				if (info.skills) {
+					if (typeof info.skills === 'string') {
+						frontendData.skills = info.skills.split(',').map(s => s.trim()).filter(s => s.length > 0);
+					} else if (Array.isArray(info.skills)) {
+						frontendData.skills = info.skills;
+					}
+				}
 			}
 		} else if (user.role === 'company') {
 			// Initialize all company fields with defaults
