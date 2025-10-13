@@ -1,16 +1,14 @@
 <script lang="ts">
 	import ProfileSettings from '$lib/components/profile/ProfileSettings.svelte';
 	import { SettingsService, SEEKER_TABS, INITIAL_SEEKER_DATA, type SeekerUserData } from '$lib/services/settingsService';
+	import { authStore } from '$lib/stores/auth.svelte';
 	import { LoaderCircle } from 'lucide-svelte';
-	import { onMount } from 'svelte';
 	
-	// State using Svelte 5 runes
 	let userData = $state<SeekerUserData>({ ...INITIAL_SEEKER_DATA });
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 	let activeTab = $state('user');
 	
-	// Utility functions
 	function showError(message: string): void {
 		error = message;
 	}
@@ -19,7 +17,6 @@
 		error = null;
 	}
 	
-	// Main functions
 	async function loadUserData(): Promise<void> {
 		try {
 			loading = true;
@@ -49,9 +46,11 @@
 		activeTab = tab;
 	}
 	
-	// Lifecycle
-	onMount(() => {
-		loadUserData();
+	// Lifecycle - wait for auth to be ready
+	$effect(() => {
+		if (authStore.isAuthenticated && authStore.user) {
+			loadUserData();
+		}
 	});
 </script>
 

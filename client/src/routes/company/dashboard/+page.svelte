@@ -1,10 +1,10 @@
 <script>
-  import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import { getUserInfo, isAuthenticated } from '$lib/utils/auth';
+  import { authStore } from '$lib/stores/auth.svelte';
+  import { apiFetch } from '$lib/utils/api';
 
-  let jobs = [];
-  let selectedJob = null;
+  let jobs = $state([]);
+  let selectedJob = $state(null);
 
   function selectRow(index) {
     selectedJob = selectedJob === index ? null : index;
@@ -15,31 +15,42 @@
       goto(`/company/edit/${job.id}`);
     }
     if (action.label === 'View') {
-      console.log("View this posting");
+      // TODO: Implement view job posting
     }
     if (action.label === 'Manage') {
-      console.log("Manage this posting");
+      // TODO: Implement manage job posting
     }
   }
 
-  onMount(async () => {
-    try {
-      if (!isAuthenticated()) {
-        goto('/login');
-        return;
-      }
+  // Wait for auth to be ready before loading data
+  $effect(() => {
+    if (authStore.isAuthenticated && authStore.user) {
+      loadCompanyData();
+    }
+  });
 
-      const user = getUserInfo();
+  async function loadCompanyData() {
+    try {
+      const user = authStore.user;
       if (!user?.userID) {
-        console.error("User not found in localStorage");
         goto('/login');
         return;
       }
       const companyID = user.userID;
-      const res = await fetch(`/jobs/query?companyID=${companyID}`);
-      if (!res.ok) throw new Error(`Failed to load jobs: ${res.status}`);
+      
+      // Fetch jobs for this company using userID as companyID
+      const res = await apiFetch(`/jobs/query?companyID=${companyID}`);
+      
+      if (!res.ok) {
+        if (res.status === 404) {
+          jobs = [];
+          return;
+        }
+        throw new Error(`Failed to load jobs: ${res.status}`);
+      }
+      
       const data = await res.json();
-
+      
       jobs = data.map(job => ({
         id: job.id,
         title: job.title,
@@ -59,9 +70,10 @@
         ]
       }));
     } catch (err) {
-      console.error("Error fetching jobs:", err);
+      // Handle error silently or show user-friendly message
+      jobs = [];
     }
-  });
+  }
 </script>
 
 <div class="p-2 bg-slate-50">
@@ -121,7 +133,7 @@
         {#each jobs as job, i (i)}
           <tr 
           class="border-t cursor-pointer {selectedJob === i ? 'bg-green-200' : ''}" 
-          on:click={() => selectRow(i)}
+          onclick={() => selectRow(i)}
           >
             <td class="px-4 py-3 font-medium text-gray-900">{job.title}</td>
             <td class="px-4 py-3">{job.status}</td>
@@ -134,7 +146,7 @@
                 <button
                   class="px-3 py-1 text-sm rounded bg-gray-100 text-gray-900 border-gray-500 border-1 disabled:opacity-50 disabled:cursor-not-allowed enabled:hover:bg-gray-300"
                   disabled={action.disabled}
-                  on:click={(e) => {
+                  onclick={(e) => {
                     e.stopPropagation();
                     handleAction(action, job);
                   }}
