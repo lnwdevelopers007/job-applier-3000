@@ -1,31 +1,21 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { LogOut, User } from 'lucide-svelte';
   import { scale } from 'svelte/transition';
   import userAvatar from '$lib/assets/user.png';
-  import { isAuthenticated, getUserInfo, logout, type UserInfo } from '$lib/utils/auth';
+  import { authStore } from '$lib/stores/auth.svelte';
   
   let { transparent = false, absolute = false }: { transparent?: boolean; absolute?: boolean } = $props();
 
-  let userInfo: UserInfo | null = $state(null);
-  let isLoggedIn = $state(false);
   let isDropdownOpen = $state(false);
   let dropdownRef = $state<HTMLDivElement>();
-
-  onMount(() => {
-    isLoggedIn = isAuthenticated();
-    if (isLoggedIn) {
-      userInfo = getUserInfo();
-    }
-  });
 
   // Format role display
   function formatRole(role: string): string {
     if (!role) return 'User';
     
     const roleMap: Record<string, string> = {
-      'jobSeeker': 'Job Seeker',
+      'jobseeker': 'Job Seeker',
       'company': 'Recruiter',
       'admin': 'Administrator',
     };
@@ -38,13 +28,7 @@
   }
 
   function handleLogout() {
-    logout();
-    
-    if (window.location.pathname === '/') {
-      window.location.reload();
-    } else {
-      goto('/');
-    }
+    authStore.logout();
   }
 
   // Close dropdown when clicking outside
@@ -75,13 +59,13 @@
     <h2 class="text-lg font-semibold text-green-700">3000</h2>
   </button>
 
-  {#if isLoggedIn}
+  {#if authStore.isAuthenticated}
     <div class="relative" bind:this={dropdownRef}>
       <button
         onclick={toggleDropdown}
         class="flex items-center space-x-3 hover:cursor-pointer focus:outline-gray-300 focus:outline  focus:transition-colors rounded-full"
       >
-        <img src={userInfo?.avatarURL || userAvatar} alt="Avatar" class="w-9 h-9 rounded-full object-cover" />
+        <img src={authStore.user?.avatarURL || userAvatar} alt="Avatar" class="w-9 h-9 rounded-full object-cover" />
       </button>
 
       {#if isDropdownOpen}
@@ -92,11 +76,11 @@
         <!-- User info section -->
         <div class="px-4 py-3 border-b border-gray-100 mb-1">
           <div class="flex items-center space-x-3">
-            <img src={userInfo?.avatarURL || userAvatar} alt="Avatar" class="w-10 h-10 rounded-full object-cover" />
+            <img src={authStore.user?.avatarURL || userAvatar} alt="Avatar" class="w-10 h-10 rounded-full object-cover" />
             <div>
-              <p class="text-sm font-semibold text-gray-900">{userInfo?.name || 'Guest'}</p>
-              <p class="text-xs text-gray-500">{userInfo?.email || ''}</p>
-              <p class="text-xs text-gray-500 mt-0.5">{formatRole(userInfo?.role || 'User')}</p>
+              <p class="text-sm font-semibold text-gray-900">{authStore.user?.name || 'Guest'}</p>
+              <p class="text-xs text-gray-500">{authStore.user?.email || ''}</p>
+              <p class="text-xs text-gray-500 mt-0.5">{formatRole(authStore.user?.role || 'User')}</p>
             </div>
           </div>
         </div>
@@ -106,7 +90,7 @@
           <button
             onclick={() => {
               isDropdownOpen = false;
-              goto(userInfo?.role === 'company' ? '/company/settings' : '/app/settings');
+              goto(authStore.user?.role === 'company' ? '/company/settings' : '/app/settings');
             }}
             class="w-full flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 hover:cursor-pointer transition-colors"
           >

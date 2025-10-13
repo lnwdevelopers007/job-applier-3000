@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { Search } from 'lucide-svelte';
-	import { goto } from '$app/navigation';
 	import { jobSearchStore } from '$lib/stores/jobSearch';
-	import { isAuthenticated } from '$lib/utils/auth';
+	import { isAuthenticated, navigateWithAuth } from '$lib/utils/auth';
 	import AuthModal from '$lib/components/ui/AuthModal.svelte';
 
 	let searchQuery = $state('');
@@ -14,7 +13,7 @@
 			if (isAuthenticated()) {
 				// User is logged in - proceed with search
 				jobSearchStore.setSearchQuery(searchQuery.trim());
-				goto('/app/jobs');
+				navigateWithAuth('/app/jobs');
 			} else {
 				// User not logged in - show modal
 				showAuthModal = true;

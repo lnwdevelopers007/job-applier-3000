@@ -1,15 +1,14 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import AuthModal from '$lib/components/ui/AuthModal.svelte';
+	import { isAuthenticated, navigateWithAuth } from '$lib/utils/auth';
 
 	let showAuthModal = $state(false);
 
 	function handleExplore() {
-		const token = localStorage.getItem('access_token');
-		
-		if (token) {
+		if (isAuthenticated()) {
 			// User is logged in - go to jobs page
-			goto('/app/jobs');
+			navigateWithAuth('/app/jobs');
 		} else {
 			// User not logged in - show auth modal
 			showAuthModal = true;
