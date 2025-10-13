@@ -47,7 +47,8 @@ export const load: PageServerLoad = async ({ url, cookies }) => {
 
 	// Check if user is verified before setting cookies
 	if (!decoded.verified) {
-		throw redirect(303, '/unverified');
+		const userName = decoded.name ? encodeURIComponent(decoded.name) : '';
+		throw redirect(303, `/unverified?name=${userName}`);
 	}
 
 	const jwtExpiresIn = decoded.exp ? Math.max(0, decoded.exp - Math.floor(Date.now() / 1000)) : 60 * 60 * 24;
