@@ -5,7 +5,7 @@
 	import DocumentsTab from './tabs/DocumentsTab.svelte';
 	import SeekerProfilePreviewDrawer from './SeekerProfilePreviewDrawer.svelte';
 	import { userService } from '$lib/services/userService';
-	import { Plus, LoaderCircle, Eye } from 'lucide-svelte';
+	import { Plus, LoaderCircle } from 'lucide-svelte';
 	import { toast } from 'svelte-french-toast';
 	
 	interface Tab {
