@@ -1,5 +1,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
 
 	function handleGoHome() {
 		goto('/');
@@ -23,7 +26,11 @@
 				</h1>
 				
 				<p class="text-sm text-gray-600 mb-4">
-					Your account is being verified.
+					{#if data.userName}
+						Hi, {data.userName}. Your account is being verified.
+					{:else}
+						Your account is being verified.
+					{/if}
 					You'll receive an email once approved.
 				</p>
 
