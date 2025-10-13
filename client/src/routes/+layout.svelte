@@ -2,8 +2,15 @@
 	import '../app.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import { Toaster } from 'svelte-french-toast';
+	import { authStore } from '$lib/stores/auth.svelte';
+	import type { LayoutData } from './$types';
 
-	let { children } = $props();
+	let { children, data }: { children: any; data: LayoutData } = $props();
+
+	// Initialize auth store with server data
+	$effect(() => {
+		authStore.initFromPageData(data.user);
+	});
 </script>
 
 <svelte:head>
