@@ -3,7 +3,17 @@
 declare global {
 	namespace App {
 		// interface Error {}
-		// interface Locals {}
+		interface Locals {
+			user?: {
+				email: string;
+				name: string;
+				avatarURL?: string;
+				userID: string;
+				role: 'jobSeeker' | 'company' | 'admin';
+				verified: boolean;
+				isAuthenticated: boolean;
+			};
+		}
 		// interface PageData {}
 		// interface PageState {}
 		// interface Platform {}
