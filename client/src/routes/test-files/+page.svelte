@@ -39,26 +39,30 @@
 	}
 
 	async function uploadFile() {
-		if (!selectedFile || !userID) {
-			error = 'Please select a file and enter a user ID';
-			return;
-		}
+    if (!selectedFile || !userID) {
+        error = 'Please select a file and enter a user ID';
+        return;
+    }
 
-		uploading = true;
-		error = '';
-		success = '';
+    uploading = true;
+    error = '';
+    success = '';
 
-		const formData = new FormData();
-		formData.append('file', selectedFile);
-		formData.append('category', category);
-		formData.append('userID', userID);
-		formData.append('userRole', userRole);
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('category', category);
+    
+    // Get token from localStorage (adjust based on your auth implementation)
+    const token = localStorage.getItem('access_token');
 
-		try {
-			const response = await fetch(`${Backend_URL}/files/upload`, {
-				method: 'POST',
-				body: formData
-			});
+    try {
+        const response = await fetch(`${Backend_URL}/files/upload`, {
+            method: 'POST',
+            headers: {
+                'Authorization': token ? `Bearer ${token}` : '',
+            },
+            body: formData
+        });
 
 			if (!response.ok) {
 				const errorData = await response.json();
@@ -85,9 +89,16 @@
 	}
 
 	async function downloadFile(fileId: string, filename: string) {
+		const token = localStorage.getItem('access_token');
+
 		try {
 			const response = await fetch(
-				`${Backend_URL}/files/download/${fileId}?requestingUserID=${userID}`
+				`${Backend_URL}/files/download/${fileId}?requestingUserID=${userID}`,
+				{
+					headers: {
+						'Authorization': token ? `Bearer ${token}` : ''
+					}
+				}
 			);
 
 			if (!response.ok) {
@@ -118,9 +129,16 @@
 	async function loadUserFiles() {
 		if (!userID) return;
 
+		const token = localStorage.getItem('access_token');
+
 		try {
 			const response = await fetch(
-				`${Backend_URL}/files/user/${userID}?requestingUserID=${userID}`
+				`${Backend_URL}/files/user/${userID}?requestingUserID=${userID}`,
+				{
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : ''
+        }
+      }
 			);
 			if (!response.ok) {
 				const errorData = await response.json();
@@ -138,13 +156,17 @@
 		}
 	}
 	async function deleteFile(fileId: string, filename: string) {
+		const token = localStorage.getItem('access_token');
 		if (!confirm(`Are you sure you want to delete "${filename}"?`)) return;
 
 		try {
 			const response = await fetch(
 				`${Backend_URL}/files/${fileId}?requestingUserID=${userID}`,
 				{
-					method: 'DELETE'
+					method: 'DELETE',
+					headers: {
+						'Authorization': token ? `Bearer ${token}` : ''
+					}
 				}
 			);
 
