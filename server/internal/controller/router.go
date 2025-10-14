@@ -63,11 +63,13 @@ func NewRouter() *gin.Engine {
 
 	file := NewFileController()
 	fileRoutes := router.Group("/files")
+	fileRoutes.Use(middleware.OptionalAuthMiddleware())
 	{
 		fileRoutes.POST("/upload", file.Upload)
 		fileRoutes.GET("/download/:id", file.Download)
 		fileRoutes.GET("/user/:userId", file.ListByUser)
 		fileRoutes.DELETE("/:id", file.Delete)
+		fileRoutes.GET("/application/:applicationId", file.GetApplicantFiles)
 	}
 
 	router.GET("/health", func(c *gin.Context) {
