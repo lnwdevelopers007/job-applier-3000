@@ -8,6 +8,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/auth"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/middleware"
 )
 
 // NewRouter returns new, default router.
@@ -23,6 +24,7 @@ func NewRouter() *gin.Engine {
 		authGroup.GET("/:provider/callback", auth.OAuthCallback)
 		authGroup.GET("/:provider/logout", auth.Logout)
 		authGroup.POST("/refresh", auth.RefreshToken)
+		authGroup.GET("/me", middleware.AuthMiddleware(), auth.Me)
 	}
 
 	jobs := router.Group("/jobs")

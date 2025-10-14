@@ -294,3 +294,107 @@ func (fc FileController) Delete(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "file deleted successfully"})
 }
+
+// GetApplicantFiles allows companies to view files of applicants who applied to their jobs
+func (fc FileController) GetApplicantFiles(c *gin.Context) {
+	applicationID := c.Param("applicationId")
+	appObjectID, err := primitive.ObjectIDFromHex(applicationID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid application ID"})
+		return
+	}
+
+	// Get authenticated user
+	requestingUserID, requestingUserRole, err := getUserFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
+		return
+	}
+
+	// Only companies can access this endpoint
+	if requestingUserRole != "company" {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "only companies can access applicant files",
+		})
+		return
+	}
+
+	db := database.GetDatabase()
+
+	// 1. Find the job application
+	var application schema.JobApplication
+	err = db.Collection("job_applications").FindOne(
+		c.Request.Context(),
+		bson.M{"_id": appObjectID},
+	).Decode(&application)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "application not found"})
+		return
+	}
+
+	// 2. Find the job to verify company ownership
+	var job schema.Job
+	err = db.Collection("jobs").FindOne(
+		c.Request.Context(),
+		bson.M{"_id": application.JobID},
+	).Decode(&job)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "job not found"})
+		return
+	}
+
+	// 3. Verify the requesting user (company) owns the job
+	if job.CompanyID != requestingUserID {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "you can only access files for applications to your own jobs",
+		})
+		return
+	}
+
+	// 4. Get applicant's files (only relevant categories: resume, cover_letter, certification)
+	cursor, err := db.Collection("files").Find(
+		c.Request.Context(),
+		bson.M{
+			"userID": application.ApplicantID,
+			"category": bson.M{
+				"$in": []string{"resume", "cover_letter", "certification"},
+			},
+		},
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve files"})
+		return
+	}
+	defer cursor.Close(c.Request.Context())
+
+	var files []gin.H
+	for cursor.Next(c.Request.Context()) {
+		var file schema.File
+		if err := cursor.Decode(&file); err != nil {
+			continue
+		}
+
+		// Return metadata only
+		files = append(files, gin.H{
+			"id":            file.ID,
+			"userID":        file.UserID,
+			"filename":      file.Filename,
+			"fileExtension": file.FileExtension,
+			"contentType":   file.ContentType,
+			"size":          file.Size,
+			"category":      file.Category,
+			"uploadDate":    file.UploadDate,
+		})
+	}
+
+	if files == nil {
+		files = []gin.H{}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"applicationID": application.ID,
+		"applicantID":   application.ApplicantID,
+		"jobID":         application.JobID,
+		"files":         files,
+	})
+}
