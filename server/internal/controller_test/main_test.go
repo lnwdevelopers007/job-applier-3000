@@ -44,25 +44,11 @@ func TestMain(m *testing.M) {
 // initJobApplication initialize job application for retrieval tests.
 func initJobApplication() {
 	router := getTestRouter()
-	w1 := httptest.NewRecorder()
-
-	body, _ := json.Marshal(rawUser("tralalero tralala"))
-
-	req, _ := http.NewRequest("POST", "/users/", bytes.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-
-	router.ServeHTTP(w1, req)
 	r := regexp.MustCompile(`"InsertedID":"(.+)"`)
-	matches := r.FindStringSubmatch(w1.Body.String())
-	id := matches[1]
+	userID := createUser(router, r, "tralalero Tralala")
 
-	w2 := httptest.NewRecorder()
-	objID, _ := primitive.ObjectIDFromHex(id)
-	body, _ = json.Marshal(rawJobApplication(objID))
-	req, _ = http.NewRequest("POST", "/apply/", bytes.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	router.ServeHTTP(w2, req)
-	globalApplicantID = id
+	createJobApplication(router, userID, primitive.NewObjectID().Hex())
+	globalApplicantID = userID
 
 }
 
@@ -110,11 +96,11 @@ func createMockCollections(db *mongo.Database, names []string) error {
 	return nil
 }
 
-func rawJobApplication(applicantID primitive.ObjectID) map[string]any {
+func rawJobApplication(applicantID primitive.ObjectID, jobID primitive.ObjectID) map[string]any {
 	now := time.Now().UTC().Truncate(time.Second)
 	return map[string]any{
 		"applicantID": applicantID,
-		"jobID":       primitive.NewObjectID(),
+		"jobID":       jobID,
 		"status":      "waiting for approval",
 		"createdAt":   now,
 	}
@@ -155,7 +141,7 @@ func rawJob(title string) map[string]any {
 		"applicationDeadline": now,
 		"numberOfPositions":   1,
 		"visibility":          "public",
-		"emailNotifications":  true,
+		"emailNotifications":  false,
 		"autoReject":          false,
 	}
 }
@@ -165,4 +151,30 @@ func getTestRouter() *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	router := controller.NewRouter()
 	return router
+}
+
+func createUser(router *gin.Engine, r *regexp.Regexp, username string) string {
+	w := httptest.NewRecorder()
+
+	body, _ := json.Marshal(rawUser(username))
+
+	req, _ := http.NewRequest("POST", "/users/", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	router.ServeHTTP(w, req)
+
+	userIDMatches := r.FindStringSubmatch(w.Body.String())
+	userID := userIDMatches[1]
+	return userID
+}
+
+func createJobApplication(router *gin.Engine, userID string, jobID string) (*httptest.ResponseRecorder, *http.Request) {
+	w := httptest.NewRecorder()
+	objID, _ := primitive.ObjectIDFromHex(userID)
+	jobIDReal, _ := primitive.ObjectIDFromHex(jobID)
+	body, _ := json.Marshal(rawJobApplication(objID, jobIDReal))
+	req, _ := http.NewRequest("POST", "/apply/", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+	return w, req
 }

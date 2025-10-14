@@ -9,8 +9,8 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // Test the GET /apply/query endpoint with valid data (200 status)
@@ -77,32 +77,39 @@ func TestQueryJobApplicationsByStatus(t *testing.T) {
 
 func TestCreateAndDeleteJobApplication(t *testing.T) {
 	router := getTestRouter()
-	w1 := httptest.NewRecorder()
-
-	body, _ := json.Marshal(rawUser("Odindindindindun"))
-
-	req, _ := http.NewRequest("POST", "/users/", bytes.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-
-	router.ServeHTTP(w1, req)
 	r := regexp.MustCompile(`"InsertedID":"(.+)"`)
-	userIDMatches := r.FindStringSubmatch(w1.Body.String())
-	userID := userIDMatches[1]
+	userID := createUser(router, r, "Odindindindindun")
+	jobID := createJob(router, r)
 
-	w2 := httptest.NewRecorder()
-	objID, _ := primitive.ObjectIDFromHex(userID)
-	body, _ = json.Marshal(rawJobApplication(objID))
-	req, _ = http.NewRequest("POST", "/apply/", bytes.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	router.ServeHTTP(w2, req)
+	w2, _ := createJobApplication(router, userID, jobID)
 
 	assert.Equal(t, http.StatusCreated, w2.Code)
 	assert.Contains(t, w2.Body.String(), "InsertedID")
 	jobAppIDMatches := r.FindStringSubmatch(w2.Body.String())
 	jobAppID := jobAppIDMatches[1]
 
-	w3 := httptest.NewRecorder()
-	req, _ = http.NewRequest("DELETE", "/apply/"+jobAppID, nil)
-	router.ServeHTTP(w3, req)
+	w3 := deleteJobApplication(jobAppID, router)
 	assert.Equal(t, http.StatusOK, w3.Code)
+}
+
+func deleteJobApplication(jobAppID string, router *gin.Engine) *httptest.ResponseRecorder {
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("DELETE", "/apply/"+jobAppID, nil)
+	router.ServeHTTP(w, req)
+	return w
+}
+
+func createJob(router *gin.Engine, r *regexp.Regexp) string {
+	w := httptest.NewRecorder()
+
+	body, _ := json.Marshal(rawJob("Job for Job Application Creation Test"))
+
+	req, _ := http.NewRequest("POST", "/jobs/", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	router.ServeHTTP(w, req)
+
+	jobIDMatches := r.FindStringSubmatch(w.Body.String())
+	jobID := jobIDMatches[1]
+	return jobID
 }
