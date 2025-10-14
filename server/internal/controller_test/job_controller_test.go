@@ -128,5 +128,6 @@ func TestDeleteJob(t *testing.T) {
 	w2 := httptest.NewRecorder()
 	req, _ = http.NewRequest("DELETE", "/jobs/"+id, nil)
 	router.ServeHTTP(w2, req)
+	t.Log(w2.Body)
 	assert.Equal(t, w2.Code, http.StatusOK)
 }

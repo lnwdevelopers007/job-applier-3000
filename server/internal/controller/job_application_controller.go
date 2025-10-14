@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/email"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -30,7 +32,7 @@ func NewJobApplicationController() JobApplicationController {
 
 func (jc JobApplicationController) Query(c *gin.Context) {
 
-	jobApplicationFilter, shouldReturn := JobApplicationFilter(c)
+	jobApplicationFilter, shouldReturn := jobApplicationFilter(c)
 	if shouldReturn {
 		return
 	}
@@ -56,10 +58,9 @@ func (jc JobApplicationController) Query(c *gin.Context) {
 	)
 
 	// query users
-	userMap, err := getUsers(
+	userMap, err := getUsersFromID(
 		ctx,
 		userIDs,
-		"users",
 	)
 
 	if err != nil {
@@ -87,27 +88,7 @@ func (jc JobApplicationController) Query(c *gin.Context) {
 	c.JSON(http.StatusOK, combinedResults)
 }
 
-func getUsers(
-	ctx context.Context,
-	userIDs []primitive.ObjectID,
-	collectionName string,
-) (
-	map[primitive.ObjectID]schema.User,
-	error,
-) {
-	filter := bson.M{"_id": bson.M{"$in": userIDs}}
-	result, err := findAll[schema.User](ctx, collectionName, filter)
-
-	// Create a map of job seekers for easy lookup
-	resultMap := make(map[primitive.ObjectID]schema.User)
-	for _, js := range result {
-		resultMap[js.ID] = js
-	}
-
-	return resultMap, err
-}
-
-func JobApplicationFilter(c *gin.Context) (bson.M, bool) {
+func jobApplicationFilter(c *gin.Context) (bson.M, bool) {
 	allowedParams := map[string]func(string) (any, error){
 		"id": func(v string) (any, error) {
 			if v == "" {
@@ -159,7 +140,39 @@ func JobApplicationFilter(c *gin.Context) (bson.M, bool) {
 
 // Create adds a new job application
 func (jc JobApplicationController) Create(c *gin.Context) {
+	companyEmail, err := jc.shouldNotifyCompany(c)
+	if err {
+		return
+	}
 	jc.baseController.Create(c)
+	if companyEmail != "" {
+		email.Send(companyEmail, "New applicant applied", "yay")
+	}
+}
+
+// shouldNotifyCompany determines whether company should be notified when an applicant applied for a job or not.
+func (jc JobApplicationController) shouldNotifyCompany(c *gin.Context) (companyEmail string, err bool) {
+	var raw schema.JobApplication
+	if err := c.ShouldBindBodyWith(&raw, binding.JSON); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return "", true
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	job, jobErr := findOne[schema.Job](ctx, "jobs", raw.JobID)
+	if jobErr != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": jobErr.Error()})
+		return "", true
+	}
+	if !job.EmailNotifications {
+		return "", false
+	}
+	company, companyErr := findOne[schema.User](ctx, "users", job.CompanyID)
+	if companyErr != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": companyErr.Error()})
+		return "", true
+	}
+	return company.Email, false
 }
 
 // Update updates a job application by ID

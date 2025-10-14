@@ -8,9 +8,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/database"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/email"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -197,7 +199,59 @@ func (jc JobController) Update(c *gin.Context) {
 
 // Delete() deletes a job by ID.
 func (jc JobController) Delete(c *gin.Context) {
+	shouldReturn := notifyJobDeletion(c)
+	if shouldReturn {
+		return
+	}
 	jc.baseController.Delete(c)
+}
+
+// notifyJobDeletion send emails to all applicants when a job they applied to got deleted.
+func notifyJobDeletion(c *gin.Context) bool {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	jobID, err := primitive.ObjectIDFromHex(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Job ID"})
+		return true
+	}
+	job, err := findOne[schema.Job](ctx, "jobs", jobID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No job Found"})
+		return true
+	}
+	filter := bson.M{"jobID": bson.M{"$eq": job.ID}}
+	jobApplications, err := findAll[schema.JobApplication](ctx, "job_applications", filter)
+	if err == mongo.ErrNoDocuments {
+		return false
+	}
+	if err != mongo.ErrNoDocuments && err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Problems when finding job applications"})
+		return true
+	}
+	visited := make(map[primitive.ObjectID]bool)
+	var applicantIDs []primitive.ObjectID
+	for _, jobApp := range jobApplications {
+		if !visited[jobApp.ApplicantID] {
+			visited[jobApp.ApplicantID] = true
+			applicantIDs = append(applicantIDs, jobApp.ApplicantID)
+		}
+	}
+	if len(applicantIDs) == 0 {
+		return false
+	}
+	applicants, err := getUsersFromID(ctx, applicantIDs)
+	if err == mongo.ErrNoDocuments {
+		return false
+	}
+	if err != nil && err != mongo.ErrNoDocuments {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return true
+	}
+	for _, applicant := range applicants {
+		email.Send(applicant.Email, "Job got deleted", "sadge")
+	}
+	return false
 }
 
 // RetrieveOne fetches a single job by ID.
