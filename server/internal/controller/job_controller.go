@@ -36,7 +36,7 @@ func (jc JobController) Query(c *gin.Context) {
 	db := database.GetDatabase()
 	collection := db.Collection(jc.baseController.collectionName)
 
-	// Only accept specific query params
+	// Allowed query params
 	allowedParams := map[string]func(string) (interface{}, error){
 		"id": func(v string) (interface{}, error) {
 			if v == "" {
@@ -92,7 +92,6 @@ func (jc JobController) Query(c *gin.Context) {
 			}
 
 			now := time.Now()
-
 			midnight := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 
 			switch v {
@@ -110,12 +109,27 @@ func (jc JobController) Query(c *gin.Context) {
 			}
 			return nil, nil
 		},
+		"sort": func(v string) (interface{}, error) {
+			switch v {
+			case "dateAsc", "dateDesc", "title":
+				return v, nil
+			case "", "null":
+				return nil, nil
+			default:
+				return nil, fmt.Errorf("invalid sort value")
+			}
+		},
 	}
 
 	filter := bson.M{}
 	salaryFilter := bson.M{}
 	findOptions := options.Find()
+
+	// Apply query params
 	for key, values := range c.Request.URL.Query() {
+		if key == "sort" || key == "latest" {
+        continue
+    }
 		if fn, ok := allowedParams[key]; ok {
 			val, err := fn(values[0])
 			if err != nil {
@@ -132,11 +146,6 @@ func (jc JobController) Query(c *gin.Context) {
 					salaryFilter["$lte"] = val
 				case "postOpenDate":
 					filter["postOpenDate"] = val
-				case "latest":
-					now := time.Now()
-					filter["postOpenDate"] = bson.M{"$lte": now}
-					findOptions.SetSort(bson.D{{"postOpenDate", -1}})
-					findOptions.SetLimit(3)
 				default:
 					filter[key] = val
 				}
@@ -149,6 +158,30 @@ func (jc JobController) Query(c *gin.Context) {
 
 	if len(salaryFilter) > 0 {
 		filter["salary"] = salaryFilter
+	}
+
+	// Handle latest parameter
+	latestParam := c.Query("latest")
+	if latestParam == "true" {
+		now := time.Now()
+		filter["postOpenDate"] = bson.M{"$lte": now}
+		findOptions.SetSort(bson.D{{"postOpenDate", -1}})
+		findOptions.SetLimit(3)
+	}
+
+	// Handle sort parameter
+	sortParam := c.Query("sort")
+	switch sortParam {
+	case "dateAsc":
+		findOptions.SetSort(bson.D{{"postOpenDate", 1}})
+	case "dateDesc":
+		findOptions.SetSort(bson.D{{"postOpenDate", -1}})
+	case "title":
+		findOptions.SetSort(bson.D{{"title", 1}})
+	case "", "null":
+		// no sorting
+	default:
+		// ignore invalid sort
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -173,6 +206,7 @@ func (jc JobController) Query(c *gin.Context) {
 
 	c.JSON(http.StatusOK, jobs)
 }
+
 
 // small helper
 func toInt(s string) int {

@@ -14,14 +14,13 @@
 <script>
   import LayoutHeader from '$lib/components/LayoutHeader.svelte';
   import SidebarNav from '$lib/components/SidebarNav.svelte';
-  import { Cog, Building, ChartColumn, ChartLine, Users, CirclePlus } from 'lucide-svelte';
+  import { Cog, ChartColumn, ChartLine, Users, CirclePlus } from 'lucide-svelte';
   
   const navItems = [
     { href: '/company/dashboard', label: 'Dashboard', icon: ChartColumn },
-    { href: '/company/applicants', label: 'Applicants', icon: Users, badge: 67 },
+    { href: '/company/applicants', label: 'Applicants', icon: Users },
     { href: '/company/analytics', label: 'Analytics', icon: ChartLine },
     { href: '/company/create', label: 'Post New Job', icon: CirclePlus, separatorBefore: true },
-    { href: '/company/profile', label: 'Company Profile', icon: Building },
     { href: '/company/settings', label: 'Settings', icon: Cog }
   ];
 </script>

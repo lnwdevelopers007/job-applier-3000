@@ -33,6 +33,11 @@ export default defineConfig(({ mode }) => {
 					changeOrigin: true,
 					secure: false
 				},
+				'/files': {
+					target: env.VITE_BACKEND,
+					changeOrigin: true,
+					secure: false
+				},
 			}
 		},
 		test: {
