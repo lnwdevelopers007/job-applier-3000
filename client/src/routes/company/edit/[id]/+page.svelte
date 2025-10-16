@@ -8,9 +8,9 @@
   import DescriptionForm from '$lib/components/job-post-creation/forms/DescriptionForm.svelte';
   import RequirementForm from '$lib/components/job-post-creation/forms/RequirementForm.svelte';
   import PostSettingForm from '$lib/components/job-post-creation/forms/PostSettingForm.svelte';
-  import PreviewDrawer from '$lib/components/job-post-creation/PreviewDrawer.svelte';
   import FormSidebar from '$lib/components/job-post-creation/FormSidebar.svelte';
 	import { getUserInfo} from '$lib/utils/auth';
+	import JobPreviewDrawer from '$lib/components/job-post-creation/JobPreviewDrawer.svelte';
 
   let jobId = $derived($page.params.id);
   let isPreviewOpen = $state(false);
@@ -233,4 +233,4 @@
   </div>
 </div>
 
-<PreviewDrawer bind:isOpen={isPreviewOpen} {formData} />
+<JobPreviewDrawer bind:isOpen={isPreviewOpen} {formData} />

@@ -16,19 +16,17 @@
 
     const user = getUserInfo();
     if (!user?.userID) {
-      console.error('User not found in localStorage');
+      console.error('User not found');
       goto('/login');
       return [];
     }
-
-    const token = localStorage.getItem('access_token');
 
     try {
       const queryParams = new URLSearchParams({ applicantID: user.userID });
       if (status !== 'All') queryParams.append('status', status.toUpperCase());
 
       const res = await fetch(`/apply?${queryParams.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
       });
 
       if (!res.ok) throw new Error('Failed to fetch applications');
@@ -37,7 +35,7 @@
       const appPromises = appData.map(async (app) => {
         // Fetch job details
         const jobRes = await fetch(`/jobs/query?id=${app.jobApplication.jobID}`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         if (!jobRes.ok) throw new Error('Failed to fetch job details');
         const jobData = await jobRes.json();
@@ -52,7 +50,7 @@
         if (job?.companyID) {
           try {
             const companyRes = await fetch(`/users/query?id=${job.companyID}`, {
-              headers: { Authorization: `Bearer ${token}` },
+              credentials: 'include',
             });
             if (companyRes.ok) {
               const companyData = await companyRes.json();

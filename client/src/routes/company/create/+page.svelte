@@ -7,7 +7,7 @@
   import DescriptionForm from '$lib/components/job-post-creation/forms/DescriptionForm.svelte';
   import RequirementForm from '$lib/components/job-post-creation/forms/RequirementForm.svelte';
   import PostSettingForm from '$lib/components/job-post-creation/forms/PostSettingForm.svelte';
-  import PreviewDrawer from '$lib/components/job-post-creation/PreviewDrawer.svelte';
+  import JobPreviewDrawer from '$lib/components/job-post-creation/JobPreviewDrawer.svelte';
   import { getUserInfo } from '$lib/utils/auth';
 
   let currentStep = $state(1); // Current step (1-4)
@@ -210,5 +210,5 @@
   </form>
 </div>
 
-<PreviewDrawer bind:isOpen={isPreviewOpen} {formData} />
+<JobPreviewDrawer bind:isOpen={isPreviewOpen} {formData} />
 

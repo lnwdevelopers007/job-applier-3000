@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import { isAuthenticated } from '$lib/utils/auth';
+  import { isAuthenticated, getUserInfo } from '$lib/utils/auth';
   import { ArrowLeft } from 'lucide-svelte';
   import { fly } from 'svelte/transition';
   import AuthLayout from '$lib/components/auth/AuthLayout.svelte';
@@ -13,9 +13,22 @@
   import GoogleOAuthButton from '$lib/components/auth/GoogleOAuthButton.svelte';
   import OrDivider from '$lib/components/auth/OrDivider.svelte';
 
-  onMount(() => {
+  onMount(async () => {
     if (isAuthenticated()) {
-      goto('/app/jobs');
+      // Wait a moment for auth store to be fully ready
+      let user = getUserInfo();
+      let retries = 0;
+      while (!user && retries < 10) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+        user = getUserInfo();
+        retries++;
+      }
+      
+      if (user?.role === 'company') {
+        goto('/company/dashboard');
+      } else {
+        goto('/app/jobs');
+      }
     }
   });
   

@@ -1,9 +1,8 @@
 <script lang="ts">
 	import type { ComponentType } from 'svelte';
 	import AuthModal from '$lib/components/ui/AuthModal.svelte';
-	import { goto } from '$app/navigation';
 	import { jobSearchStore } from '$lib/stores/jobSearch';
-	import { isAuthenticated } from '$lib/utils/auth';
+	import { isAuthenticated, navigateWithAuth } from '$lib/utils/auth';
 
 	type CareerPath = {
 		id: string; // Used for keying in each loops
@@ -22,7 +21,7 @@
 		if (isAuthenticated()) {
 			// User is logged in - search for jobs in this category
 			jobSearchStore.setSearchQuery(path.title);
-			goto('/app/jobs');
+			navigateWithAuth('/app/jobs');
 		} else {
 			// User not logged in - show auth modal
 			showAuthModal = true;
