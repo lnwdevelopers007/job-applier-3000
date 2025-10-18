@@ -162,6 +162,8 @@
 
   async function applyJob(job) {
     try {
+      isLoggedIn = isAuthenticated();
+      userInfo = getUserInfo();
       if (!isLoggedIn || !userInfo.userID) {
         alert("❌ You must be logged in to apply.");
         return;

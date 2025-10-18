@@ -244,16 +244,31 @@ func (jc JobController) Delete(c *gin.Context) {
 func notifyJobDeletion(c *gin.Context) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+
 	jobID, err := primitive.ObjectIDFromHex(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Job ID"})
 		return true
 	}
+
+	var body struct {
+		Reason string `json:"reason"`
+	}
+	if err := c.BindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON body"})
+		return true
+	}
+	reason := body.Reason
+	if reason == "" {
+		reason = "No reason provided."
+	}
+
 	job, err := findOne[schema.Job](ctx, "jobs", jobID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No job Found"})
 		return true
 	}
+
 	filter := bson.M{"jobID": bson.M{"$eq": job.ID}}
 	jobApplications, err := findAll[schema.JobApplication](ctx, "job_applications", filter)
 	if err == mongo.ErrNoDocuments {
@@ -263,6 +278,7 @@ func notifyJobDeletion(c *gin.Context) bool {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Problems when finding job applications"})
 		return true
 	}
+
 	visited := make(map[primitive.ObjectID]bool)
 	var applicantIDs []primitive.ObjectID
 	for _, jobApp := range jobApplications {
@@ -271,9 +287,11 @@ func notifyJobDeletion(c *gin.Context) bool {
 			applicantIDs = append(applicantIDs, jobApp.ApplicantID)
 		}
 	}
+
 	if len(applicantIDs) == 0 {
 		return false
 	}
+
 	applicants, err := getUsersFromID(ctx, applicantIDs)
 	if err == mongo.ErrNoDocuments {
 		return false
@@ -282,9 +300,16 @@ func notifyJobDeletion(c *gin.Context) bool {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return true
 	}
+
 	for _, applicant := range applicants {
-		email.Send(applicant.Email, "Job got deleted", "sadge")
+		emailBody := fmt.Sprintf(
+			"The job '%s' you applied for has been deleted.\n\nReason: %s",
+			job.Title,
+			reason,
+		)
+		email.Send(applicant.Email, "Job Deletion Notice", emailBody)
 	}
+
 	return false
 }
 
