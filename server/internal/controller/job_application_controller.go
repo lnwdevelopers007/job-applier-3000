@@ -140,14 +140,31 @@ func jobApplicationFilter(c *gin.Context) (bson.M, bool) {
 
 // Create adds a new job application
 func (jc JobApplicationController) Create(c *gin.Context) {
-	companyEmail, err := jc.shouldNotifyCompany(c)
-	if err {
-		return
-	}
-	jc.baseController.Create(c)
-	if companyEmail != "" {
-		email.Send(companyEmail, "New applicant applied", "yay")
-	}
+  companyEmail, err := jc.shouldNotifyCompany(c)
+  if err {
+    return
+  }
+  jc.baseController.Create(c)
+
+  if companyEmail != "" {
+    var raw schema.JobApplication
+    if err := c.ShouldBindBodyWith(&raw, binding.JSON); err == nil {
+      ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+      defer cancel()
+
+      applicant, _ := findOne[schema.User](ctx, "users", raw.ApplicantID)
+      job, _ := findOne[schema.Job](ctx, "jobs", raw.JobID)
+
+      subject := "New applicant applied to your job"
+      body := fmt.Sprintf(
+        "Hello,\n\n%s has applied to your job \"%s\".\n\nPlease review the application in your applicant board.\n\nBest regards,\nJob Applier 3000",
+        applicant.Name,
+        job.Title,
+      )
+
+      email.Send(companyEmail, subject, body)
+    }
+  }
 }
 
 // shouldNotifyCompany determines whether company should be notified when an applicant applied for a job or not.
@@ -218,21 +235,21 @@ func (jc JobApplicationController) notifyApplicantOnStatusChange(ctx context.Con
   case "ACCEPTED":
     subject = "Congratulations! Your job application has been accepted"
     body = fmt.Sprintf(
-      "Hello %s,\n\nWe are pleased to inform you that your application for the job \"%s\" has been ACCEPTED.\n\nOur team will contact you soon with the next steps.\n\nBest regards,\nCompany Team",
+      "Hello %s,\n\nWe are pleased to inform you that your application for the job \"%s\" has been ACCEPTED.\n\nOur team will contact you soon with the next steps.\n\nBest regards,\nJob Applier 3000",
       applicant.Name,
       job.Title,
     )
   case "REJECTED":
     subject = "Update on your job application"
     body = fmt.Sprintf(
-      "Hello %s,\n\nWe regret to inform you that your application for the job \"%s\" has been REJECTED.\n\nWe appreciate your interest and encourage you to apply for future opportunities.\n\nBest regards,\nCompany Team",
+      "Hello %s,\n\nWe regret to inform you that your application for the job \"%s\" has been REJECTED.\n\nWe appreciate your interest and encourage you to apply for future opportunities.\n\nBest regards,\nJob Applier 3000",
       applicant.Name,
       job.Title,
     )
   default:
     subject = "Your job application status has been updated"
     body = fmt.Sprintf(
-      "Hello %s,\n\nThe status of your application for the job \"%s\" has been updated to: %s\n\nBest regards,\nCompany Team",
+      "Hello %s,\n\nThe status of your application for the job \"%s\" has been updated to: %s\n\nBest regards,\nJob Applier 3000",
       applicant.Name,
       job.Title,
       app.Status,
