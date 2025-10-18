@@ -10,6 +10,7 @@
   let showDeleteModal = $state(false);
   let deleteReason = $state('');
   let jobToDelete = $state(null);
+  let deleting = $state(false);
 
   function selectRow(index) {
     selectedJob = selectedJob === index ? null : index;
@@ -31,6 +32,7 @@
 
   async function confirmDelete() {
     if (!jobToDelete) return;
+    deleting = true;
     try {
       const res = await apiFetch(`/jobs/${jobToDelete.id}`, {
         method: 'DELETE',
@@ -44,6 +46,7 @@
     } catch (err) {
       console.error(err);
     } finally {
+      deleting = false;
       showDeleteModal = false;
       jobToDelete = null;
     }
@@ -236,7 +239,7 @@
         </button>
         <button
           class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
-          disabled={!deleteReason.trim()}
+          disabled={!deleteReason.trim() || deleting}
           onclick={confirmDelete}
         >
           Confirm Delete
