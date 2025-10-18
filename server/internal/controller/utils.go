@@ -80,3 +80,16 @@ func findOne[Schema any](
 	}
 	return result, nil
 }
+
+func deleteMany[Schema any](
+	ctx context.Context,
+	collectionName string,
+	filter any,
+) error {
+	db := database.GetDatabase()
+	collection := db.Collection(collectionName)
+
+	_, err := collection.DeleteMany(ctx, filter)
+	return err
+
+}
