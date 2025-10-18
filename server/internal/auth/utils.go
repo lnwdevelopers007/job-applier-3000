@@ -66,12 +66,12 @@ func upsertUser(user goth.User, role string) (any, error) {
 		"$set": bson.M{
 			"provider":  user.Provider,
 			"email":     user.Email,
-			"name":      user.Name,
 			"avatarURL": user.AvatarURL,
 			"updatedAt": time.Now(),
 		},
 		"$setOnInsert": bson.M{
 			"createdAt": time.Now(),
+			"name":      user.Name,
 			"role":      role,
 			"verified":  false,
 		},
