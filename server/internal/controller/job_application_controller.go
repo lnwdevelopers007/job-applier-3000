@@ -177,8 +177,71 @@ func (jc JobApplicationController) shouldNotifyCompany(c *gin.Context) (companyE
 
 // Update updates a job application by ID
 func (jc JobApplicationController) Update(c *gin.Context) {
-	jc.baseController.Update(c)
+  id := c.Param("id")
+  objID, err := primitive.ObjectIDFromHex(id)
+  if err != nil {
+    c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+    return
+  }
+
+  jc.baseController.Update(c)
+
+  ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+  defer cancel()
+
+  updatedApp, err := findOne[schema.JobApplication](ctx, jc.baseController.collectionName, objID)
+  if err != nil {
+    fmt.Println("Failed to fetch updated application for notification:", err)
+    return
+  }
+
+  jc.notifyApplicantOnStatusChange(ctx, updatedApp)
 }
+
+// notifyApplicantOnStatusChange notifies the applicant when their application status changes
+func (jc JobApplicationController) notifyApplicantOnStatusChange(ctx context.Context, app schema.JobApplication) {
+  applicant, err := findOne[schema.User](ctx, "users", app.ApplicantID)
+  if err != nil {
+    fmt.Println("Failed to fetch applicant for notification:", err)
+    return
+  }
+
+  job, err := findOne[schema.Job](ctx, "jobs", app.JobID)
+  if err != nil {
+    fmt.Println("Failed to fetch job for notification:", err)
+    return
+  }
+
+  var subject, body string
+
+  switch app.Status {
+  case "ACCEPTED":
+    subject = "Congratulations! Your job application has been accepted"
+    body = fmt.Sprintf(
+      "Hello %s,\n\nWe are pleased to inform you that your application for the job \"%s\" has been ACCEPTED.\n\nOur team will contact you soon with the next steps.\n\nBest regards,\nCompany Team",
+      applicant.Name,
+      job.Title,
+    )
+  case "REJECTED":
+    subject = "Update on your job application"
+    body = fmt.Sprintf(
+      "Hello %s,\n\nWe regret to inform you that your application for the job \"%s\" has been REJECTED.\n\nWe appreciate your interest and encourage you to apply for future opportunities.\n\nBest regards,\nCompany Team",
+      applicant.Name,
+      job.Title,
+    )
+  default:
+    subject = "Your job application status has been updated"
+    body = fmt.Sprintf(
+      "Hello %s,\n\nThe status of your application for the job \"%s\" has been updated to: %s\n\nBest regards,\nCompany Team",
+      applicant.Name,
+      job.Title,
+      app.Status,
+    )
+  }
+
+  email.Send(applicant.Email, subject, body)
+}
+
 
 // Delete deletes a job application by ID
 func (jc JobApplicationController) Delete(c *gin.Context) {
