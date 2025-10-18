@@ -128,8 +128,8 @@ func (jc JobController) Query(c *gin.Context) {
 	// Apply query params
 	for key, values := range c.Request.URL.Query() {
 		if key == "sort" || key == "latest" {
-        continue
-    }
+			continue
+		}
 		if fn, ok := allowedParams[key]; ok {
 			val, err := fn(values[0])
 			if err != nil {
@@ -207,7 +207,6 @@ func (jc JobController) Query(c *gin.Context) {
 	c.JSON(http.StatusOK, jobs)
 }
 
-
 // small helper
 func toInt(s string) int {
 	var n int
@@ -238,6 +237,10 @@ func (jc JobController) Delete(c *gin.Context) {
 		return
 	}
 	jc.baseController.Delete(c)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	id, _ := primitive.ObjectIDFromHex(c.Param("id"))
+	deleteMany[schema.JobApplication](ctx, "job_applications", bson.M{"jobID": bson.M{"$eq": id}})
 }
 
 // notifyJobDeletion send emails to all applicants when a job they applied to got deleted.
