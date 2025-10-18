@@ -3,46 +3,11 @@
 	import { Download, MapPin, Eye, EllipsisVertical } from 'lucide-svelte';
 	import { getUserInfo, isAuthenticated } from '$lib/utils/auth';
 	import { goto } from '$app/navigation';
+	import { fetchJob, fetchCompanyNameLogo } from '$lib/utils/fetcher';
 
 	let applications: any[] = [];
 	let activities: any[] = [];
 	let filterStatus = 'All';
-	const DEFAULT_COMPANY_LOGO =
-		'https://images.unsplash.com/photo-1534237710431-e2fc698436d0?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8YnVpbGRpbmd8ZW58MHx8MHx8fDA%3D';
-
-	const DEFAULT_COMPANY_NAME = 'Unknown Company';
-
-	async function fetchJob(app: any) {
-		const jobRes = await fetch(`/jobs/${app.jobApplication.jobID}`, {
-			credentials: 'include'
-		});
-		if (!jobRes.ok) throw new Error('Failed to fetch job details');
-		const jobData = await jobRes.json();
-		return jobData;
-	}
-
-	async function fetchCompany(companyID: string) {
-		let companyName = DEFAULT_COMPANY_NAME;
-		let companyLogo = DEFAULT_COMPANY_LOGO;
-
-		try {
-			const companyRes = await fetch(`/users/${companyID}`, {
-				credentials: 'include'
-			});
-			if (companyRes.ok) {
-				const company = await companyRes.json();
-				const infoArray = company.userInfo || [];
-				const info = Object.fromEntries(infoArray.map((item: any) => [item.Key, item.Value]));
-
-				companyName = info.name || company.name || companyName;
-				companyLogo = info.logo || company.avatarURL || companyLogo;
-			}
-		} catch (err) {
-			console.warn(`Failed to load company info for ID ${companyID}:`, err);
-		}
-
-    return [companyName, companyLogo];
-	}
 
 	async function fetchApplications(status: string = 'All') {
 		if (!isAuthenticated()) {
@@ -71,10 +36,10 @@
 
 			const appPromises = appData.map(async (app: any) => {
 				// Fetch job details
-				const job = await fetchJob(app);
+				const job = await fetchJob(app.jobApplication.jobID);
 
-				// Default values
-				let [companyName, companyLogo] = await fetchCompany(job.companyID); 
+				// fetch company name and logo.
+				let [companyName, companyLogo] = await fetchCompanyNameLogo(job.companyID || '');
 
 				const created = new Date(app.jobApplication.createdAt);
 				const diffDays = Math.floor((Date.now() - created.getTime()) / (1000 * 60 * 60 * 24));
