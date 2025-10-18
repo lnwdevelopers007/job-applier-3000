@@ -43,7 +43,7 @@ function getCompanyInfo(company: any) {
   const infoArray = company.userInfo || [];
   const info = Object.fromEntries(infoArray.map((item: any) => [item.Key, item.Value]));
 
-  let companyName: string = info.name || company.name || DEFAULT_COMPANY_NAME;
-  let companyLogo: string = info.logo || company.avatarURL || DEFAULT_COMPANY_LOGO;
+  const companyName: string = info.name || company.name || DEFAULT_COMPANY_NAME;
+  const companyLogo: string = info.logo || company.avatarURL || DEFAULT_COMPANY_LOGO;
   return [companyName, companyLogo]
 }

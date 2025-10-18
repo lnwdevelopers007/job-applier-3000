@@ -24,6 +24,8 @@
 	let isLoggedIn = false;
 	let appliedJobs = new Set();
 
+	let isApplying = false;
+
 	$: totalPages = Math.ceil(filteredJobs.length / pageSize);
 	$: paginatedJobs = filteredJobs.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 	$: if (selectedJob?.companyID) {
@@ -155,6 +157,7 @@
 				return;
 			}
 
+			isApplying = true;
 			const payload = {
 				applicantID: userInfo.userID,
 				jobID: job.id,
@@ -184,6 +187,7 @@
 			console.error('Error applying to job:', err);
 			alert('❌ Failed to apply. Please try again.');
 		}
+		isApplying = false;
 	}
 
 	function toggleCycle(field) {
@@ -421,10 +425,13 @@
 							</button>
 						{:else}
 							<button
-								class="rounded-lg bg-green-600 px-4 py-2 text-sm text-white"
+								class={`rounded-lg px-4 py-2 text-sm text-white transition-colors duration-200 ${
+									isApplying ? 'cursor-not-allowed bg-gray-500' : 'bg-green-600'
+								}`}
 								onclick={() => applyJob(selectedJob)}
+								disabled={isApplying}
 							>
-								Apply
+								{isApplying ? 'Applying…' : 'Apply'}
 							</button>
 						{/if}
 
