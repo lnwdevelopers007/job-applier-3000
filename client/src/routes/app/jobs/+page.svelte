@@ -68,8 +68,7 @@
 
 	async function fetchCompanyInfo(companyID) {
 		try {
-			const raw = fetchCompany(companyID);
-
+			const raw = await fetchCompany(companyID);
 			const infoArray = raw.userInfo || [];
 			const info = Object.fromEntries(infoArray.map((item) => [item.Key, item.Value]));
 
