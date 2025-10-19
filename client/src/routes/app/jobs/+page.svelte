@@ -410,7 +410,14 @@
 
 					<!-- Apply / Bookmark -->
 					<div class="mb-4 flex gap-2">
-						{#if new Date(selectedJob.closeDate) < new Date()}
+						{#if appliedJobs.has(selectedJob.id)}
+							<button
+								class="cursor-not-allowed rounded-lg bg-gray-400 px-4 py-2 text-sm text-white"
+								disabled
+							>
+								Applied
+							</button>
+						{:else if new Date(selectedJob.closeDate) < new Date()}
 							<button
 								class="cursor-not-allowed rounded-lg bg-gray-400 px-4 py-2 text-sm text-white"
 								disabled
