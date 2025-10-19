@@ -19,13 +19,14 @@
 
   let candidates: any[] = [];
   let selectedCandidate: any = null;
-  let currentStatusFilter = '';
+  let currentStatusFilter: string = '';
 
   let company: any = null;
   let pendingCount: number = 0;
   let currentPage: number = 1;
   let itemsPerPage: number = 5;
   let totalPages: number = 1;
+  let isUpdatingStatus: boolean = false;
 
   $: paginatedCandidates = candidates.slice(
   (currentPage - 1) * itemsPerPage,
@@ -160,6 +161,8 @@
   }
 
   async function updateStatus(candidateID: string, newStatus: string) {
+    if (isUpdatingStatus) return;
+    isUpdatingStatus = true;
     try {
       const candidate = candidates.find(c => c.id === candidateID);
       if (!candidate) throw new Error('Candidate not found');
@@ -184,6 +187,8 @@
         selectedCandidate = candidates.find((c) => c.id === candidateID) || null;
     } catch (err) {
       console.error('Error updating candidate status:', err);
+    } finally {
+      isUpdatingStatus = false;
     }
   }
 
@@ -322,11 +327,11 @@
                 <button class="flex px-4 py-1 text-xs bg-gray-100 rounded border border-gray-300 hover:bg-gray-500"><StickyNote class="w-4 h-4 mx-1" />Notes</button>
                 <button class="flex px-4 py-1 text-xs bg-green-500 text-white rounded border border-green-300 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 on:click={() => updateStatus(selectedCandidate.id, 'ACCEPTED')}
-                disabled={selectedCandidate.status === 'Accepted' || selectedCandidate.status === 'Rejected'}
+                disabled={isUpdatingStatus || selectedCandidate.status === 'Accepted' || selectedCandidate.status === 'Rejected'}
                 ><Check class="w-4 h-4 mx-1" />Accept</button>
                 <button class="flex px-4 py-1 text-xs bg-red-500 text-white rounded border border-red-300 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 on:click={() => updateStatus(selectedCandidate.id, 'REJECTED')}
-                disabled={selectedCandidate.status === 'Accepted' || selectedCandidate.status === 'Rejected'}
+                disabled={isUpdatingStatus || selectedCandidate.status === 'Accepted' || selectedCandidate.status === 'Rejected'}
                 ><X class="w-4 h-4 mx-1" />Reject</button>
               </div>
             </div>
