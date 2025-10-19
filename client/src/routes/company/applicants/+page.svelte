@@ -290,7 +290,7 @@
         <div class="flex justify-center items-center gap-2 mt-4">
           <button
             on:click={() => changePage(currentPage - 1)}
-            class="px-3 py-1 bg-white border border-gray-300 rounded disabled:opacity-50"
+            class="px-3 py-1 bg-gray-200 border border-gray-300 rounded disabled:opacity-50"
             disabled={currentPage === 1}
           >
             Prev
@@ -302,7 +302,7 @@
 
           <button
             on:click={() => changePage(currentPage + 1)}
-            class="px-3 py-1 bg-white border border-gray-300 rounded disabled:opacity-50"
+            class="px-3 py-1 bg-gray-200 border border-gray-300 rounded disabled:opacity-50"
             disabled={currentPage === totalPages}
           >
             Next
