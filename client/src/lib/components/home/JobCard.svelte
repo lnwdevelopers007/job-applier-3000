@@ -39,7 +39,7 @@
 	function handleApply() {
 		if (isAuthenticated()) {
 			// User is logged in - proceed to job application
-			navigateWithAuth('/app/jobs');
+			navigateWithAuth('/app/jobs/' + job.id);
 		} else {
 			// User not logged in - show auth modal
 			showAuthModal = true;
