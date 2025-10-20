@@ -235,9 +235,6 @@
 					{:else}
 						<div class="col-span-full text-center py-8">
 							<div class="max-w-md mx-auto">
-								<div class="text-gray-400 mb-4">
-									<Briefcase class="w-16 h-16 mx-auto" />
-								</div>
 								<h3 class="text-lg font-medium text-gray-900 mb-2">No recent opportunities</h3>
 								<p class="text-gray-500 mb-4">Check back later for new job postings, or explore all available positions.</p>
 								<button 

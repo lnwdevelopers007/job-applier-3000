@@ -204,20 +204,12 @@
 	<!-- Skills/Tags Section -->
 	{#if job.tags && job.tags.length > 0}
 		<div class="mb-6">
-			<h3 class="text-lg font-semibold text-gray-900 mb-3">Skills Required</h3>
+			<h3 class="text-lg font-semibold text-gray-900 mb-3">Skills</h3>
 			<div class="flex flex-wrap gap-2">
-				{#each (showAllSkills ? job.tags : job.tags.slice(0, 6)) as tag}
+				{#each (showAllSkills ? job.tags : job.tags) as tag}
 					<SkillTag skill={tag} />
 				{/each}
 			</div>
-			{#if job.tags.length > 6}
-				<button 
-					onclick={() => showAllSkills = !showAllSkills}
-					class="mt-2 text-sm text-green-600 hover:text-green-700 transition-colors font-medium"
-				>
-					{showAllSkills ? 'Show less' : `Show ${job.tags.length - 6} more skills`}
-				</button>
-			{/if}
 		</div>
 	{/if}
 
