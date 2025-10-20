@@ -10,6 +10,7 @@
   import FloatingJobHeader from '$lib/components/job/FloatingJobHeader.svelte';
   import { fetchJob, fetchCompany, fetchCompanyNameLogo, DEFAULT_COMPANY_LOGO } from '$lib/utils/fetcher';
   import { isAuthenticated, getUserInfo } from '$lib/utils/auth';
+	import { formatDateDMY } from '$lib/utils/datetime';
 
   let { data }: { data: { jobId: string } } = $props();
 
@@ -88,7 +89,7 @@
         salary: formatSalary(jobData.minSalary, jobData.maxSalary, jobData.currency || 'THB'),
         posted: jobData.postOpenDate ? getRelativeTime(jobData.postOpenDate) : 'Unknown',
         postedDate: jobData.postOpenDate || null,
-        closeDate: jobData.applicationDeadline ? getRelativeTime(jobData.applicationDeadline) : 'Open until filled',
+        closeDate: jobData.applicationDeadline ? formatDateDMY(jobData.applicationDeadline) : 'Open until filled',
         closeDateRaw: jobData.applicationDeadline || null,
         description: jobData.jobDescription || 'No description provided.',
         skills: jobData.requiredSkills ? jobData.requiredSkills.split(',').map((skill: string) => skill.trim()) : [],
@@ -149,13 +150,58 @@
 
   async function loadSimilarJobs() {
     try {
-      const params = new URLSearchParams();
-      if (job?.workType) params.set('workType', job.workType);
-      
-      const res = await fetch(`/jobs/query?${params.toString()}`);
+      // Fetch all jobs first
+      const res = await fetch('/jobs/query');
       if (res.ok) {
         const data = await res.json();
-        const filteredJobs = data.filter((j: any) => j.id !== job?.id).slice(0, 3);
+        
+        // Filter out current job and calculate similarity scores
+        const otherJobs = data.filter((j: any) => j.id !== job?.id);
+        const jobsWithScores = otherJobs.map((jobData: any) => {
+          let score = 0;
+          
+          // Score based on title similarity (keyword matching)
+          if (job?.title && jobData.title) {
+            const currentTitle = job.title.toLowerCase();
+            const otherTitle = jobData.title.toLowerCase();
+            
+            // Extract keywords from titles (remove common words)
+            const commonWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'];
+            const currentKeywords = currentTitle.split(/\s+/).filter((word: string) => word.length > 2 && !commonWords.includes(word));
+            const otherKeywords = otherTitle.split(/\s+/).filter((word: string) => word.length > 2 && !commonWords.includes(word));
+            
+            // Calculate keyword overlap
+            const matchingKeywords = currentKeywords.filter((keyword: string) => 
+              otherKeywords.some((otherKeyword: string) => 
+                otherKeyword.includes(keyword) || keyword.includes(otherKeyword)
+              )
+            );
+            score += (matchingKeywords.length / Math.max(currentKeywords.length, 1)) * 3;
+          }
+          
+          // Score based on skills similarity
+          if (job?.skills && jobData.requiredSkills) {
+            const currentSkills = job.skills.map((s: string) => s.toLowerCase().trim());
+            const otherSkills = jobData.requiredSkills.split(',').map((s: string) => s.toLowerCase().trim());
+            
+            const matchingSkills = currentSkills.filter((skill: string) => 
+              otherSkills.some((otherSkill: string) => otherSkill.includes(skill) || skill.includes(otherSkill))
+            );
+            score += (matchingSkills.length / Math.max(currentSkills.length, 1)) * 2;
+          }
+          
+          // Minor bonus for same work type
+          if (job?.workType && jobData.workType === job.workType) {
+            score += 0.5;
+          }
+          
+          return { ...jobData, similarityScore: score };
+        });
+        
+        // Sort by similarity score and take top 3
+        const filteredJobs = jobsWithScores
+          .sort((a: any, b: any) => b.similarityScore - a.similarityScore)
+          .slice(0, 3);
         
         similarJobs = await Promise.all(filteredJobs.map(async (jobData: any) => {
           try {
@@ -286,11 +332,6 @@
   }
 
   function handleApplyClick() {
-    if (!isAuthenticated()) {
-      // Redirect to login or show auth modal
-      goto('/auth/login');
-      return;
-    }
     showApplyModal = true;
   }
 
