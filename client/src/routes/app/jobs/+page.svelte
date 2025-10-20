@@ -12,6 +12,7 @@
 		DEFAULT_COMPANY_LOGO,
 		DEFAULT_COMPANY_NAME
 	} from '$lib/utils/fetcher';
+	import { formatDateShort } from '$lib/utils/datetime';
 
 	let jobs = $state([]);
 	let filteredJobs = $state([]);
@@ -131,9 +132,9 @@
 					tags: job.requiredSkills
 						? job.requiredSkills.split(',').map((skill) => skill.trim())
 						: [],
-					posted: job.postOpenDate ? new Date(job.postOpenDate).toLocaleDateString() : 'Unknown',
+					posted: job.postOpenDate ? formatDateShort(job.postOpenDate) : 'Unknown',
 					closeDate: job.applicationDeadline
-						? new Date(job.applicationDeadline).toLocaleDateString()
+						? formatDateShort(job.applicationDeadline)
 						: 'Unknown',
 					description: job.jobDescription || 'No description provided.',
 					logo: companyLogo
@@ -153,11 +154,6 @@
 	}
 
 	function applyJob(job) {
-		if (!isLoggedIn || !userInfo?.userID) {
-			window.location.href = '/auth/login';
-			return;
-		}
-
 		jobToApply = job;
 		showApplyModal = true;
 	}
@@ -310,7 +306,7 @@
 						{#each paginatedJobs as job (job.id)}
 							<button
 								onclick={() => (selectedJob = job)}
-								class={`flex w-full cursor-pointer flex-col rounded-lg bg-white shadow ring-offset-2 hover:ring-2 hover:ring-green-300 ${selectedJob?.id === job.id ? 'ring-2 ring-green-500' : ''}`}
+								class={`flex w-full cursor-pointer flex-col rounded-lg bg-white shadow ring-offset-2 hover:ring-2 hover:ring-green-500 ${selectedJob?.id === job.id ? 'ring-2 ring-green-600' : ''}`}
 							>
 								<div class="flex items-start gap-3 p-2">
 									<img

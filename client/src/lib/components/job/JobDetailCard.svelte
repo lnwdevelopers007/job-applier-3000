@@ -4,6 +4,7 @@
 	import Badge from './Badge.svelte';
 	import SkillTag from './SkillTag.svelte';
 	import CompanyCard from './CompanyCard.svelte';
+	import { formatRelativeTime } from '$lib/utils/datetime';
 	
 	interface Job {
 		id: string;
@@ -43,30 +44,6 @@
 		isBookmarked?: boolean;
 	} = $props();
 	
-	// Utility functions
-	function getRelativeTime(dateString: string): string {
-		if (!dateString || dateString === 'Unknown') return 'Unknown';
-		
-		const date = new Date(dateString);
-		const now = new Date();
-		const diffTime = Math.abs(now.getTime() - date.getTime());
-		const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-		
-		if (date > now) {
-			if (diffDays === 0) return 'Today';
-			if (diffDays === 1) return 'Tomorrow';
-			if (diffDays < 7) return `In ${diffDays} days`;
-			if (diffDays < 30) return `In ${Math.floor(diffDays / 7)} weeks`;
-			return date.toLocaleDateString();
-		} else {
-			if (diffDays === 0) return 'Today';
-			if (diffDays === 1) return 'Yesterday';
-			if (diffDays < 7) return `${diffDays} days ago`;
-			if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-			if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-			return date.toLocaleDateString();
-		}
-	}
 	
 	const isClosed = $derived(new Date(job.closeDate) < new Date());
 	const isNotOpen = $derived(new Date(job.posted) > new Date());
@@ -146,7 +123,7 @@
 				</div>
 			{/if}
 			<div class="flex items-center gap-2 mt-1">
-				<span>Posted {getRelativeTime(job.posted)}</span>
+				<span>Posted {formatRelativeTime(job.posted)}</span>
 			</div>
 		</div>
 
@@ -179,12 +156,12 @@
 					class="px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-md hover:bg-green-700 active:scale-[0.98] transition-all duration-150 hover:cursor-pointer"
 					onclick={() => onApply(job)}
 				>
-					Apply now
+					Apply
 				</button>
 				{#if onBookmark}
 					<button 
 						onclick={onBookmark}
-						class="px-3 py-2 text-sm font-medium border border-gray-200 rounded-md hover:bg-gray-50 transition-colors flex items-center {isBookmarked ? 'text-green-700 bg-green-50 border-green-200' : 'text-gray-700'} hover:cursor-pointer"
+						class="p-2 text-sm font-medium border border-gray-200 rounded-md hover:bg-gray-50 transition-colors flex items-center {isBookmarked ? 'text-green-700' : 'text-gray-700'} hover:cursor-pointer"
 					>
 						<Bookmark class="w-4 h-4 {isBookmarked ? 'fill-current' : ''}" />
 					</button>
@@ -221,34 +198,3 @@
 		</div>
 	{/if}
 </div>
-
-
-<style>
-	.job-description :global(h2) {
-		font-size: 1.125rem;
-		font-weight: 600;
-		color: rgb(31, 41, 55);
-		margin-bottom: 0.5rem;
-	}
-	
-	.job-description :global(p) {
-		margin-bottom: 0.75rem;
-		color: rgb(55, 65, 81);
-	}
-	
-	.job-description :global(ul) {
-		list-style-type: disc;
-		padding-left: 1.25rem;
-		margin-bottom: 0.75rem;
-		color: rgb(55, 65, 81);
-	}
-	
-	.job-description :global(li) {
-		margin-bottom: 0.25rem;
-	}
-	
-	.job-description :global(strong) {
-		font-weight: 600;
-		color: rgb(17, 24, 39);
-	}
-</style>
