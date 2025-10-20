@@ -8,7 +8,6 @@
     <div class="flex-1 min-w-0">
       <div class="flex items-start justify-between mb-1">
         <Skeleton width="w-3/4" height="h-5" />
-        <Skeleton width="w-4" height="h-4" class="rounded" />
       </div>
       <div class="flex items-center gap-1 mb-3">
         <Skeleton width="w-1/2" height="h-4" />

@@ -46,16 +46,15 @@
 					{#if onBookmark}
 						<button 
 							onclick={onBookmark}
-							class="px-3 py-2 text-sm font-medium border border-gray-200 rounded-md hover:bg-gray-50 transition-colors flex items-center {isBookmarked ? 'text-green-700 bg-green-50' : 'text-gray-700 bg-white'} hover:cursor-pointer"
+							class="p-2 text-sm font-medium border border-gray-200 rounded-md hover:bg-gray-50 transition-colors flex items-center {isBookmarked ? 'text-green-700' : 'text-gray-700 bg-white'} hover:cursor-pointer"
 						>
 							<Bookmark class="w-4 h-4 {isBookmarked ? 'fill-current' : ''}" />
-							<span class="ml-1 hidden sm:inline">{isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
 						</button>
 					{/if}
 					{#if onShare}
 						<button 
 							onclick={onShare}
-							class="px-3 py-2 text-sm font-medium border border-gray-200 rounded-md hover:bg-gray-50 transition-colors flex items-center hover:cursor-pointer"
+							class="p-2 text-sm font-medium border border-gray-200 rounded-md hover:bg-gray-50 transition-colors flex items-center hover:cursor-pointer"
 						>
 							<Share2 class="w-4 h-4" />
 						</button>

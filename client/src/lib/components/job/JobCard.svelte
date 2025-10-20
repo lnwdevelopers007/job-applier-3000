@@ -53,7 +53,7 @@
   <div class="flex items-start gap-3 mb-2">
     <img src={job.logo} alt={job.company} class="w-12 h-12 rounded flex-shrink-0">
     <div class="flex-1 min-w-0">
-      <div class="flex items-start justify-between mb-1">
+      <div class="flex items-start justify-between">
         <h3 class="text-md font-medium text-gray-900">{job.title}</h3>
         <button
           onclick={handleBookmark}
@@ -61,7 +61,7 @@
           class="p-1 hover:bg-gray-100 rounded transition-colors"
           aria-label="Bookmark job"
         >
-          <Bookmark class="w-4 h-4 {isBookmarked ? 'text-green-600 fill-current' : 'text-gray-400 hover:text-gray-600'}" />
+          <Bookmark class="w-5 h-5 {isBookmarked ? 'text-green-600 fill-current' : 'text-gray-400 hover:text-gray-600'} hover:cursor-pointer" />
         </button>
       </div>
       <div class="space-y-1 mb-3">
