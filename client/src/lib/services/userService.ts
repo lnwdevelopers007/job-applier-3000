@@ -96,6 +96,15 @@ class UserService {
 			user.id = user._id;
 		}
 		
+		// Parse userInfo if it's an array of key-value pairs (company format)
+		if (Array.isArray(user.userInfo)) {
+			const userInfoObj: Record<string, any> = {};
+			user.userInfo.forEach((item: { Key: string; Value: any }) => {
+				userInfoObj[item.Key] = item.Value;
+			});
+			user.userInfo = userInfoObj;
+		}
+		
 		return user;
 	}
 	
@@ -119,6 +128,15 @@ class UserService {
 		// Map _id from backend to id for frontend
 		if (updatedUser._id) {
 			updatedUser.id = updatedUser._id;
+		}
+		
+		// Parse userInfo if it's an array of key-value pairs (company format)
+		if (Array.isArray(updatedUser.userInfo)) {
+			const userInfoObj: Record<string, any> = {};
+			updatedUser.userInfo.forEach((item: { Key: string; Value: any }) => {
+				userInfoObj[item.Key] = item.Value;
+			});
+			updatedUser.userInfo = userInfoObj;
 		}
 		
 		// Update auth store with new user data
