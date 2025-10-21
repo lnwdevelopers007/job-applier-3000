@@ -374,6 +374,7 @@
 							onApply={applyJob}
 							onBookmark={toggleBookmark}
 							{isBookmarked}
+							isApplied={appliedJobs.has(selectedJob.id)}
 						/>
 					</div>
 				{:else}

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { MapPin, Clock } from 'lucide-svelte';
 	import AuthModal from '$lib/components/ui/AuthModal.svelte';
+	import Badge from '$lib/components/job/Badge.svelte';
 	import { isAuthenticated, navigateWithAuth } from '$lib/utils/auth';
 
 	type Job = {
@@ -169,10 +170,10 @@
 			{job ? formatSalary(job.minSalary, job.maxSalary, job.currency) : ''}
 		</span>
 		{#if job?.type}
-			<span class="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded font-medium">{job.type}</span>
+			<Badge variant="purple" size="xs" text={job.type} />
 		{/if}
 		{#if job?.locationType}
-			<span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded font-medium capitalize">{job.locationType}</span>
+			<Badge variant="info" size="xs" text={job.locationType} />
 		{/if}
 	</div>
 

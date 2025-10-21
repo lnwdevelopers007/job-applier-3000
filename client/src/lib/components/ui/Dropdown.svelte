@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { scale } from 'svelte/transition';
+	import { tick } from 'svelte';
 	
 	interface DropdownItem {
 		label: string;
@@ -11,11 +12,13 @@
 		items: DropdownItem[];
 		isOpen: boolean;
 		onClose: () => void;
+		triggerElement?: HTMLElement;
 	}
 	
-	let { items, isOpen, onClose }: Props = $props();
+	let { items, isOpen, onClose, triggerElement }: Props = $props();
 	
 	let dropdownRef = $state<HTMLDivElement>();
+	let position = $state({ top: 0, left: 0 });
 	
 	function handleClickOutside(event: MouseEvent) {
 		if (dropdownRef && !dropdownRef.contains(event.target as Node)) {
@@ -23,16 +26,44 @@
 		}
 	}
 	
+	async function updatePosition() {
+		if (!triggerElement || !dropdownRef) return;
+		
+		await tick();
+		const rect = triggerElement.getBoundingClientRect();
+		const dropdownRect = dropdownRef.getBoundingClientRect();
+		
+		// Calculate position relative to viewport
+		let top = rect.bottom + 4; // 4px gap
+		let left = rect.right - dropdownRect.width;
+		
+		// Adjust if dropdown goes off screen
+		if (top + dropdownRect.height > window.innerHeight) {
+			top = rect.top - dropdownRect.height - 4;
+		}
+		
+		if (left < 0) {
+			left = rect.left;
+		}
+		
+		position = { top, left };
+	}
+	
 	$effect(() => {
 		if (isOpen) {
+			updatePosition();
 			// Delay adding the event listener to avoid immediately closing
 			setTimeout(() => {
 				document.addEventListener('click', handleClickOutside);
+				window.addEventListener('scroll', updatePosition, true);
+				window.addEventListener('resize', updatePosition);
 			}, 0);
 		}
 		
 		return () => {
 			document.removeEventListener('click', handleClickOutside);
+			window.removeEventListener('scroll', updatePosition, true);
+			window.removeEventListener('resize', updatePosition);
 		};
 	});
 </script>
@@ -40,7 +71,8 @@
 {#if isOpen}
 	<div 
 		bind:this={dropdownRef}
-		class="absolute right-0 top-full mt-1 min-w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-10"
+		class="fixed min-w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-[100]"
+		style="top: {position.top}px; left: {position.left}px;"
 		in:scale={{ duration: 150, start: 0.95 }}
 		out:scale={{ duration: 100, start: 0.95 }}
 	>

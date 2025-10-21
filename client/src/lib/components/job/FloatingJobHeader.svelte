@@ -1,11 +1,14 @@
 <script lang="ts">
 	import { Bookmark, Share2 } from 'lucide-svelte';
+	import ApplyButton from './ApplyButton.svelte';
 	
 	interface Job {
 		id: string;
 		title: string;
 		company: string;
 		logo: string;
+		closeDateRaw?: string | null;
+		postedDate?: string | null;
 	}
 	
 	let {
@@ -14,7 +17,8 @@
 		onApply,
 		onBookmark,
 		onShare,
-		isBookmarked = false
+		isBookmarked = false,
+		isApplied = false
 	}: {
 		show: boolean;
 		job: Job;
@@ -22,6 +26,7 @@
 		onBookmark?: () => void;
 		onShare?: () => void;
 		isBookmarked?: boolean;
+		isApplied?: boolean;
 	} = $props();
 </script>
 
@@ -37,12 +42,13 @@
 					</div>
 				</div>
 				<div class="flex items-center gap-2">
-					<button 
-						onclick={onApply}
-						class="px-6 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 active:scale-[0.98] transition-all duration-150 hover:cursor-pointer"
-					>
-						Apply now
-					</button>
+					<ApplyButton
+						{isApplied}
+						closeDateRaw={job.closeDateRaw}
+						postedDate={job.postedDate}
+						onClick={onApply}
+						size="md"
+					/>
 					{#if onBookmark}
 						<button 
 							onclick={onBookmark}

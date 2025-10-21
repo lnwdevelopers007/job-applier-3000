@@ -15,6 +15,7 @@
 	let activities = $state<any[]>([]);
 	let filterStatus = $state('All');
 	let openDropdown = $state<string | null>(null);
+	let dropdownTriggers = $state<Record<string, HTMLElement>>({});
 	let showAllApplications = $state(false);
 	
 	// Cancel modal state
@@ -303,6 +304,7 @@
 
 						<div class="relative">
 							<button 
+								bind:this={dropdownTriggers[app.id]}
 								onclick={() => toggleDropdown(app.id)}
 								class="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors hover:cursor-pointer"
 							>
@@ -312,6 +314,7 @@
 							<Dropdown
 								isOpen={openDropdown === app.id}
 								onClose={() => openDropdown = null}
+								triggerElement={dropdownTriggers[app.id]}
 								items={[
 									{
 										label: 'View Job',

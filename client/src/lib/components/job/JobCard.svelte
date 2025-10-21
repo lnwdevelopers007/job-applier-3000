@@ -38,6 +38,7 @@
     isBookmarked = !isBookmarked;
     onBookmark?.();
   }
+  
 </script>
 
 {#if loading || !job}
@@ -48,9 +49,9 @@
   tabindex="0"
   onclick={onclick}
   onkeydown={(e) => e.key === 'Enter' && onclick?.()}
-  class="block rounded-lg border border-gray-200 p-4 hover:bg-gray-50 hover:shadow transition-all text-left w-full cursor-pointer"
+  class="block rounded-lg border border-gray-200 p-4 hover:bg-gray-50 transition-all text-left w-full cursor-pointer"
 >
-  <div class="flex items-start gap-3 mb-2">
+  <div class="flex items-start gap-3">
     <img src={job.logo} alt={job.company} class="w-12 h-12 rounded flex-shrink-0">
     <div class="flex-1 min-w-0">
       <div class="flex items-start justify-between">
@@ -58,7 +59,7 @@
         <button
           onclick={handleBookmark}
           onkeydown={(e) => e.key === 'Enter' && handleBookmark(e)}
-          class="p-1 hover:bg-gray-100 rounded transition-colors"
+          class="hover:bg-gray-100 rounded transition-colors"
           aria-label="Bookmark job"
         >
           <Bookmark class="w-5 h-5 {isBookmarked ? 'text-green-600 fill-current' : 'text-gray-400 hover:text-gray-600'} hover:cursor-pointer" />
@@ -70,17 +71,12 @@
           <MapPin class="w-3 h-3" />
           <span>{job.location}</span>
         </div>
-        {#if showSalary && job.salary}
-          <p class="text-sm font-medium text-green-600">{job.salary}</p>
-        {/if}
       </div>
     </div>
   </div>
   <div class="flex flex-wrap gap-1.5">
-    <Badge variant="success">{job.workType}</Badge>
-    <Badge variant={job.workArrangement === 'Remote' ? 'info' : job.workArrangement === 'On-site' ? 'warning' : 'secondary'}>
-      {job.workArrangement}
-    </Badge>
+    <Badge variant="purple" text={job.workArrangement} />
+    <Badge variant="info" text={job.workType} />
   </div>
 </div>
 {/if}

@@ -2,7 +2,9 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { MapPin, Bookmark, Share2, Calendar, Clock, Banknote } from 'lucide-svelte';
+  import SafeHTML from '$lib/utils/SafeHTML.svelte';
   import SkillTag from '$lib/components/job/SkillTag.svelte';
+  import ApplyButton from '$lib/components/job/ApplyButton.svelte';
   import CompanyCard from '$lib/components/job/CompanyCard.svelte';
   import JobCard from '$lib/components/job/JobCard.svelte';
   import JobDetailSkeleton from '$lib/components/job/JobDetailSkeleton.svelte';
@@ -22,9 +24,10 @@
   let error = $state<string | null>(null);
   let isBookmarked = $state(false);
   let bookmarkedJobs = $state(new Set<string>());
+  let appliedJobs = $state(new Set<string>());
   let userInfo: any = null;
   let showFloatingCard = $state(false);
-  let applyButtonRef: HTMLElement;
+  let applyButtonRef = $state<HTMLElement | undefined>();
   let showApplyModal = $state(false);
   let showAllSkills = $state(false);
 
@@ -71,10 +74,35 @@
     return '';
   }
 
+  async function fetchAppliedJobs() {
+    if (!userInfo?.userID) return;
+    
+    try {
+      const res = await fetch(`/apply/query?applicantID=${userInfo.userID}`, {
+        credentials: 'include'
+      });
+      if (!res.ok) throw new Error('Failed to fetch applied jobs');
+      
+      const data = await res.json();
+      appliedJobs = new Set(data.map((app: any) => app.jobApplication.jobID));
+    } catch (err) {
+      console.error('Error fetching applied jobs:', err);
+      appliedJobs = new Set();
+    }
+  }
+
   async function loadJobData() {
     try {
       loading = true;
       error = null;
+
+      // Check authentication and fetch applied jobs first
+      if (isAuthenticated()) {
+        userInfo = getUserInfo();
+        if (userInfo?.userID) {
+          await fetchAppliedJobs();
+        }
+      }
 
       const jobData = await fetchJob(data.jobId);
       
@@ -344,10 +372,6 @@
   });
 
   onMount(() => {
-    if (isAuthenticated()) {
-      userInfo = getUserInfo();
-    }
-
     // Handle scroll detection for floating card
     const handleScroll = () => {
       if (applyButtonRef) {
@@ -444,7 +468,7 @@
               <!-- Job Description Section -->
               <h2 class="text-lg font-semibold text-gray-900 mb-4">Job Description</h2>
               <div class="space-y-5 text-sm text-gray-700 leading-7">
-                {@html job.description}
+                <SafeHTML html={job.description} />
               </div>
 
               <!-- Skills Section -->
@@ -479,17 +503,19 @@
               <div class="text-xs text-gray-500 mb-3">
                 Application deadline: {job.closeDate || 'Open until filled'}
               </div>
-              <button 
-                onclick={handleApplyClick}
-                class="w-full px-4 py-2.5 bg-green-600 text-white text-md font-medium rounded-md hover:bg-green-700 active:scale-[0.99] transition-all duration-150 hover:cursor-pointer"
-              >
-                Apply now
-              </button>
+              <ApplyButton
+                isApplied={appliedJobs.has(job.id)}
+                closeDateRaw={job.closeDateRaw}
+                postedDate={job.postedDate}
+                onClick={handleApplyClick}
+                size="lg"
+                fullWidth={true}
+              />
             </div>
             <!-- Similar Jobs -->
             {#if similarJobs.length > 0}
-              <div class="bg-white border border-gray-200 rounded-xl overflow-hidden p-6 mb-6">
-                <h2 class="text-lg font-semibold text-gray-900 mb-3">Similar Jobs</h2>
+              <div class="bg-white border border-gray-200 rounded-xl overflow-hidden p-4 mb-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-3">Similar Jobs</h2>
                 <div class="space-y-3">
                   {#each similarJobs as similarJob}
                     <JobCard 
@@ -504,8 +530,8 @@
 
             <!-- Other Jobs from Company -->
             {#if otherCompanyJobs.length > 0}
-              <div class="bg-white border border-gray-200 rounded-xl overflow-hidden p-6">
-                <h2 class="text-lg font-semibold text-gray-900 mb-3">Other jobs from {job.company}</h2>
+              <div class="bg-white border border-gray-200 rounded-xl overflow-hidden p-4">
+                <h2 class="text-lg font-medium text-gray-900 mb-3">Other jobs from {job.company}</h2>
                 <div class="space-y-3">
                   {#each otherCompanyJobs as otherJob}
                     <JobCard 
@@ -536,6 +562,7 @@
   onBookmark={toggleBookmark}
   onShare={handleShare}
   {isBookmarked}
+  isApplied={job && appliedJobs.has(job.id)}
 />
 
 <!-- Apply Modal -->

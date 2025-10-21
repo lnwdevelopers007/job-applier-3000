@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { MapPin, Clock, Calendar, Banknote, Share2, ExternalLink, Bookmark } from 'lucide-svelte';
+import ApplyButton from './ApplyButton.svelte';
 	import SafeHTML from '$lib/utils/SafeHTML.svelte';
 	import Badge from './Badge.svelte';
 	import SkillTag from './SkillTag.svelte';
@@ -35,21 +36,22 @@
 		companyInfo = null,
 		onApply,
 		onBookmark = null,
-		isBookmarked = false
+		isBookmarked = false,
+		isApplied = false
 	}: {
 		job: Job;
 		companyInfo?: CompanyInfo | null;
 		onApply: (job: Job) => void;
 		onBookmark?: () => void;
 		isBookmarked?: boolean;
+		isApplied?: boolean;
 	} = $props();
 	
 	
-	const isClosed = $derived(new Date(job.closeDate) < new Date());
-	const isNotOpen = $derived(new Date(job.posted) > new Date());
 	const displayDescription = $derived(job.description || '');
 	
 	let showAllSkills = $state(false);
+	
 	
 	// Transform companyInfo to match CompanyCard interface
 	const company = $derived(companyInfo ? {
@@ -129,43 +131,25 @@
 
 		<!-- Job Type and Work Arrangement Badges -->
 		<div class="flex flex-wrap gap-2 mb-4">
-			<Badge variant="success">{job.workArrangement || 'FULL-TIME'}</Badge>
-			<Badge variant={job.workType === 'remote' ? 'info' : job.workType === 'hybrid' ? 'secondary' : 'warning'}>
-				{job.workType?.toUpperCase() || 'ON-SITE'}
-			</Badge>
+			<Badge variant="purple" text={job.workArrangement || 'full-time'} />
+			<Badge variant="info" text={job.workType || 'on-site'} />
 		</div>
 
 		<!-- Action Buttons -->
 		<div class="flex gap-2">
-			{#if isClosed}
-				<button
-					class="px-4 py-2 text-sm font-medium bg-gray-400 text-white rounded-md cursor-not-allowed"
-					disabled
+			<ApplyButton
+				{isApplied}
+				closeDate={job.closeDate}
+				posted={job.posted}
+				onClick={() => onApply(job)}
+			/>
+			{#if onBookmark}
+				<button 
+					onclick={onBookmark}
+					class="p-2 text-sm font-medium border border-gray-200 rounded-md hover:bg-gray-50 transition-colors flex items-center {isBookmarked ? 'text-green-700' : 'text-gray-700'} hover:cursor-pointer"
 				>
-					Closed
+					<Bookmark class="w-4 h-4 {isBookmarked ? 'fill-current' : ''}" />
 				</button>
-			{:else if isNotOpen}
-				<button
-					class="px-4 py-2 text-sm font-medium bg-gray-400 text-white rounded-md cursor-not-allowed"
-					disabled
-				>
-					Not Open Yet
-				</button>
-			{:else}
-				<button
-					class="px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-md hover:bg-green-700 active:scale-[0.98] transition-all duration-150 hover:cursor-pointer"
-					onclick={() => onApply(job)}
-				>
-					Apply
-				</button>
-				{#if onBookmark}
-					<button 
-						onclick={onBookmark}
-						class="p-2 text-sm font-medium border border-gray-200 rounded-md hover:bg-gray-50 transition-colors flex items-center {isBookmarked ? 'text-green-700' : 'text-gray-700'} hover:cursor-pointer"
-					>
-						<Bookmark class="w-4 h-4 {isBookmarked ? 'fill-current' : ''}" />
-					</button>
-				{/if}
 			{/if}
 		</div>
 	</div>
