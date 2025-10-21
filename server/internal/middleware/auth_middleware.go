@@ -2,19 +2,33 @@ package middleware
 
 import (
 	"net/http"
+	"os"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/lnwdevelopers007/job-applier-3000/server/config"
 )
 
-var jwtSecret = []byte(config.LoadEnv("JWT_SECRET"))
+var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
 // AuthMiddleware validates JWT token and extracts user information
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Extract token from Authorization header
+		enableAuth, _ := strconv.ParseBool(os.Getenv("ENABLE_AUTH"))
+		if !enableAuth {
+			// Optional: allow test headers for user context
+			if userID := c.GetHeader("X-User-Id"); userID != "" {
+				c.Set("userID", userID)
+			}
+			if role := c.GetHeader("X-User-Role"); role != "" {
+				c.Set("role", role)
+			}
+			c.Next()
+			return
+		}
+
+		// 🔒 Enforce real authentication when enabled
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "authorization header required"})
@@ -22,7 +36,6 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// Check for Bearer token format
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || parts[0] != "Bearer" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization header format"})
@@ -31,10 +44,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		tokenString := parts[1]
-
-		// Parse and validate token
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			// Verify signing method
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, jwt.ErrSignatureInvalid
 			}
@@ -47,7 +57,6 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// Extract claims
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token claims"})
@@ -55,7 +64,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// Set user information in context
+		// Extract claims
 		userID, _ := claims["userID"].(string)
 		role, _ := claims["role"].(string)
 		email, _ := claims["email"].(string)
@@ -65,24 +74,8 @@ func AuthMiddleware() gin.HandlerFunc {
 		c.Set("role", role)
 		c.Set("email", email)
 		c.Set("name", name)
-		
-		// Note: 'verified' is managed by admin, not passed in middleware
-		// If you need to check verification status, query the database
 
 		c.Next()
 	}
 }
 
-// OptionalAuthMiddleware makes auth optional based on environment variable
-func OptionalAuthMiddleware() gin.HandlerFunc {
-	enableAuth := config.LoadBoolean("ENABLE_AUTH")
-	
-	if enableAuth {
-		return AuthMiddleware()
-	}
-	
-	// If auth is disabled, just pass through
-	return func(c *gin.Context) {
-		c.Next()
-	}
-}

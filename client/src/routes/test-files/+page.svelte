@@ -60,6 +60,8 @@
             method: 'POST',
             headers: {
                 'Authorization': token ? `Bearer ${token}` : '',
+				'X-User-Id': userID,
+    			'X-User-Role': userRole
             },
             body: formData
         });
@@ -96,7 +98,9 @@
 				`${Backend_URL}/files/download/${fileId}?requestingUserID=${userID}`,
 				{
 					headers: {
-						'Authorization': token ? `Bearer ${token}` : ''
+						'Authorization': token ? `Bearer ${token}` : '',
+						'X-User-Id': userID,
+   						'X-User-Role': userRole
 					}
 				}
 			);
@@ -136,7 +140,9 @@
 				`${Backend_URL}/files/user/${userID}?requestingUserID=${userID}`,
 				{
         headers: {
-          'Authorization': token ? `Bearer ${token}` : ''
+          'Authorization': token ? `Bearer ${token}` : '',
+		  'X-User-Id': userID,
+		  'X-User-Role': userRole
         }
       }
 			);
@@ -165,7 +171,9 @@
 				{
 					method: 'DELETE',
 					headers: {
-						'Authorization': token ? `Bearer ${token}` : ''
+						'Authorization': token ? `Bearer ${token}` : '',
+						'X-User-Id': userID,
+    					'X-User-Role': userRole
 					}
 				}
 			);

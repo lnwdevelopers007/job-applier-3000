@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"time"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/database"
@@ -27,7 +28,7 @@ func NewFileController() FileController {
 }
 // getUserFromContext extracts user info from context (set by auth middleware)
 func getUserFromContext(c *gin.Context) (userID primitive.ObjectID, role string, err error) {
-	enableAuth := os.Getenv("ENABLE_AUTH") == "true"
+	enableAuth, _ := strconv.ParseBool(os.Getenv("ENABLE_AUTH"))
 
 	if enableAuth {
 		// Get from context (set by auth middleware)
@@ -36,30 +37,35 @@ func getUserFromContext(c *gin.Context) (userID primitive.ObjectID, role string,
 			err = http.ErrNotSupported
 			return
 		}
-		
+
 		userID, err = primitive.ObjectIDFromHex(userIDStr.(string))
 		if err != nil {
 			return
 		}
 
 		roleVal, _ := c.Get("role")
-		role = roleVal.(string)
+		role, _ = roleVal.(string)
 	} else {
-		// Fallback for testing (when auth is disabled)
-		userIDStr := c.PostForm("userID")
-		if userIDStr == "" {
-			userIDStr = c.Query("requestingUserID")
-		}
-		
-		userID, err = primitive.ObjectIDFromHex(userIDStr)
-		if err != nil {
+		// When auth disabled, use context from middleware (simulated headers)
+		userIDStr, exists := c.Get("userID")
+		if !exists {
+			userID = primitive.NewObjectID()
+			role = "jobSeeker"
+			err = nil
 			return
 		}
 
-		role = c.PostForm("userRole")
-		if role == "" {
-			role = "jobSeeker" // default for testing
+		userID, err = primitive.ObjectIDFromHex(userIDStr.(string))
+		if err != nil {
+			userID = primitive.NewObjectID()
 		}
+
+		roleVal, _ := c.Get("role")
+		role, _ = roleVal.(string)
+		if role == "" {
+			role = "jobSeeker"
+		}
+		err = nil
 	}
 
 	return
@@ -198,12 +204,13 @@ func (fc FileController) ListByUser(c *gin.Context) {
 	}
 
 	// Check if requesting user is trying to access their own files
-	if objectID != requestingUserID {
-		c.JSON(http.StatusForbidden, gin.H{
-			"error": "you can only access your own files",
-		})
-		return
-	}
+	enableAuth, _ := strconv.ParseBool(os.Getenv("ENABLE_AUTH"))
+	if enableAuth && objectID != requestingUserID {
+    c.JSON(http.StatusForbidden, gin.H{
+        "error": "you can only access your own files",
+    })
+    return
+}
 
 	db := database.GetDatabase()
 	collection := db.Collection(fc.baseController.collectionName)

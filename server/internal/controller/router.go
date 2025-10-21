@@ -63,7 +63,7 @@ func NewRouter() *gin.Engine {
 
 	file := NewFileController()
 	fileRoutes := router.Group("/files")
-	fileRoutes.Use(middleware.OptionalAuthMiddleware())
+	fileRoutes.Use(middleware.AuthMiddleware())
 	{
 		fileRoutes.POST("/upload", file.Upload)
 		fileRoutes.GET("/download/:id", file.Download)
@@ -85,7 +85,7 @@ func setUpCors() cors.Config {
 			os.Getenv("FRONTEND"),
 		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-User-Id", "X-User-Role"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
