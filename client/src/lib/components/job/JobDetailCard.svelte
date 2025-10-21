@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { MapPin, Clock, Calendar, Banknote, Share2, ExternalLink, Bookmark } from 'lucide-svelte';
+	import { MapPin, Banknote, Share2, ExternalLink, Bookmark } from 'lucide-svelte';
 import ApplyButton from './ApplyButton.svelte';
 	import SafeHTML from '$lib/utils/SafeHTML.svelte';
 	import Badge from './Badge.svelte';
@@ -167,7 +167,7 @@ import ApplyButton from './ApplyButton.svelte';
 		<div class="mb-6">
 			<h3 class="text-lg font-semibold text-gray-900 mb-3">Skills</h3>
 			<div class="flex flex-wrap gap-2">
-				{#each (showAllSkills ? job.tags : job.tags) as tag}
+				{#each (showAllSkills ? job.tags : job.tags) as tag, index (index)}
 					<SkillTag skill={tag} />
 				{/each}
 			</div>

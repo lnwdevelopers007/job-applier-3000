@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import { MapPin, Bookmark, Share2, Calendar, Clock, Banknote } from 'lucide-svelte';
+  import { MapPin, Bookmark, Share2, Clock, Banknote } from 'lucide-svelte';
   import SafeHTML from '$lib/utils/SafeHTML.svelte';
   import SkillTag from '$lib/components/job/SkillTag.svelte';
   import ApplyButton from '$lib/components/job/ApplyButton.svelte';
@@ -476,7 +476,7 @@
                 <div class="mt-6 pt-6">
                   <h2 class="text-lg font-semibold text-gray-900 mb-4">Skills</h2>
                   <div class="flex flex-wrap gap-2">
-                    {#each (showAllSkills ? job.skills : job.skills) as skill}
+                    {#each (showAllSkills ? job.skills : job.skills) as skill, index (index)}
                       <SkillTag {skill} />
                     {/each}
                   </div>
@@ -517,7 +517,7 @@
               <div class="bg-white border border-gray-200 rounded-xl overflow-hidden p-4 mb-6">
                 <h2 class="text-lg font-medium text-gray-900 mb-3">Similar Jobs</h2>
                 <div class="space-y-3">
-                  {#each similarJobs as similarJob}
+                  {#each similarJobs as similarJob (similarJob.id)}
                     <JobCard 
                       job={similarJob} 
                       onclick={() => navigateToJob(similarJob.id)}
@@ -533,7 +533,7 @@
               <div class="bg-white border border-gray-200 rounded-xl overflow-hidden p-4">
                 <h2 class="text-lg font-medium text-gray-900 mb-3">Other jobs from {job.company}</h2>
                 <div class="space-y-3">
-                  {#each otherCompanyJobs as otherJob}
+                  {#each otherCompanyJobs as otherJob (otherJob.id)}
                     <JobCard 
                       job={otherJob} 
                       onclick={() => navigateToJob(otherJob.id)}

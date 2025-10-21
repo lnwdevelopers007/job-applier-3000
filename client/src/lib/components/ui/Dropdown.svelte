@@ -77,7 +77,7 @@
 		out:scale={{ duration: 100, start: 0.95 }}
 	>
 		<div class="py-1">
-			{#each items as item}
+			{#each items as item, index (index)}
 				<button
 					onclick={() => {
 						item.action();

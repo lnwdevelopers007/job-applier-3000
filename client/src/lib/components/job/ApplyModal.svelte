@@ -8,9 +8,6 @@
     id: string;
     title: string;
     company: string;
-    location: string;
-    workType?: string;
-    workArrangement?: string;
   }
   
   interface Document {
@@ -158,7 +155,7 @@
             </button>
           </div>
           <div class="space-y-2">
-            {#each documents as doc}
+            {#each documents as doc (doc.id)}
               <div class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg bg-gray-50">
                 <FileText class="w-5 h-5 text-gray-400" />
                 <div class="flex-1">

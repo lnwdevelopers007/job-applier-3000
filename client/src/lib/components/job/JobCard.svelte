@@ -20,15 +20,13 @@
     onclick?: () => void;
     onBookmark?: () => void;
     loading?: boolean;
-    showSalary?: boolean;
   }
 
   let {
     job,
     onclick,
     onBookmark,
-    loading = false,
-    showSalary = false
+    loading = false
   }: Props = $props();
 
   let isBookmarked = $state(false);

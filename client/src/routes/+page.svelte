@@ -7,7 +7,7 @@
 	import CTASection from '$lib/components/home/CTASection.svelte';
 	import Footer from '$lib/components/home/Footer.svelte';
 	import LayoutHeader from '$lib/components/LayoutHeader.svelte';
-	import { ArrowRight, Code, ChartLine, Brush, Shield, Smartphone, Cloud, Bot, Gamepad2, ChevronLeft, ChevronRight, Briefcase } from 'lucide-svelte';
+	import { ArrowRight, Code, ChartLine, Brush, Shield, Smartphone, Cloud, Bot, Gamepad2, ChevronLeft, ChevronRight } from 'lucide-svelte';
 	import { isAuthenticated, navigateWithAuth } from '$lib/utils/auth';
 	import AuthModal from '$lib/components/ui/AuthModal.svelte';
 
