@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/database"
@@ -80,6 +81,22 @@ func (fc FileController) Upload(c *gin.Context) {
 		return
 	}
 
+	// Check user role in database matches the role from context
+	db := database.GetDatabase()
+	userCollection := db.Collection("users")
+	var userDoc struct {
+		Role string `bson:"role"`
+	}
+	err = userCollection.FindOne(c.Request.Context(), bson.M{"_id": userID}).Decode(&userDoc)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to verify user role"})
+		return
+	}
+	if !strings.EqualFold(userDoc.Role, userRole) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "role mismatch: user role in system does not match current context"})
+		return
+	}
+
 	// Parse multipart form
 	file, header, err := c.Request.FormFile("file")
 	if err != nil {
@@ -123,7 +140,6 @@ func (fc FileController) Upload(c *gin.Context) {
 	}
 
 	// Save to database
-	db := database.GetDatabase()
 	collection := db.Collection(fc.baseController.collectionName)
 	result, err := collection.InsertOne(c.Request.Context(), fileDoc)
 	if err != nil {
