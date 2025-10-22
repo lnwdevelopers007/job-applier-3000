@@ -18,20 +18,32 @@ export async function fetchCompany(companyID: string) {
   const companyRes = await fetch(`/users/${companyID}`, {
     credentials: 'include'
   });
-  if (!companyRes.ok) throw new Error('Failed to fetch company details');
+  if (!companyRes.ok) {
+    if (companyRes.status === 404) {
+      throw new Error(`Company not found (ID: ${companyID})`);
+    }
+    throw new Error(`Failed to fetch company details (Status: ${companyRes.status})`);
+  }
   const companyData = await companyRes.json()
   return companyData
 }
 
 export async function fetchCompanyNameLogo(companyID: any) {
-
   let companyName = DEFAULT_COMPANY_NAME
   let companyLogo = DEFAULT_COMPANY_LOGO
+  
+  if (!companyID) {
+    return [companyName, companyLogo];
+  }
+  
   try {
     const companyData = await fetchCompany(companyID);
     [companyName, companyLogo] = getCompanyInfo(companyData);
   } catch (err) {
-    console.warn(`Failed to load company info for ID ${companyID}:`, err);
+    // Only log warning for non-404 errors to reduce noise
+    if (err instanceof Error && !err.message.includes('Company not found')) {
+      console.warn(`Failed to load company info for ID ${companyID}:`, err);
+    }
   }
 
   return [companyName, companyLogo];

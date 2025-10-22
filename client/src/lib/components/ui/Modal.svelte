@@ -138,11 +138,11 @@
 	<!-- Full-screen overlay to block interaction -->
 	<div
 		class="fixed inset-0 z-50 overflow-y-auto"
-		transition:fade={{ duration: 200 }}
+		transition:fade={{ duration: 100 }}
 	>
 		<!-- Backdrop with click handler -->
 		<button
-			class="fixed inset-0 bg-black/50 cursor-default"
+			class="fixed inset-0 bg-black/25 cursor-default"
 			onclick={handleBackdropClick}
 			onkeydown={(e) => e.key === 'Enter' && handleClose()}
 			aria-label="Close modal"
@@ -154,7 +154,7 @@
 			<!-- Modal Content -->
 			<div
 				class="relative bg-white rounded-lg shadow-xl w-full {sizeClasses[size]} {className}"
-				transition:scale={{ duration: 200, start: 0.95 }}
+				transition:scale={{ duration: 100, start: 0.95 }}
 				role="dialog"
 				aria-modal="true"
 			>

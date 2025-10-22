@@ -22,4 +22,9 @@
 {@render children?.()}
 
 <!-- Global Toast Notifications -->
-<Toaster position="bottom-right" />
+<Toaster 
+  position="bottom-right" 
+  toastOptions={{
+    style: 'max-width: 500px;'
+  }}
+/>
