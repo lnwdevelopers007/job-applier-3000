@@ -277,77 +277,6 @@
 								</div>
 							</div>
 						</div>
-<<<<<<< backend-middleware
-
-						<!-- Right part block -->
-						<div class="flex items-center gap-4">
-							<div class="flex flex-col items-end text-right">
-								<span class="text-xs font-bold text-gray-600">APPLIED</span>
-								<span class="text-sm text-gray-500">{app.daysAgo} days ago</span>
-							</div>
-
-							<span
-								class={`badge rounded-full border p-2 text-xs font-semibold ${
-									app.status === 'IN REVIEW'
-										? 'border-yellow-300 bg-yellow-100 text-yellow-800'
-										: app.status === 'ACCEPTED'
-											? 'border-green-300 bg-green-100 text-green-800'
-											: app.status === 'PENDING'
-												? 'border-blue-300 bg-blue-100 text-blue-800'
-												: app.status === 'REJECTED'
-													? 'border-red-300 bg-red-100 text-red-800'
-													: 'badge-outline'
-								}`}
-							>
-								{app.status}
-							</span>
-
-							<div class="flex items-center gap-2">
-								<button class="btn btn-sm btn-ghost rounded-lg border border-gray-300 p-1">
-									<Eye class="h-5 w-5" />
-								</button>
-								<button class="btn btn-sm btn-ghost rounded-lg border border-gray-300 p-1">
-									<EllipsisVertical class="h-5 w-5" />
-								</button>
-							</div>
-						</div>
-					</div>
-				{/each}
-			{/if}
-		</div>
-	</div>
-
-	<div class="mt-8">
-		<h2 class="mb-4 text-lg font-semibold text-gray-900">Recent Activity</h2>
-		<div class="relative">
-			<div
-				class="absolute left-4 w-px bg-gray-300"
-				style="top: calc(2rem); bottom: calc(2rem);"
-			></div>
-
-			{#if activities.length === 0}
-				<div class="ml-10 p-4 text-gray-500">
-					No recent activity for "{filterStatus}"
-				</div>
-			{:else}
-				{#each activities as activity, i (i)}
-					<div class="relative mb-8 last:mb-0">
-						<span
-							class="absolute left-4 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-green-500 bg-white"
-						></span>
-
-						<div class="ml-10 rounded-lg bg-white p-3 shadow">
-							<p class="text-xs uppercase tracking-wide text-gray-500">{activity.time}</p>
-							<p class="text-sm font-semibold text-gray-800">{activity.title}</p>
-							<p class="text-sm text-gray-600">{activity.description}</p>
-						</div>
-					</div>
-				{/each}
-			{/if}
-		</div>
-	</div>
-</div>
-=======
 					</div>
 
 					<!-- Right part block -->
@@ -463,4 +392,3 @@
 		</div>
 	</div>
 </Modal>
->>>>>>> main
