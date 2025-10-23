@@ -170,7 +170,7 @@ func (jc JobController) Query(c *gin.Context) {
 	if latestParam == "true" {
 		now := time.Now()
 		filter["postOpenDate"] = bson.M{"$lte": now}
-		findOptions.SetSort(bson.D{{"postOpenDate", -1}})
+		findOptions.SetSort(bson.D{{Key: "postOpenDate",Value:  -1}})
 		findOptions.SetLimit(3)
 	}
 
@@ -178,11 +178,11 @@ func (jc JobController) Query(c *gin.Context) {
 	sortParam := c.Query("sort")
 	switch sortParam {
 	case "dateAsc":
-		findOptions.SetSort(bson.D{{"postOpenDate", 1}})
+		findOptions.SetSort(bson.D{{Key: "postOpenDate", Value: 1}})
 	case "dateDesc":
-		findOptions.SetSort(bson.D{{"postOpenDate", -1}})
+		findOptions.SetSort(bson.D{{Key: "postOpenDate", Value: -1}})
 	case "title":
-		findOptions.SetSort(bson.D{{"title", 1}})
+		findOptions.SetSort(bson.D{{Key: "title", Value: 1}})
 	case "", "null":
 		// no sorting
 	default:
