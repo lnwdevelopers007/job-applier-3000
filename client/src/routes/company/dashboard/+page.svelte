@@ -21,7 +21,7 @@
       goto(`/company/edit/${job.id}`);
     }
     if (action.label === 'View') {
-      // TODO: Implement view job posting
+      goto(`/app/jobs/${job.id}`);
     }
     if (action.label === 'Delete') {
       jobToDelete = job;
