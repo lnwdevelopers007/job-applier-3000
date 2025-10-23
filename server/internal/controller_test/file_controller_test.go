@@ -35,10 +35,10 @@ func setupFileTestData(t *testing.T) {
 	ctx := context.Background()
 
 	// Clean up collections
-	db.Collection("files").DeleteMany(ctx, bson.M{})
-	db.Collection("users").DeleteMany(ctx, bson.M{})
-	db.Collection("jobs").DeleteMany(ctx, bson.M{})
-	db.Collection("job_applications").DeleteMany(ctx, bson.M{})
+	db.Collection("files").DeleteMany(ctx, bson.M{"userID": bson.M{"$in": []primitive.ObjectID{testFileUserID1, testFileUserID2, testFileCompanyID}}})
+	db.Collection("users").DeleteMany(ctx, bson.M{"_id": bson.M{"$in": []primitive.ObjectID{testFileUserID1, testFileUserID2, testFileCompanyID}}})
+	db.Collection("jobs").DeleteMany(ctx, bson.M{"_id": testFileJobID})
+	db.Collection("job_applications").DeleteMany(ctx, bson.M{"_id": testFileAppID})
 
 	// Create test users
 	db.Collection("users").InsertMany(ctx, []interface{}{
