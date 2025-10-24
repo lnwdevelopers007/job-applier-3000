@@ -1,37 +1,44 @@
 <script>
-  let { formData = $bindable() } = $props();
+  import TextInput from '$lib/components/forms/TextInput.svelte';
+  import Select from '$lib/components/forms/Select.svelte';
+  
+  let { 
+    formData = $bindable(),
+    validationErrors = {},
+    showValidationErrors = false
+  } = $props();
+  
+  const currencyOptions = [
+    { value: 'THB', label: 'THB' },
+    { value: 'USD', label: 'USD' },
+    { value: 'EUR', label: 'EUR' }
+  ];
 </script>
 
 <div class="space-y-6">
   <h2 class="text-lg font-medium text-gray-900 mb-6">Basic Job Information</h2>
   
   <!-- Job Title -->
-  <div>
-    <label for="jobTitle" class="block text-sm font-medium text-gray-700 mb-2">
-      Job title <span class="text-red-500">*</span>
-    </label>
-    <input
-      id="jobTitle"
-      type="text"
-      bind:value={formData.jobTitle}
-      placeholder="Enter job title..."
-      class="text-sm min-w-lg px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-gray-400"
-    />
-  </div>
+  <TextInput
+    label="Job title"
+    bind:value={formData.jobTitle}
+    placeholder="Enter job title..."
+    required={true}
+    error={validationErrors.jobTitle}
+    showError={showValidationErrors}
+    class="max-w-lg"
+  />
 
   <!-- Location -->
-  <div>
-    <label for="location" class="block text-sm font-medium text-gray-700 mb-2">
-      Location <span class="text-red-500">*</span>
-    </label>
-    <input
-      id="location"
-      type="text"
-      bind:value={formData.location}
-      placeholder="Enter location..."
-      class="text-sm min-w-lg px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-gray-400"
-    />
-  </div>
+  <TextInput
+    label="Location"
+    bind:value={formData.location}
+    placeholder="Enter location..."
+    required={true}
+    error={validationErrors.location}
+    showError={showValidationErrors}
+    class="max-w-lg"
+  />
 
   <!-- Work Type -->
   <fieldset>
@@ -121,42 +128,40 @@
     
     <div class="flex items-center gap-2">
       <!-- Currency -->
-      <div class="w-20">
-        <label for="currency" class="block text-xs text-gray-500 mb-1">Currency</label>
-        <div class="relative">
-          <select
-            id="currency"
-            bind:value={formData.currency}
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-gray-400 bg-white appearance-none pr-6 text-sm"
-          >
-            <option value="THB">THB</option>
-            <option value="USD">USD</option>
-            <option value="EUR">EUR</option>
-          </select>
-        </div>
+      <div class="w-22">
+        <Select
+          label="Currency"
+          bind:value={formData.currency}
+          options={currencyOptions}
+          class="text-xs"
+        />
       </div>
       
       <!-- From -->
       <div class="flex-shrink-0">
-        <label for="minSalary" class="block text-xs text-gray-500 mb-1">From</label>
-        <input
-          id="minSalary"
+        <TextInput
+          label="From"
           type="number"
           bind:value={formData.minSalary}
           placeholder="Enter minimum salary"
-          class="text-sm min-w-xs px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-gray-400"
+          required={true}
+          error={validationErrors.minSalary}
+          showError={showValidationErrors}
+          class="max-w-xs"
         />
       </div>
       
       <!-- To -->
       <div class="flex-shrink-0">
-        <label for="maxSalary" class="block text-xs text-gray-500 mb-1">To</label>
-        <input
-          id="maxSalary"
+        <TextInput
+          label="To"
           type="number"
           bind:value={formData.maxSalary}
           placeholder="Enter maximum salary"
-          class="text-sm min-w-xs px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-gray-400"
+          required={true}
+          error={validationErrors.maxSalary}
+          showError={showValidationErrors}
+          class="max-w-xs"
         />
       </div>
     </div>

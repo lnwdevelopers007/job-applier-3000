@@ -1,7 +1,11 @@
 <script>
   import TiptapEditor from '$lib/components/job-post-creation/TextEditor.svelte';
   
-  let { formData = $bindable() } = $props();
+  let { 
+    formData = $bindable(),
+    validationErrors = {},
+    showValidationErrors = false
+  } = $props();
 </script>
 
 <div class="space-y-6">
@@ -15,6 +19,9 @@
     <TiptapEditor 
       bind:value={formData.jobDescription}
       placeholder="Describe the job role and responsibilities..."
+      height="450px"
+      error={validationErrors.jobDescription}
+      showError={showValidationErrors}
     />
   </div>
 
