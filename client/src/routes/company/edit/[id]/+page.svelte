@@ -11,39 +11,15 @@
   import FormSidebar from '$lib/components/job-post-creation/FormSidebar.svelte';
 	import { getUserInfo} from '$lib/utils/auth';
 	import JobPreviewDrawer from '$lib/components/job-post-creation/JobPreviewDrawer.svelte';
+  import { JobService } from '$lib/services/jobService';
 
   let jobId = $derived($page.params.id);
   let isPreviewOpen = $state(false);
   let activeSection = $state('basic-info');
-  const userInfo = getUserInfo();
-  let formData = $state({
-    // Basic Info
-    jobTitle: '',
-    companyID: userInfo.userID,
-    location: '',
-    category: '',
-    workType: 'full-time',
-    workArrangement: 'on-site',
-    currency: 'THB',
-    minSalary: '',
-    maxSalary: '',
+  let formData = $state(JobService.createEmptyFormData(getUserInfo()?.userID));
 
-    // Description
-    jobDescription: '',
-    jobSummary: '',
-
-    // Requirements
-    requiredSkills: [],
-    experienceLevel: '',
-    education: '',
-
-    // Post Settings
-    applicationDeadline: '',
-    numberOfPositions: 1,
-    visibility: 'public',
-    emailNotifications: true,
-    autoReject: false
-  });
+  let validationErrors = $state({});
+  let showValidationErrors = $state(false);
 
   const sections = [
     { id: 'basic-info', name: 'Basic Info' },
@@ -52,79 +28,18 @@
     { id: 'settings', name: 'Post Settings' }
   ];
 
-  function handleBackNavigation() {
-    goto('/company/dashboard');
-  }
-
   function handlePreview() {
     isPreviewOpen = true;
   }
 
-  function buildPayload(formData) {
-    function withDeadlineTime(dateStr) {
-      const d = new Date(dateStr);
-      d.setUTCHours(16, 59, 0, 0);
-      return d.toISOString();
-    }
-    return {
-      // Basic Info
-      title: formData.jobTitle || "Test Job Title",
-      companyID: String(formData.companyID || "64f0c44a27b1c27f4d92e9a2"),
-      location: formData.location || "Bangkok, Thailand",
-      workType: formData.workType,
-      workArrangement: formData.workArrangement,
-      currency: formData.currency,
-      minSalary: Number(formData.minSalary || 0),
-      maxSalary: Number(formData.maxSalary || 0),
-
-      // Description
-      jobDescription: formData.jobDescription || "Test description",
-      jobSummary: formData.jobSummary || "Test summary",
-
-      // Requirements
-      requiredSkills: Array.isArray(formData.requiredSkills) && formData.requiredSkills.length
-          ? formData.requiredSkills.join(", ")
-          : "JS, Node",
-      experienceLevel: formData.yearsOfExperience || "Mid-Level",
-      education: formData.educationLevel|| "Bachelor",
-      niceToHave: formData.niceToHave || "",
-      questions: formData.screeningQuestions || "What is your expected salary?",
-
-      // Post Settings
-      applicationDeadline: formData.postingCloseDate
-        ? withDeadlineTime(formData.postingCloseDate)
-        : withDeadlineTime(new Date()),
-      postOpenDate: formData.postingOpenDate
-        ? new Date(formData.postingOpenDate).toISOString()
-        : new Date().toISOString(),
-      numberOfPositions: Number(formData.numberOfPositions || 1),
-      visibility: formData.visibility || "public",
-      emailNotifications: Boolean(formData.emailNotifications),
-      autoReject: Boolean(formData.autoReject)
-    };
+  function updateValidation(validation) {
+    validationErrors = validation.errors;
+    showValidationErrors = validation.showErrors;
   }
 
   async function handlePublish() {
     jobId = get(page).params.id;
-    try {
-      const payload = buildPayload(formData);
-      const res = await fetch(`/jobs/${jobId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) {
-        throw new Error(`Failed to update job: ${res.status}`);
-      }
-
-      const updatedJob = await res.json();
-      console.log('Job updated successfully:', updatedJob);
-
-      goto('/company/dashboard');
-    } catch (err) {
-      console.error('Error updating job:', err);
-    }
+    await JobService.handleFormSubmit(formData, updateValidation, true, jobId);
   }
 
   function scrollToSection(sectionId) {
@@ -154,35 +69,11 @@
   }
 
   onMount(async () => {
-    try {
-      const res = await fetch(`/jobs/query?id=${jobId}`);
-      if (!res.ok) throw new Error(`Failed to load job: ${res.status}`);
-      const data = await res.json();
-      const job = Array.isArray(data) ? data[0] : data;
-
-      const formattedDeadline = job.applicationDeadline
-        ? new Date(job.applicationDeadline).toISOString().slice(0, 10)
-        : '';
-
-      const formattedOpenDate = job.postOpenDate
-        ? new Date(job.postOpenDate).toISOString().slice(0, 10)
-        : '';
-
-      formData = {
-        ...formData,
-        ...job,
-        requiredSkills: typeof job.requiredSkills === 'string'
-          ? job.requiredSkills.split(',').map(s => s.trim()).filter(Boolean)
-          : job.requiredSkills || [],
-        postingCloseDate: formattedDeadline,
-        postingOpenDate: formattedOpenDate,
-        jobTitle: job.title || '',
-        screeningQuestions: job.questions || '',
-        educationLevel: job.education || '',
-        yearsOfExperience: job.experienceLevel || ''
-      };
-    } catch (err) {
-      console.error('Error loading job:', err);
+    const result = await JobService.loadJob(jobId);
+    if (result.success && result.data) {
+      formData = { ...formData, ...result.data };
+    } else {
+      console.error('Error loading job:', result.error);
     }
   });
 
@@ -190,7 +81,9 @@
 
 <svelte:window on:scroll={handleScroll} />
 
-<div class="max-w-7xl mx-auto py-8">
+<div>
+  <h1 class="text-2xl font-semibold text-gray-900 mb-8">Edit Job Post</h1>
+
   <div class="flex gap-10">
     <FormSidebar 
       {sections}
@@ -198,35 +91,26 @@
       onSectionClick={scrollToSection}
       onPreview={handlePreview}
       onPublish={handlePublish}
-      actionLabel="Update Job Post"
+      actionLabel="Save Changes"
     />
 
-    <div class="flex-1 min-w-0">
-      <div class="mb-8">
-        <div class="flex items-center gap-4">
-          <button onclick={handleBackNavigation} class="p-1 hover:bg-gray-100 rounded">
-            <ChevronLeft class="w-5 h-5 text-gray-600" />
-          </button>
-          <h1 class="text-xl font-medium text-gray-900">Edit Job Post</h1>
-          <span class="text-sm text-gray-500">ID: {jobId}</span>
-        </div>
-      </div>
-
+    <div class="flex-1 min-w-0 pl-8 pb-10">
+      
       <form class="space-y-8">
-        <section id="basic-info" class="mb-8 pb-10 border-b border-gray-200">
-          <BasicInfoForm bind:formData />
+        <section id="basic-info" class="mb-10 pb-10 border-b border-gray-200">
+          <BasicInfoForm bind:formData {validationErrors} {showValidationErrors} />
         </section>
 
-        <section id="description" class="mb-8 pb-10 border-b border-gray-200">
-          <DescriptionForm bind:formData />
+        <section id="description" class="mb-10 pb-10 border-b border-gray-200">
+          <DescriptionForm bind:formData {validationErrors} {showValidationErrors} />
         </section>
 
-        <section id="requirements" class="mb-8 pb-10 border-b border-gray-200">
-          <RequirementForm bind:formData />
+        <section id="requirements" class="mb-10 pb-10 border-b border-gray-200">
+          <RequirementForm bind:formData {validationErrors} {showValidationErrors} />
         </section>
 
-        <section id="settings" class="mb-8">
-          <PostSettingForm bind:formData />
+        <section id="settings" class="mb-10">
+          <PostSettingForm bind:formData {validationErrors} {showValidationErrors} />
         </section>
       </form>
     </div>
