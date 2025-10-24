@@ -1,11 +1,21 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
   import { LogOut, User } from 'lucide-svelte';
   import { scale } from 'svelte/transition';
   import userAvatar from '$lib/assets/user.png';
   import { authStore } from '$lib/stores/auth.svelte';
   
-  let { transparent = false, absolute = false }: { transparent?: boolean; absolute?: boolean } = $props();
+  interface NavItem {
+    href: string;
+    label: string;
+  }
+  
+  let { 
+    navItems = []
+  }: { 
+    navItems?: NavItem[];
+  } = $props();
 
   let isDropdownOpen = $state(false);
   let dropdownRef = $state<HTMLDivElement>();
@@ -48,9 +58,9 @@
   });
 </script>
 
-<header class="{absolute ? 'absolute top-0 left-0 right-0 z-20' : ''} flex items-center justify-between {transparent ? '' : 'bg-white border-b border-gray-200'} px-6 py-3">
+<header class="absolute top-0 left-0 right-0 z-20 grid grid-cols-3 items-center py-3 px-6 max-w-7xl mx-auto">
   <button 
-    class="flex items-start space-x-1 group cursor-pointer"
+    class="flex items-start space-x-1 group cursor-pointer justify-self-start"
     onclick={() => goto('/')}
     onkeydown={(e) => e.key === 'Enter' && goto('/')}
     aria-label="Go to home page"
@@ -59,8 +69,24 @@
     <h2 class="text-lg font-semibold text-green-700">3000</h2>
   </button>
 
-  {#if authStore.isAuthenticated}
-    <div class="relative" bind:this={dropdownRef}>
+  {#if navItems.length > 0 && authStore.isAuthenticated}
+    <nav class="hidden md:flex items-center space-x-6 justify-self-center">
+      {#each navItems as item (item.href)}
+        <a 
+          href={item.href} 
+          class="text-sm font-medium hover:text-gray-900 transition-colors whitespace-nowrap {$page.url.pathname === item.href ? 'text-gray-900' : 'text-gray-800'}"
+        >
+          {item.label}
+        </a>
+      {/each}
+    </nav>
+  {:else}
+    <div></div>
+  {/if}
+    
+  <div class="justify-self-end">
+    {#if authStore.isAuthenticated}
+      <div class="relative" bind:this={dropdownRef}>
       <button
         onclick={toggleDropdown}
         class="flex items-center space-x-3 hover:cursor-pointer focus:outline-gray-300 focus:outline  focus:transition-colors rounded-full"
@@ -70,7 +96,7 @@
 
       {#if isDropdownOpen}
       <div 
-        class="absolute right-0 mt-1 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50"
+        class="absolute right-0 mt-1 min-w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50"
         in:scale={{ duration: 100, start: 0.95, opacity: 0 }}
         out:scale={{ duration: 75, start: 0.98, opacity: 0 }}>
         <!-- User info section -->
@@ -79,7 +105,7 @@
             <img src={authStore.user?.avatarURL || userAvatar} alt="Avatar" class="w-10 h-10 rounded-full object-cover" />
             <div>
               <p class="text-sm font-semibold text-gray-900">{authStore.user?.name || 'Guest'}</p>
-              <p class="text-xs text-gray-500">{authStore.user?.email || ''}</p>
+              <p class="text-xs text-gray-500 pr-10">{authStore.user?.email || ''}</p>
               <p class="text-xs text-gray-500 mt-0.5">{formatRole(authStore.user?.role || 'User')}</p>
             </div>
           </div>
@@ -110,21 +136,22 @@
         </div>
       </div>
       {/if}
-    </div>
-  {:else}
-    <div class="flex items-center space-x-3">
-      <a
-        href="/login"
-        class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-      >
-        Log in
-      </a>
-      <a
-        href="/signup"
-        class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors"
-      >
-        Sign up
-      </a>
-    </div>
-  {/if}
+      </div>
+    {:else}
+      <div class="flex items-center space-x-3">
+        <a
+          href="/login"
+          class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+        >
+          Log in
+        </a>
+        <a
+          href="/signup"
+          class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors"
+        >
+          Sign up
+        </a>
+      </div>
+    {/if}
+  </div>
 </header>

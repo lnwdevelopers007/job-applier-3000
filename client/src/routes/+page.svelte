@@ -6,7 +6,6 @@
 	import CareerPathCard from '$lib/components/home/CareerPathCard.svelte';
 	import CTASection from '$lib/components/home/CTASection.svelte';
 	import Footer from '$lib/components/home/Footer.svelte';
-	import LayoutHeader from '$lib/components/LayoutHeader.svelte';
 	import { ArrowRight, Code, ChartLine, Brush, Shield, Smartphone, Cloud, Bot, Gamepad2, ChevronLeft, ChevronRight } from 'lucide-svelte';
 	import { isAuthenticated, navigateWithAuth } from '$lib/utils/auth';
 	import AuthModal from '$lib/components/ui/AuthModal.svelte';
@@ -201,10 +200,7 @@
 	<meta name="description" content="Connect with leading tech companies and discover opportunities tailored for KU Computer Engineering students" />
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50">
-	<!-- Layout Header with transparent background for home page -->
-	<LayoutHeader transparent={true} absolute={true} />
-	
+<div class="min-h-screen">
 	<main>
 		<HeroSection />
 
