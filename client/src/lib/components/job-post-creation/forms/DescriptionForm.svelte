@@ -9,7 +9,6 @@
 </script>
 
 <div class="space-y-6">
-  <h2 class="text-lg font-medium text-gray-900 mb-6">Job Description</h2>
   
   <!-- Job Description -->
   <div>

@@ -25,12 +25,10 @@
 			{ href: '/company/applicants', label: 'Applicants' },
 			{ href: '/company/analytics', label: 'Analytics' },
 			{ href: '/company/create', label: 'Post Job' },
-			{ href: '/company/settings', label: 'Settings' }
 		] : [
 			{ href: '/', label: 'Home' },
 			{ href: '/app/jobs', label: 'Jobs' },
 			{ href: '/app/applications', label: 'Applications' },
-			{ href: '/app/settings', label: 'Settings' }
 		]
 	);
 </script>
@@ -46,8 +44,9 @@
 	{#if !shouldHideHeader}
 	<LayoutHeader navItems={navItems} />
 	{/if}
-
-	{@render children()}
+	<div>
+		{@render children()}
+	</div>
 </div>
 
 <!-- Global Toast Notifications -->

@@ -16,7 +16,6 @@
 </script>
 
 <div class="space-y-6">
-  <h2 class="text-lg font-medium text-gray-900 mb-6">Basic Job Information</h2>
   
   <!-- Job Title -->
   <TextInput

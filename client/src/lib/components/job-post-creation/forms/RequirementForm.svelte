@@ -27,7 +27,6 @@
 </script>
 
 <div class="space-y-6">
-  <h2 class="text-lg font-medium text-gray-900 mb-6">Requirement</h2>
   
   <!-- Years of Experience and Education Level (side by side) -->
   <div class="grid grid-cols-2 gap-4">
