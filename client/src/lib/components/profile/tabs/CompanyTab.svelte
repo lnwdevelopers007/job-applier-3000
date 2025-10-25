@@ -12,7 +12,7 @@
 </script>
 
 <div class="divide-y divide-gray-200">
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-center">
 			<label class="text-sm font-medium text-gray-700">Company name</label>
 			<div class="col-span-1">
@@ -24,25 +24,7 @@
 		</div>
 	</div>
 	
-	<div class="px-8 py-5">
-		<div class="grid grid-cols-3 gap-8 items-start">
-			<div>
-				<label class="text-sm font-medium text-gray-700">Company logo</label>
-				<p class="text-xs text-gray-500 mt-1">This will be displayed on job postings and your profile</p>
-			</div>
-			<div class="col-span-2">
-				<FileUpload 
-					currentImage={companyData.companyLogo}
-					maxSize="2MB"
-					onFileSelect={(file) => {
-						companyData.companyLogoFile = file;
-					}}
-				/>
-			</div>
-		</div>
-	</div>
-	
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-center">
 			<label class="text-sm font-medium text-gray-700">Industry</label>
 			<div class="col-span-1">
@@ -64,7 +46,7 @@
 		</div>
 	</div>
 	
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-center">
 			<label class="text-sm font-medium text-gray-700">Company size</label>
 			<div class="col-span-1">
@@ -84,7 +66,7 @@
 		</div>
 	</div>
 	
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-center">
 			<label class="text-sm font-medium text-gray-700">Founded</label>
 			<div class="col-span-1">
@@ -97,7 +79,7 @@
 		</div>
 	</div>
 	
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-start">
 			<div>
 				<label class="text-sm font-medium text-gray-700">Headquarters</label>
@@ -112,7 +94,7 @@
 		</div>
 	</div>
 	
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-start">
 			<div>
 				<label class="text-sm font-medium text-gray-700">About us</label>
@@ -128,7 +110,7 @@
 		</div>
 	</div>
 	
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-center">
 			<label class="text-sm font-medium text-gray-700">Website</label>
 			<div class="col-span-1">
@@ -142,7 +124,7 @@
 		</div>
 	</div>
 	
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-center">
 			<label class="text-sm font-medium text-gray-700">LinkedIn</label>
 			<div class="col-span-1">

@@ -32,7 +32,7 @@
 </script>
 
 <div class="divide-y divide-gray-200">
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-4 gap-8 items-start">
 			<div>
 				<label class="text-sm font-medium text-gray-700">Documents</label>

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
-  import { LogOut, User } from 'lucide-svelte';
+  import { LogOut, Settings } from 'lucide-svelte';
   import { scale } from 'svelte/transition';
   import userAvatar from '$lib/assets/user.png';
   import { authStore } from '$lib/stores/auth.svelte';
@@ -58,33 +58,34 @@
   });
 </script>
 
-<header class="absolute top-0 left-0 right-0 z-20 grid grid-cols-3 items-center py-3 px-6 max-w-7xl mx-auto">
-  <button 
-    class="flex items-start space-x-1 group cursor-pointer justify-self-start"
-    onclick={() => goto('/')}
-    onkeydown={(e) => e.key === 'Enter' && goto('/')}
-    aria-label="Go to home page"
-  >
-    <h2 class="text-lg font-semibold text-black">Job Applier </h2>
-    <h2 class="text-lg font-semibold text-green-700">3000</h2>
-  </button>
+<header class="absolute top-0 left-0 right-0 z-20 w-full backdrop-blur-md">
+  <div class="grid grid-cols-3 items-center py-3 px-6 max-w-7xl mx-auto">
+    <button 
+      class="flex items-start space-x-1 group cursor-pointer justify-self-start"
+      onclick={() => goto('/')}
+      onkeydown={(e) => e.key === 'Enter' && goto('/')}
+      aria-label="Go to home page"
+    >
+      <h2 class="text-lg font-semibold text-black">Job Applier </h2>
+      <h2 class="text-lg font-semibold text-green-700">3000</h2>
+    </button>
 
-  {#if navItems.length > 0 && authStore.isAuthenticated}
-    <nav class="hidden md:flex items-center space-x-6 justify-self-center">
-      {#each navItems as item (item.href)}
-        <a 
-          href={item.href} 
-          class="text-sm font-medium hover:text-gray-900 transition-colors whitespace-nowrap {$page.url.pathname === item.href ? 'text-gray-900' : 'text-gray-800'}"
-        >
-          {item.label}
-        </a>
-      {/each}
-    </nav>
-  {:else}
-    <div></div>
-  {/if}
-    
-  <div class="justify-self-end">
+    {#if navItems.length > 0 && authStore.isAuthenticated}
+      <nav class="hidden md:flex items-center space-x-6 justify-self-center">
+        {#each navItems as item (item.href)}
+          <a 
+            href={item.href} 
+            class="text-sm font-medium hover:text-gray-900 transition-colors whitespace-nowrap {$page.url.pathname === item.href ? 'text-gray-900' : 'text-gray-800'}"
+          >
+            {item.label}
+          </a>
+        {/each}
+      </nav>
+    {:else}
+      <div></div>
+    {/if}
+      
+    <div class="justify-self-end">
     {#if authStore.isAuthenticated}
       <div class="relative" bind:this={dropdownRef}>
       <button
@@ -120,8 +121,8 @@
             }}
             class="w-full flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 hover:cursor-pointer transition-colors"
           >
-            <User class="w-4 h-4" />
-            <span>Profile</span>
+            <Settings class="w-4 h-4" />
+            <span>Settings</span>
           </button>
 
           <hr class="my-1 border-gray-100" />
@@ -153,5 +154,6 @@
         </a>
       </div>
     {/if}
+  </div>
   </div>
 </header>
