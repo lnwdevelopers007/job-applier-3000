@@ -370,7 +370,21 @@ func (fc FileController) Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "file deleted successfully"})
 }
 
-// GetApplicantFiles allows companies to view files of applicants who applied to their jobs
+// GetApplicantFiles godoc
+// @Summary      Get applicant files for a job application
+// @Description  Allows a company to view files (resume, cover_letter, certification) of an applicant for a specific job application. Only the company who owns the job can access.
+// @Tags         Files
+// @Accept       json
+// @Produce      json
+// @Param        applicationId   path      string  true  "Job Application ID"
+// @Param        requestingUserID query     string  true  "ID of the requesting user (company)"
+// @Success      200 {object} map[string]interface{} "Metadata of applicant's files"
+// @Failure      400 {object} map[string]string
+// @Failure      401 {object} map[string]string
+// @Failure      403 {object} map[string]string
+// @Failure      404 {object} map[string]string
+// @Failure      500 {object} map[string]string
+// @Router       /files/applicant/{applicationId} [get]
 func (fc FileController) GetApplicantFiles(c *gin.Context) {
 	applicationID := c.Param("applicationId")
 	appObjectID, err := primitive.ObjectIDFromHex(applicationID)
