@@ -51,15 +51,12 @@
     const formData = new FormData();
     formData.append('file', selectedFile);
     formData.append('category', category);
-    
-    // Get token from localStorage (adjust based on your auth implementation)
-    const token = localStorage.getItem('access_token');
 
     try {
         const response = await fetch(`${Backend_URL}/files/upload`, {
             method: 'POST',
+            credentials: 'include', // Send cookies automatically
             headers: {
-                'Authorization': token ? `Bearer ${token}` : '',
 				'X-User-Id': userID,
     			'X-User-Role': userRole
             },
@@ -91,14 +88,12 @@
 	}
 
 	async function downloadFile(fileId: string, filename: string) {
-		const token = localStorage.getItem('access_token');
-
 		try {
 			const response = await fetch(
 				`${Backend_URL}/files/download/${fileId}?requestingUserID=${userID}`,
 				{
+					credentials: 'include', // Send cookies automatically
 					headers: {
-						'Authorization': token ? `Bearer ${token}` : '',
 						'X-User-Id': userID,
    						'X-User-Role': userRole
 					}
@@ -133,18 +128,16 @@
 	async function loadUserFiles() {
 		if (!userID) return;
 
-		const token = localStorage.getItem('access_token');
-
 		try {
 			const response = await fetch(
 				`${Backend_URL}/files/user/${userID}?requestingUserID=${userID}`,
 				{
-        headers: {
-          'Authorization': token ? `Bearer ${token}` : '',
-		  'X-User-Id': userID,
-		  'X-User-Role': userRole
-        }
-      }
+					credentials: 'include', // Send cookies automatically
+					headers: {
+						'X-User-Id': userID,
+						'X-User-Role': userRole
+					}
+				}
 			);
 			if (!response.ok) {
 				const errorData = await response.json();
@@ -162,7 +155,6 @@
 		}
 	}
 	async function deleteFile(fileId: string, filename: string) {
-		const token = localStorage.getItem('access_token');
 		if (!confirm(`Are you sure you want to delete "${filename}"?`)) return;
 
 		try {
@@ -170,8 +162,8 @@
 				`${Backend_URL}/files/${fileId}?requestingUserID=${userID}`,
 				{
 					method: 'DELETE',
+					credentials: 'include', // Send cookies automatically
 					headers: {
-						'Authorization': token ? `Bearer ${token}` : '',
 						'X-User-Id': userID,
     					'X-User-Role': userRole
 					}

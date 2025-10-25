@@ -3,17 +3,9 @@
 	import { goto } from '$app/navigation';
 
 	onMount(async () => {
-		// Get the access token from URL query parameter
-		const urlParams = new URLSearchParams(window.location.search);
-		const token = urlParams.get('token');
-
-		if (token) {
-			// Store the access token in localStorage
-			localStorage.setItem('access_token', token);
-			console.log('Access token saved successfully');
-		} else {
-			console.error('No token found in URL');
-		}
+		// Token is now stored as HttpOnly cookie by the backend
+		// No need to store it in localStorage (more secure!)
+		console.log('Authentication completed - token stored in secure cookie');
 
 		// Clean up any pending actions
 		sessionStorage.removeItem('pendingSearch');

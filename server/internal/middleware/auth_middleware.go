@@ -28,22 +28,30 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// 🔒 Enforce real authentication when enabled
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "authorization header required"})
-			c.Abort()
-			return
-		}
+		// Enforce real authentication when enabled
+		// First try to get token from HttpOnly cookie (most secure)
+		var tokenString string
+		cookie, err := c.Cookie("access_token")
+		if err == nil && cookie != "" {
+			tokenString = cookie
+		} else {
+			// Fallback to Authorization header for API clients
+			authHeader := c.GetHeader("Authorization")
+			if authHeader == "" {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "authorization token required (cookie or header)"})
+				c.Abort()
+				return
+			}
 
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization header format"})
-			c.Abort()
-			return
-		}
+			parts := strings.Split(authHeader, " ")
+			if len(parts) != 2 || parts[0] != "Bearer" {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization header format"})
+				c.Abort()
+				return
+			}
 
-		tokenString := parts[1]
+			tokenString = parts[1]
+		}
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, jwt.ErrSignatureInvalid
