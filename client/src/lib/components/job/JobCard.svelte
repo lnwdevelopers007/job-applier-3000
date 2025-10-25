@@ -3,6 +3,8 @@
   import Badge from './Badge.svelte';
   import JobCardSkeleton from './JobCardSkeleton.svelte';
 	import { formatRelativeTime } from '$lib/utils/datetime';
+  import { bookmarkService } from '$lib/services/bookmarkService';
+  import { getUserInfo } from '$lib/utils/auth';
   
   type Job = {
     id: string;
@@ -20,28 +22,58 @@
   interface Props {
     job?: Job;
     onclick?: () => void;
-    onBookmark?: () => void;
     loading?: boolean;
   }
 
   let {
     job,
     onclick,
-    onBookmark,
     loading = false
   }: Props = $props();
-
+  
+  // Track bookmark state for this specific job
   let isBookmarked = $state(false);
+  let bookmarkedJobs = $state<Set<string>>(new Set());
+  
+  // Initialize and subscribe to bookmark changes
+  $effect(() => {
+    // Initialize bookmarks if user is logged in and not already initialized
+    const user = getUserInfo();
+    if (user?.userID && bookmarkService.getBookmarkedJobIds().length === 0) {
+      bookmarkService.initializeBookmarks(user.userID);
+    }
+    
+    const unsubscribe = bookmarkService.subscribe((jobs) => {
+      bookmarkedJobs = jobs;
+      isBookmarked = job?.id ? jobs.has(job.id) : false;
+    });
+    
+    return unsubscribe;
+  });
+  
+  // Update bookmark state when job changes
+  $effect(() => {
+    if (job?.id) {
+      isBookmarked = bookmarkedJobs.has(job.id);
+    }
+  });
 
   // Show max 3 skill tags, then "+n" for remaining
   const maxSkillTags = 3;
   const visibleSkills = $derived(job?.tags?.slice(0, maxSkillTags) || []);
   const remainingSkillsCount = $derived((job?.tags?.length || 0) - maxSkillTags);
 
-  function handleBookmark(event: Event) {
+  async function handleBookmark(event: Event) {
     event.stopPropagation();
-    isBookmarked = !isBookmarked;
-    onBookmark?.();
+    if (job?.id) {
+      const user = getUserInfo();
+      if (user?.userID) {
+        await bookmarkService.toggleBookmark(job.id, user.userID);
+      } else {
+        // Handle not logged in case - you might want to show a login prompt
+        console.warn('User must be logged in to bookmark jobs');
+      }
+    }
   }
   
 </script>

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { MapPin, Banknote, Share2, ExternalLink, Bookmark } from 'lucide-svelte';
-import ApplyButton from './ApplyButton.svelte';
+	import ApplyButton from './ApplyButton.svelte';
 	import SafeHTML from '$lib/utils/SafeHTML.svelte';
 	import Badge from './Badge.svelte';
 	import SkillTag from './SkillTag.svelte';
