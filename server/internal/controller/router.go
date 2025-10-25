@@ -7,8 +7,11 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	_ "github.com/lnwdevelopers007/job-applier-3000/server/docs"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/auth"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/middleware"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 // NewRouter returns new, default router.
@@ -75,6 +78,7 @@ func NewRouter() *gin.Engine {
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"ok": true})
 	})
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	return router
 }

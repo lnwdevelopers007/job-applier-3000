@@ -30,6 +30,20 @@ func NewJobApplicationController() JobApplicationController {
 	}
 }
 
+// Query godoc
+// @Summary      Query job applications
+// @Description  Get all job applications that match query parameters
+// @Tags         Applications
+// @Accept       json
+// @Produce      json
+// @Param        applicantID query string false "Applicant ID"
+// @Param        jobID query string false "Job ID"
+// @Param        companyID query string false "Company ID"
+// @Param        status query string false "Status of the application"
+// @Success      200  {array}  schema.ApplicationWithApplicant
+// @Failure      400  {object} map[string]string
+// @Failure      500  {object} map[string]string
+// @Router       /apply/query [get]
 func (jc JobApplicationController) Query(c *gin.Context) {
 
 	jobApplicationFilter, shouldReturn := jobApplicationFilter(c)
@@ -138,7 +152,17 @@ func jobApplicationFilter(c *gin.Context) (bson.M, bool) {
 	return filter, false
 }
 
-// Create adds a new job application
+// Create godoc
+// @Summary      Create new job application
+// @Description  Submit a job application for a specific job
+// @Tags         Applications
+// @Accept       json
+// @Produce      json
+// @Param        request body schema.JobApplication true "Job Application JSON"
+// @Success      200  {object} schema.JobApplication
+// @Failure      400  {object} map[string]string
+// @Failure      500  {object} map[string]string
+// @Router       /apply/ [post]
 func (jc JobApplicationController) Create(c *gin.Context) {
   companyEmail, err := jc.shouldNotifyCompany(c)
   if err {
@@ -192,7 +216,18 @@ func (jc JobApplicationController) shouldNotifyCompany(c *gin.Context) (companyE
 	return company.Email, false
 }
 
-// Update updates a job application by ID
+// Update godoc
+// @Summary      Update job application
+// @Description  Update job application data (including status changes)
+// @Tags         Applications
+// @Accept       json
+// @Produce      json
+// @Param        id path string true "Application ID"
+// @Param        request body schema.JobApplication true "Updated Application JSON"
+// @Success      200  {object} schema.JobApplication
+// @Failure      400  {object} map[string]string
+// @Failure      500  {object} map[string]string
+// @Router       /apply/{id} [put]
 func (jc JobApplicationController) Update(c *gin.Context) {
   id := c.Param("id")
   objID, err := primitive.ObjectIDFromHex(id)
@@ -259,18 +294,46 @@ func (jc JobApplicationController) notifyApplicantOnStatusChange(ctx context.Con
   email.Send(applicant.Email, subject, body)
 }
 
-
-// Delete deletes a job application by ID
+// Delete godoc
+// @Summary      Delete a job application
+// @Description  Remove a job application by its ID
+// @Tags         Applications
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string  true  "Application ID"
+// @Success      200  {object}  map[string]string
+// @Failure      400  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /apply/{id} [delete]
 func (jc JobApplicationController) Delete(c *gin.Context) {
 	jc.baseController.Delete(c)
 }
 
-// RetrieveAll fetches all job applications from the database.
+// RetrieveAll godoc
+// @Summary      Get all job applications
+// @Description  Retrieve all job applications in the system
+// @Tags         Applications
+// @Accept       json
+// @Produce      json
+// @Success      200  {array}   schema.JobApplication
+// @Failure      500  {object}  map[string]string
+// @Router       /apply/ [get]
 func (jc JobApplicationController) RetrieveAll(c *gin.Context) {
 	jc.baseController.RetrieveAll(c)
 }
 
-// RetrieveOne fetches a single job application by ID.
+// RetrieveOne godoc
+// @Summary      Get a specific job application
+// @Description  Retrieve a single job application by its ID
+// @Tags         Applications
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string  true  "Application ID"
+// @Success      200  {object}  schema.JobApplication
+// @Failure      400  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /apply/{id} [get]
 func (jc JobApplicationController) RetrieveOne(c *gin.Context) {
 	jc.baseController.RetrieveOne(c)
 }

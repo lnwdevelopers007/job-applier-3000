@@ -72,7 +72,20 @@ func getUserFromContext(c *gin.Context) (userID primitive.ObjectID, role string,
 	return
 }
 
-// Upload handles file upload
+// Upload godoc
+// @Summary      Upload a file
+// @Description  Uploads a PDF or image file for a specific user. Supports categories such as resume, profile_picture, etc.
+// @Tags         Files
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        userID    formData  string  true   "User ID (hex ObjectID)"
+// @Param        userRole  formData  string  true   "User role (jobSeeker or company)"
+// @Param        category  formData  string  true   "File category (e.g., resume, certificate, logo)"
+// @Param        file      formData  file    true   "File to upload"
+// @Success      201  {object}  schema.File  "File uploaded successfully"
+// @Failure      400  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /files/upload [post]
 func (fc FileController) Upload(c *gin.Context) {
 	// Get authenticated user
 	userID, userRole, err := getUserFromContext(c)
@@ -162,7 +175,20 @@ func (fc FileController) Upload(c *gin.Context) {
 	})
 }
 
-// Download retrieves a single file (download)
+// Download godoc
+// @Summary      Download a file
+// @Description  Downloads a file by its ID. Only the owner can access their files.
+// @Tags         Files
+// @Accept       json
+// @Produce      octet-stream
+// @Param        id               path      string  true  "File ID"
+// @Param        requestingUserID query     string  true  "ID of the requesting user"
+// @Success      200  {file}      binary
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      403  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Router       /files/{id}/download [get]
 func (fc FileController) Download(c *gin.Context) {
 	fileID := c.Param("id")
 	objectID, err := primitive.ObjectIDFromHex(fileID)
@@ -202,8 +228,20 @@ func (fc FileController) Download(c *gin.Context) {
 	c.Data(http.StatusOK, fileDoc.ContentType, fileDoc.Content)
 }
 
-
-// ListByUser lists all files for a specific user
+// ListByUser godoc
+// @Summary      List all files for a user
+// @Description  Retrieves metadata for all files belonging to a specific user. Only the owner can view their files.
+// @Tags         Files
+// @Accept       json
+// @Produce      json
+// @Param        userId           path      string  true  "User ID"
+// @Param        requestingUserID query     string  true  "ID of the requesting user"
+// @Success      200  {object}  map[string][]schema.File  "List of files"
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      403  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /files/user/{userId} [get]
 func (fc FileController) ListByUser(c *gin.Context) {
 	userID := c.Param("userId")
 	objectID, err := primitive.ObjectIDFromHex(userID)
@@ -268,7 +306,21 @@ func (fc FileController) ListByUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"files": files})
 }
 
-// Delete removes a file by ID
+// Delete godoc
+// @Summary      Delete a file
+// @Description  Deletes a file by its ID. Only the owner of the file can delete it.
+// @Tags         Files
+// @Accept       json
+// @Produce      json
+// @Param        id               path      string  true  "File ID"
+// @Param        requestingUserID query     string  true  "ID of the requesting user"
+// @Success      200  {object}  map[string]string  "File deleted successfully"
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      403  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /files/{id} [delete]
 func (fc FileController) Delete(c *gin.Context) {
 	fileID := c.Param("id")
 	objectID, err := primitive.ObjectIDFromHex(fileID)

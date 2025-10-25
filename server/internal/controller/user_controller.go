@@ -25,6 +25,18 @@ func NewUserController() UserController {
 	}
 }
 
+// Query godoc
+// @Summary      Query users
+// @Description  Retrieve users that match the specified query parameters. Supported parameters: `id`, `role`.
+// @Tags         Users
+// @Accept       json
+// @Produce      json
+// @Param        id    query     string  false  "User ID (ObjectID)"
+// @Param        role  query     string  false  "User role (e.g. company, jobSeeker)"
+// @Success      200   {array}   schema.User
+// @Failure      400   {object}  map[string]string
+// @Failure      500   {object}  map[string]string
+// @Router       /users/query [get]
 func (jc UserController) Query(c *gin.Context) {
 	userFilter, shouldReturn := userFilter(c)
 	if shouldReturn {
@@ -84,27 +96,79 @@ func userFilter(c *gin.Context) (bson.M, bool) {
 	return filter, false
 }
 
-// Update updates an existing user by ID.
+// Update godoc
+// @Summary      Update an existing user
+// @Description  Modify user data by providing the user ID in the path and updated JSON body.
+// @Tags         Users
+// @Accept       json
+// @Produce      json
+// @Param        id    path      string       true  "User ID"
+// @Param        user  body      schema.User  true  "Updated user data"
+// @Success      200   {object}  schema.User
+// @Failure      400   {object}  map[string]string
+// @Failure      404   {object}  map[string]string
+// @Failure      500   {object}  map[string]string
+// @Router       /users/{id} [put]
 func (jc UserController) Update(c *gin.Context) {
 	jc.baseController.Update(c)
 }
 
-// Create creates a user.
+// Create godoc
+// @Summary      Create a new user
+// @Description  Add a new user document to the database.
+// @Tags         Users
+// @Accept       json
+// @Produce      json
+// @Param        user  body      schema.User  true  "User object"
+// @Success      201   {object}  schema.User
+// @Failure      400   {object}  map[string]string
+// @Failure      500   {object}  map[string]string
+// @Router       /users/ [post]
 func (jc UserController) Create(c *gin.Context) {
 	jc.baseController.Create(c)
 }
 
-// Delete removes a user by ID.
+// Delete godoc
+// @Summary      Delete a user
+// @Description  Remove a user document from the database by ID.
+// @Tags         Users
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string  true  "User ID"
+// @Success      200  {object}  map[string]string
+// @Failure      400  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /users/{id} [delete]
 func (jc UserController) Delete(c *gin.Context) {
 	jc.baseController.Delete(c)
 }
 
-// RetrieveAll fetches all companies from the database.
+// RetrieveAll godoc
+// @Summary      Retrieve all users
+// @Description  Fetch all user documents from the database.
+// @Tags         Users
+// @Accept       json
+// @Produce      json
+// @Success      200   {array}   schema.User
+// @Failure      500   {object}  map[string]string
+// @Router       /users/ [get]
 func (jc UserController) RetrieveAll(c *gin.Context) {
 	jc.baseController.RetrieveAll(c)
 }
 
-// RetrieveOne fetches a single user by ID.
+// RetrieveOne godoc
+// @Summary      Get a user by ID
+// @Description  Retrieve a single user document by its ID.
+// @Tags         Users
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string  true  "User ID"
+// @Success      200  {object}  schema.User
+// @Failure      400  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /users/{id} [get]
 func (jc UserController) RetrieveOne(c *gin.Context) {
 	jc.baseController.RetrieveOne(c)
 }
