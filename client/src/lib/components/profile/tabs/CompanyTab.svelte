@@ -32,14 +32,14 @@
 					bind:value={companyData.industry}
 					placeholder="Select industry..."
 					options={[
-						'Technology',
-						'Healthcare',
-						'Finance',
-						'Education',
-						'Manufacturing',
-						'Retail',
-						'Consulting',
-						'Other'
+						{ value: 'Technology', label: 'Technology' },
+						{ value: 'Healthcare', label: 'Healthcare' },
+						{ value: 'Finance', label: 'Finance' },
+						{ value: 'Education', label: 'Education' },
+						{ value: 'Manufacturing', label: 'Manufacturing' },
+						{ value: 'Retail', label: 'Retail' },
+						{ value: 'Consulting', label: 'Consulting' },
+						{ value: 'Other', label: 'Other' }
 					]}
 				/>
 			</div>
@@ -54,12 +54,12 @@
 					bind:value={companyData.companySize}
 					placeholder="Select size..."
 					options={[
-						'1-10 employees',
-						'11-50 employees',
-						'51-200 employees',
-						'201-500 employees',
-						'501-1000 employees',
-						'1000+ employees'
+						{ value: '1-10 employees', label: '1-10 employees' },
+						{ value: '11-50 employees', label: '11-50 employees' },
+						{ value: '51-200 employees', label: '51-200 employees' },
+						{ value: '201-500 employees', label: '201-500 employees' },
+						{ value: '501-1000 employees', label: '501-1000 employees' },
+						{ value: '1000+ employees', label: '1000+ employees' }
 					]}
 				/>
 			</div>
