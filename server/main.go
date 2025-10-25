@@ -1,3 +1,8 @@
+// @title Job Applier 3000 API
+// @version 1.0
+// @description REST API for Job Applier 3000 platform
+// @BasePath /
+// @schemes http https
 package main
 
 import (
