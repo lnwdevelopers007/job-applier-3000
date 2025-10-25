@@ -1,9 +1,7 @@
-<script>
-  import { goto } from '$app/navigation';
+<script lang="ts">
   import { page } from '$app/stores';
   import { get } from 'svelte/store';
   import { onMount } from 'svelte';
-  import { ChevronLeft } from 'lucide-svelte';
   import BasicInfoForm from '$lib/components/job-post-creation/forms/BasicInfoForm.svelte';
   import DescriptionForm from '$lib/components/job-post-creation/forms/DescriptionForm.svelte';
   import RequirementForm from '$lib/components/job-post-creation/forms/RequirementForm.svelte';
@@ -12,6 +10,7 @@
 	import { getUserInfo} from '$lib/utils/auth';
 	import JobPreviewDrawer from '$lib/components/job-post-creation/JobPreviewDrawer.svelte';
   import { JobService } from '$lib/services/jobService';
+  import toast from 'svelte-french-toast';
 
   let jobId = $derived($page.params.id);
   let isPreviewOpen = $state(false);
@@ -22,10 +21,30 @@
   let showValidationErrors = $state(false);
 
   const sections = [
-    { id: 'basic-info', name: 'Basic Info' },
-    { id: 'description', name: 'Description' },
-    { id: 'requirements', name: 'Requirement' },
-    { id: 'settings', name: 'Post Settings' }
+    { 
+      id: 'basic-info', 
+      name: 'Basic Info',
+      title: 'Basic Information',
+      description: 'Set up the fundamental details of your job posting including title, location, and compensation.'
+    },
+    { 
+      id: 'description', 
+      name: 'Description',
+      title: 'Job Description',
+      description: 'Provide a detailed overview of the role, responsibilities, and what makes this opportunity unique.'
+    },
+    { 
+      id: 'requirements', 
+      name: 'Requirement',
+      title: 'Requirements',
+      description: 'Specify the qualifications, skills, and experience needed for this position.'
+    },
+    { 
+      id: 'settings', 
+      name: 'Post Settings',
+      title: 'Post Settings',
+      description: 'Configure application requirements, posting timeline, and notification preferences.'
+    }
   ];
 
   function handlePreview() {
@@ -37,35 +56,36 @@
     showValidationErrors = validation.showErrors;
   }
 
-  async function handlePublish() {
-    jobId = get(page).params.id;
-    await JobService.handleFormSubmit(formData, updateValidation, true, jobId);
-  }
-
-  function scrollToSection(sectionId) {
+  function handleSectionClick(sectionId: string) {
     activeSection = sectionId;
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
   }
 
-  function handleScroll() {
-    const scrollY = window.scrollY;
-    const offset = 100;
-
-    for (const section of sections) {
-      const element = document.getElementById(section.id);
-      if (element) {
-        const elementTop = element.offsetTop - offset;
-        const elementBottom = elementTop + element.offsetHeight;
-
-        if (scrollY >= elementTop && scrollY < elementBottom) {
-          activeSection = section.id;
-          break;
-        }
+  async function handleSave() {
+    // Get the step number based on active section
+    const stepMap: Record<string, number> = {
+      'basic-info': 1,
+      'description': 2,
+      'requirements': 3,
+      'settings': 4
+    };
+    
+    const currentStep = stepMap[activeSection];
+    
+    // Validate current step
+    const isValid = await JobService.handleStepValidation(currentStep, formData, updateValidation);
+    
+    if (isValid) {
+      // Save the job
+      jobId = get(page).params.id;
+      const result = await JobService.handleFormSubmit(formData, updateValidation, true, jobId);
+      if (result) {
+        toast.success('Job saved successfully!');
       }
     }
+  }
+
+  function getActiveSection() {
+    return sections.find(s => s.id === activeSection);
   }
 
   onMount(async () => {
@@ -79,7 +99,6 @@
 
 </script>
 
-<svelte:window on:scroll={handleScroll} />
 
 <div>
   <h1 class="text-2xl font-semibold text-gray-900 mb-8">Edit Job Post</h1>
@@ -88,30 +107,46 @@
     <FormSidebar 
       {sections}
       {activeSection}
-      onSectionClick={scrollToSection}
-      onPreview={handlePreview}
-      onPublish={handlePublish}
-      actionLabel="Save Changes"
+      onSectionClick={handleSectionClick}
     />
 
     <div class="flex-1 min-w-0 pl-8 pb-10">
+      <!-- Section Header with Action Buttons -->
+      <div class="mb-6 pb-4 border-b border-gray-200">
+        <div class="flex justify-between items-start">
+          <div>
+            <h2 class="text-lg font-medium text-gray-900">{getActiveSection()?.title || ''}</h2>
+            <p class="text-sm text-gray-500 mt-1">{getActiveSection()?.description || ''}</p>
+          </div>
+          <div class="flex gap-3">
+            <button
+              onclick={handlePreview}
+              type="button"
+              class="px-4 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors font-medium"
+            >
+              Preview
+            </button>
+            <button
+              onclick={handleSave}
+              type="button"
+              class="px-4 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-medium"
+            >
+              Save Changes
+            </button>
+          </div>
+        </div>
+      </div>
       
-      <form class="space-y-8">
-        <section id="basic-info" class="mb-10 pb-10 border-b border-gray-200">
+      <form>
+        {#if activeSection === 'basic-info'}
           <BasicInfoForm bind:formData {validationErrors} {showValidationErrors} />
-        </section>
-
-        <section id="description" class="mb-10 pb-10 border-b border-gray-200">
+        {:else if activeSection === 'description'}
           <DescriptionForm bind:formData {validationErrors} {showValidationErrors} />
-        </section>
-
-        <section id="requirements" class="mb-10 pb-10 border-b border-gray-200">
+        {:else if activeSection === 'requirements'}
           <RequirementForm bind:formData {validationErrors} {showValidationErrors} />
-        </section>
-
-        <section id="settings" class="mb-10">
+        {:else if activeSection === 'settings'}
           <PostSettingForm bind:formData {validationErrors} {showValidationErrors} />
-        </section>
+        {/if}
       </form>
     </div>
   </div>
