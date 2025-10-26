@@ -1,0 +1,1075 @@
+basePath: /
+definitions:
+  schema.ApplicationWithApplicant:
+    properties:
+      applicant: {}
+      jobApplication:
+        $ref: '#/definitions/schema.JobApplication'
+    type: object
+  schema.File:
+    properties:
+      category:
+        $ref: '#/definitions/schema.FileCategory'
+      contentType:
+        type: string
+      fileExtension:
+        type: string
+      filename:
+        type: string
+      id:
+        type: string
+      size:
+        type: integer
+      uploadDate:
+        type: string
+      userID:
+        type: string
+    required:
+    - category
+    - contentType
+    - fileExtension
+    - filename
+    - size
+    - userID
+    type: object
+  schema.FileCategory:
+    enum:
+    - resume
+    - cover_letter
+    - certification
+    - verification
+    type: string
+    x-enum-varnames:
+    - CategoryResume
+    - CategoryCoverLetter
+    - CategoryCertification
+    - CategoryVerification
+  schema.Job:
+    properties:
+      applicationDeadline:
+        type: string
+      autoReject:
+        type: boolean
+      companyID:
+        type: string
+      currency:
+        minLength: 0
+        type: string
+      education:
+        minLength: 0
+        type: string
+      emailNotifications:
+        type: boolean
+      experienceLevel:
+        minLength: 0
+        type: string
+      id:
+        type: string
+      jobDescription:
+        minLength: 0
+        type: string
+      jobSummary:
+        minLength: 0
+        type: string
+      location:
+        minLength: 0
+        type: string
+      maxSalary:
+        minimum: 0
+        type: number
+      minSalary:
+        minimum: 0
+        type: number
+      niceToHave:
+        type: string
+      numberOfPositions:
+        type: integer
+      postOpenDate:
+        type: string
+      questions:
+        type: string
+      requiredSkills:
+        minLength: 0
+        type: string
+      title:
+        minLength: 0
+        type: string
+      visibility:
+        minLength: 0
+        type: string
+      workArrangement:
+        minLength: 0
+        type: string
+      workType:
+        minLength: 0
+        type: string
+    required:
+    - applicationDeadline
+    - companyID
+    - currency
+    - education
+    - experienceLevel
+    - jobDescription
+    - jobSummary
+    - location
+    - maxSalary
+    - minSalary
+    - numberOfPositions
+    - postOpenDate
+    - requiredSkills
+    - title
+    - visibility
+    - workArrangement
+    - workType
+    type: object
+  schema.JobApplication:
+    properties:
+      applicantID:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      jobID:
+        type: string
+      status:
+        type: string
+    required:
+    - applicantID
+    - jobID
+    - status
+    type: object
+  schema.User:
+    properties:
+      avatarURL:
+        type: string
+      createdAt:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      provider:
+        type: string
+      role:
+        type: string
+      updatedAt:
+        type: string
+      userID:
+        type: string
+      userInfo: {}
+      verified:
+        type: boolean
+    type: object
+info:
+  contact: {}
+  description: REST API for Job Applier 3000 platform
+  title: Job Applier 3000 API
+  version: "1.0"
+paths:
+  /apply/:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all job applications in the system
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/schema.JobApplication'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get all job applications
+      tags:
+      - Applications
+    post:
+      consumes:
+      - application/json
+      description: Submit a job application for a specific job
+      parameters:
+      - description: Job Application JSON
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/schema.JobApplication'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schema.JobApplication'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create new job application
+      tags:
+      - Applications
+  /apply/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a job application by its ID
+      parameters:
+      - description: Application ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete a job application
+      tags:
+      - Applications
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a single job application by its ID
+      parameters:
+      - description: Application ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schema.JobApplication'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get a specific job application
+      tags:
+      - Applications
+    put:
+      consumes:
+      - application/json
+      description: Update job application data (including status changes)
+      parameters:
+      - description: Application ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated Application JSON
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/schema.JobApplication'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schema.JobApplication'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update job application
+      tags:
+      - Applications
+  /apply/query:
+    get:
+      consumes:
+      - application/json
+      description: Get all job applications that match query parameters
+      parameters:
+      - description: Applicant ID
+        in: query
+        name: applicantID
+        type: string
+      - description: Job ID
+        in: query
+        name: jobID
+        type: string
+      - description: Company ID
+        in: query
+        name: companyID
+        type: string
+      - description: Status of the application
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/schema.ApplicationWithApplicant'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Query job applications
+      tags:
+      - Applications
+  /files/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a file by its ID. Only the owner of the file can delete
+        it.
+      parameters:
+      - description: File ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: ID of the requesting user
+        in: query
+        name: requestingUserID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: File deleted successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete a file
+      tags:
+      - Files
+  /files/{id}/download:
+    get:
+      consumes:
+      - application/json
+      description: Downloads a file by its ID. Only the owner can access their files.
+      parameters:
+      - description: File ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: ID of the requesting user
+        in: query
+        name: requestingUserID
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Download a file
+      tags:
+      - Files
+  /files/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Uploads a PDF or image file for a specific user. Supports categories
+        such as resume, profile_picture, etc.
+      parameters:
+      - description: User ID (hex ObjectID)
+        in: formData
+        name: userID
+        required: true
+        type: string
+      - description: User role (jobSeeker or company)
+        in: formData
+        name: userRole
+        required: true
+        type: string
+      - description: File category (e.g., resume, certificate, logo)
+        in: formData
+        name: category
+        required: true
+        type: string
+      - description: File to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: File uploaded successfully
+          schema:
+            $ref: '#/definitions/schema.File'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Upload a file
+      tags:
+      - Files
+  /files/user/{userId}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves metadata for all files belonging to a specific user.
+        Only the owner can view their files.
+      parameters:
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: string
+      - description: ID of the requesting user
+        in: query
+        name: requestingUserID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of files
+          schema:
+            additionalProperties:
+              items:
+                $ref: '#/definitions/schema.File'
+              type: array
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List all files for a user
+      tags:
+      - Files
+  /jobs/:
+    get:
+      description: Retrieve all job postings
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/schema.Job'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get all jobs
+      tags:
+      - jobs
+    post:
+      consumes:
+      - application/json
+      description: Add a new job posting to the database
+      parameters:
+      - description: Job data
+        in: body
+        name: job
+        required: true
+        schema:
+          $ref: '#/definitions/schema.Job'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/schema.Job'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new job
+      tags:
+      - jobs
+  /jobs/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a job posting by ID and notify applicants
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Reason for deletion
+        in: body
+        name: reason
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete a job
+      tags:
+      - jobs
+    get:
+      description: Retrieve details of a specific job posting
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schema.Job'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get a job by ID
+      tags:
+      - jobs
+    put:
+      consumes:
+      - application/json
+      description: Update a job posting by ID
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated job data
+        in: body
+        name: job
+        required: true
+        schema:
+          $ref: '#/definitions/schema.Job'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schema.Job'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update a job
+      tags:
+      - jobs
+  /jobs/query:
+    get:
+      consumes:
+      - application/json
+      description: Get jobs by filtering fields like title, location, salary, company,
+        etc.
+      parameters:
+      - description: Job ID (ObjectID)
+        in: query
+        name: id
+        type: string
+      - description: Title (regex match)
+        in: query
+        name: title
+        type: string
+      - description: Company ID (ObjectID)
+        in: query
+        name: companyID
+        type: string
+      - description: Location (regex match)
+        in: query
+        name: location
+        type: string
+      - description: Minimum salary
+        in: query
+        name: minSalary
+        type: integer
+      - description: Maximum salary
+        in: query
+        name: maxSalary
+        type: integer
+      - description: Work type (e.g., Full-time, Part-time)
+        in: query
+        name: workType
+        type: string
+      - description: Work arrangement (e.g., Remote, On-site)
+        in: query
+        name: workArrangement
+        type: string
+      - description: Post open date (1d or 6w)
+        in: query
+        name: postOpenDate
+        type: string
+      - description: If true, returns the latest 3 jobs
+        in: query
+        name: latest
+        type: boolean
+      - description: 'Sorting: dateAsc | dateDesc | title'
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/schema.Job'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Query jobs with filters
+      tags:
+      - jobs
+  /users/:
+    get:
+      consumes:
+      - application/json
+      description: Fetch all user documents from the database.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/schema.User'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Retrieve all users
+      tags:
+      - Users
+    post:
+      consumes:
+      - application/json
+      description: Add a new user document to the database.
+      parameters:
+      - description: User object
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/schema.User'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/schema.User'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new user
+      tags:
+      - Users
+  /users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a user document from the database by ID.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete a user
+      tags:
+      - Users
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a single user document by its ID.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schema.User'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get a user by ID
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      description: Modify user data by providing the user ID in the path and updated
+        JSON body.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated user data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/schema.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schema.User'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update an existing user
+      tags:
+      - Users
+  /users/query:
+    get:
+      consumes:
+      - application/json
+      description: 'Retrieve users that match the specified query parameters. Supported
+        parameters: `id`, `role`.'
+      parameters:
+      - description: User ID (ObjectID)
+        in: query
+        name: id
+        type: string
+      - description: User role (e.g. company, jobSeeker)
+        in: query
+        name: role
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/schema.User'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Query users
+      tags:
+      - Users
+schemes:
+- http
+- https
+swagger: "2.0"

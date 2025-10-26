@@ -19,9 +19,19 @@
 
   let candidates: any[] = [];
   let selectedCandidate: any = null;
-  let currentStatusFilter = '';
+  let currentStatusFilter: string = '';
 
   let company: any = null;
+  let pendingCount: number = 0;
+  let currentPage: number = 1;
+  let itemsPerPage: number = 5;
+  let totalPages: number = 1;
+  let isUpdatingStatus: boolean = false;
+
+  $: paginatedCandidates = candidates.slice(
+  (currentPage - 1) * itemsPerPage,
+  currentPage * itemsPerPage
+  );
 
   function getDocIcon(doc: string) {
     if (doc.toLowerCase().endsWith('.pdf')) return FileText;
@@ -139,7 +149,11 @@
         };
       });
 
-      return await Promise.all(candidatePromises);
+      const results = await Promise.all(candidatePromises);
+      pendingCount = results.filter(c => c.status === 'Pending').length;
+      totalPages = Math.ceil(results.length / itemsPerPage);
+      return results;
+
     } catch (err) {
       console.error('Error fetching candidates:', err);
       return [];
@@ -147,6 +161,8 @@
   }
 
   async function updateStatus(candidateID: string, newStatus: string) {
+    if (isUpdatingStatus) return;
+    isUpdatingStatus = true;
     try {
       const candidate = candidates.find(c => c.id === candidateID);
       if (!candidate) throw new Error('Candidate not found');
@@ -171,6 +187,8 @@
         selectedCandidate = candidates.find((c) => c.id === candidateID) || null;
     } catch (err) {
       console.error('Error updating candidate status:', err);
+    } finally {
+      isUpdatingStatus = false;
     }
   }
 
@@ -180,6 +198,11 @@
       candidates = data;
       selectedCandidate = data.length > 0 ? data[0] : null;
     });
+  }
+
+  function changePage(page: number) {
+  if (page < 1 || page > totalPages) return;
+  currentPage = page;
   }
 
   onMount(async () => {
@@ -225,7 +248,7 @@
 
       <div class="border-l border-gray-300 h-6 py-1"></div>
         <button class="px-3 py-1 bg-white border-1 border-gray-200 rounded-full text-sm">All</button>
-        <button class="px-3 py-1 bg-white border-1 border-gray-200  rounded-full text-sm">New (34)</button>
+        <button class="px-3 py-1 bg-white border-1 border-gray-200  rounded-full text-sm">New ({pendingCount})</button>
         <button class="px-3 py-1 bg-white border-1 border-gray-200  rounded-full text-sm">High Match</button>
         <button class="px-3 py-1 bg-white border-1 border-gray-200  rounded-full text-sm">Recent Grads</button>
         <button class="px-3 py-1 bg-white border-1 border-gray-200  rounded-full text-sm">Experienced</button>
@@ -241,7 +264,7 @@
         <button class="px-2 py-1 bg-white border-1 border-gray-200  rounded-full text-xs">Rejected</button>
       </div>
     <div class="mt-3 space-y-3">
-        {#each candidates as candidate, i (i)}
+        {#each paginatedCandidates as candidate, i (i)}
           <button
             class="flex items-start gap-3 p-3 border rounded-lg shadow-sm hover:shadow-md transition cursor-pointer w-full
               {selectedCandidate?.name === candidate.name ? 'bg-green-100 border-green-600' : ''}"
@@ -269,6 +292,27 @@
             </div>
           </button>
         {/each}
+        <div class="flex justify-center items-center gap-2 mt-4">
+          <button
+            on:click={() => changePage(currentPage - 1)}
+            class="px-3 py-1 bg-gray-200 border border-gray-300 rounded disabled:opacity-50"
+            disabled={currentPage === 1}
+          >
+            Prev
+          </button>
+
+          <span class="text-sm text-gray-600">
+            Page {currentPage} of {totalPages}
+          </span>
+
+          <button
+            on:click={() => changePage(currentPage + 1)}
+            class="px-3 py-1 bg-gray-200 border border-gray-300 rounded disabled:opacity-50"
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
 
@@ -283,11 +327,11 @@
                 <button class="flex px-4 py-1 text-xs bg-gray-100 rounded border border-gray-300 hover:bg-gray-500"><StickyNote class="w-4 h-4 mx-1" />Notes</button>
                 <button class="flex px-4 py-1 text-xs bg-green-500 text-white rounded border border-green-300 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 on:click={() => updateStatus(selectedCandidate.id, 'ACCEPTED')}
-                disabled={selectedCandidate.status === 'Accepted' || selectedCandidate.status === 'Rejected'}
+                disabled={isUpdatingStatus || selectedCandidate.status === 'Accepted' || selectedCandidate.status === 'Rejected'}
                 ><Check class="w-4 h-4 mx-1" />Accept</button>
                 <button class="flex px-4 py-1 text-xs bg-red-500 text-white rounded border border-red-300 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 on:click={() => updateStatus(selectedCandidate.id, 'REJECTED')}
-                disabled={selectedCandidate.status === 'Accepted' || selectedCandidate.status === 'Rejected'}
+                disabled={isUpdatingStatus || selectedCandidate.status === 'Accepted' || selectedCandidate.status === 'Rejected'}
                 ><X class="w-4 h-4 mx-1" />Reject</button>
               </div>
             </div>

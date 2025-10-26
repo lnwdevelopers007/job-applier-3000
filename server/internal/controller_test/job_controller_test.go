@@ -126,7 +126,9 @@ func TestDeleteJob(t *testing.T) {
 
 	// Create POST request with JSON body
 	w2 := httptest.NewRecorder()
-	req, _ = http.NewRequest("DELETE", "/jobs/"+id, nil)
+	req, _ = http.NewRequest("DELETE", "/jobs/"+id, bytes.NewReader([]byte(`{"reason": "testing delete"}`)))
+	req.Header.Set("Content-Type", "application/json")
+
 	router.ServeHTTP(w2, req)
 	t.Log(w2.Body)
 	assert.Equal(t, w2.Code, http.StatusOK)

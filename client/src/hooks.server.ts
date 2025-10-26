@@ -183,14 +183,18 @@ export const handle: Handle = async ({ event, resolve }) => {
 	if (event.locals.user?.isAuthenticated) {
 		const userRole = event.locals.user.role;
 		
-		// Redirect authenticated users away from login/signup
+		// Redirect authenticated users away from login/signup to their last intended page or default
 		if (path === '/login' || path === '/signup') {
-			const redirectPath = getDefaultPathForRole(userRole);
+			const returnUrl = event.url.searchParams.get('returnUrl');
+			const redirectPath = returnUrl || getDefaultPathForRole(userRole);
 			throw redirect(303, redirectPath);
 		}
 		
-		// Check role-specific access
-		if (path.startsWith('/app/') && userRole !== 'jobSeeker') {
+		// Check role-specific access - only redirect if accessing wrong role's area
+		if (path.startsWith('/app/jobs')) {
+			// No restrictions - all authenticated users can access job routes
+		} else if (path.startsWith('/app/') && userRole !== 'jobSeeker') {
+			// Other /app/ routes are restricted to jobSeekers only
 			throw redirect(303, getDefaultPathForRole(userRole));
 		}
 		

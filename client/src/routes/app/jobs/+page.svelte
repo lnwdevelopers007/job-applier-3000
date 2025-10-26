@@ -1,6 +1,7 @@
 <script>
-	import { Search, ArrowUpDown, MapPin, Users, Building } from 'lucide-svelte';
-	import SafeHTML from '$lib/utils/SafeHTML.svelte';
+	import { Search, ArrowUpDown, MapPin } from 'lucide-svelte';
+	import ApplyModal from '$lib/components/job/ApplyModal.svelte';
+	import JobDetailCard from '$lib/components/job/JobDetailCard.svelte';
 	import { onMount } from 'svelte';
 	import { jobSearchStore } from '$lib/stores/jobSearch';
 	import { get } from 'svelte/store';
@@ -11,33 +12,41 @@
 		DEFAULT_COMPANY_LOGO,
 		DEFAULT_COMPANY_NAME
 	} from '$lib/utils/fetcher';
+	import { formatDateShort } from '$lib/utils/datetime';
 
-	let jobs = [];
-	let filteredJobs = [];
-	let selectedJob = null;
-	let searchQuery = '';
-	let currentPage = 1;
+	let jobs = $state([]);
+	let filteredJobs = $state([]);
+	let selectedJob = $state(null);
+	let searchQuery = $state('');
+	let currentPage = $state(1);
 	const pageSize = 4;
 
-	let userInfo = null;
-	let companyInfo = null;
-	let isLoggedIn = false;
-	let appliedJobs = new Set();
+	let userInfo = $state(null);
+	let companyInfo = $state(null);
+	let isLoggedIn = $state(false);
+	let appliedJobs = $state(new Set());
 
-	let isApplying = false;
+	let showApplyModal = $state(false);
+	let jobToApply = $state(null);
+	let isBookmarked = $state(false);
+	let bookmarkedJobs = $state(new Set());
 
-	$: totalPages = Math.ceil(filteredJobs.length / pageSize);
-	$: paginatedJobs = filteredJobs.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-	$: if (selectedJob?.companyID) {
-		fetchCompanyInfo(selectedJob.companyID);
-	}
+	const totalPages = $derived(Math.ceil(filteredJobs.length / pageSize));
+	const paginatedJobs = $derived(filteredJobs.slice((currentPage - 1) * pageSize, currentPage * pageSize));
+	
+	$effect(() => {
+		if (selectedJob?.companyID) {
+			fetchCompanyInfo(selectedJob.companyID);
+		}
+		checkBookmarkStatus();
+	});
 
-	let activeFilters = {
+	let activeFilters = $state({
 		type: null,
 		posted: null,
 		arrangement: null
-	};
-	let sortBy = null;
+	});
+	let sortBy = $state(null);
 
 	const typeCycle = ['Full-time', 'Part-time', 'Contract', 'Casual'];
 	const arrangementCycle = ['On-site', 'Remote', 'Hybrid'];
@@ -123,9 +132,9 @@
 					tags: job.requiredSkills
 						? job.requiredSkills.split(',').map((skill) => skill.trim())
 						: [],
-					posted: job.postOpenDate ? new Date(job.postOpenDate).toLocaleDateString() : 'Unknown',
+					posted: job.postOpenDate ? formatDateShort(job.postOpenDate) : 'Unknown',
 					closeDate: job.applicationDeadline
-						? new Date(job.applicationDeadline).toLocaleDateString()
+						? formatDateShort(job.applicationDeadline)
 						: 'Unknown',
 					description: job.jobDescription || 'No description provided.',
 					logo: companyLogo
@@ -144,50 +153,32 @@
 		}
 	}
 
-	async function applyJob(job) {
-		try {
-			if (!isLoggedIn || !userInfo.userID) {
-				alert('❌ You must be logged in to apply.');
-				return;
-			}
-
-			if (appliedJobs.has(job.id)) {
-				alert('⚠️ You have already applied to this job.');
-				return;
-			}
-
-			isApplying = true;
-			const payload = {
-				applicantID: userInfo.userID,
-				jobID: job.id,
-				companyID: job.companyID,
-				status: 'PENDING',
-				createdAt: new Date().toISOString()
-			};
-
-			const res = await fetch('/apply', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(payload)
-			});
-
-			if (!res.ok) {
-				if (res.status === 409) {
-					alert('⚠️ You already applied to this job.');
-				} else {
-					throw new Error(`Failed to apply: ${res.status}`);
-				}
-				return;
-			}
-
-			appliedJobs.add(job.id);
-			alert(`✅ Successfully applied to ${job.title}`);
-		} catch (err) {
-			console.error('Error applying to job:', err);
-			alert('❌ Failed to apply. Please try again.');
-		}
-		isApplying = false;
+	function applyJob(job) {
+		jobToApply = job;
+		showApplyModal = true;
 	}
+
+	function checkBookmarkStatus() {
+		if (isAuthenticated() && userInfo?.userID && selectedJob?.id) {
+			isBookmarked = bookmarkedJobs.has(selectedJob.id);
+		}
+	}
+
+	function toggleBookmark() {
+		if (!selectedJob?.id) return;
+
+		if (isBookmarked) {
+			bookmarkedJobs.delete(selectedJob.id);
+			isBookmarked = false;
+		} else {
+			bookmarkedJobs.add(selectedJob.id);
+			isBookmarked = true;
+		}
+		
+		// TODO: Add backend API call when ready
+		// await fetch('/bookmarks', { method: isBookmarked ? 'POST' : 'DELETE', ... });
+	}
+
 
 	function toggleCycle(field) {
 		if (field === 'type') {
@@ -243,6 +234,7 @@
 		if (!currentState.shouldFetch) {
 			fetchJobs();
 		}
+
 
 		return () => {
 			unsubscribe();
@@ -304,9 +296,9 @@
 			</div>
 		</div>
 
-		<div class="grid w-full grid-cols-2 gap-6">
+		<div class="grid w-full grid-cols-3 gap-6 h-[calc(100vh-200px)]">
 			<!-- Jobs List -->
-			<section class="col-span-1 flex flex-col space-y-4">
+			<section class="col-span-1 flex flex-col space-y-4 h-full">
 				<div class="w-full flex-1 space-y-3 overflow-y-auto p-2">
 					{#if paginatedJobs.length === 0}
 						<div class="mt-4 text-center text-gray-500">No jobs match your search or filters.</div>
@@ -314,7 +306,7 @@
 						{#each paginatedJobs as job (job.id)}
 							<button
 								onclick={() => (selectedJob = job)}
-								class={`flex w-full cursor-pointer flex-col rounded-lg bg-white shadow ring-offset-2 hover:ring-2 hover:ring-green-300 ${selectedJob?.id === job.id ? 'ring-2 ring-green-500' : ''}`}
+								class={`flex w-full cursor-pointer flex-col rounded-lg bg-white shadow ring-offset-2 hover:ring-2 hover:ring-green-500 ${selectedJob?.id === job.id ? 'ring-2 ring-green-600' : ''}`}
 							>
 								<div class="flex items-start gap-3 p-2">
 									<img
@@ -372,123 +364,19 @@
 
 			<!-- Job Detail -->
 			<section
-				class="col-span-1 flex min-h-[400px] flex-col space-y-2 rounded-lg bg-white p-6 shadow"
+				class="col-span-2 flex flex-col rounded-lg bg-white border border-gray-200 h-full overflow-hidden"
 			>
 				{#if selectedJob}
-					<!-- Job Info -->
-					<div class="mb-2">
-						<div class="flex items-start gap-3 px-2">
-							<img
-								src={selectedJob.logo}
-								alt={selectedJob.company}
-								class="mt-0.5 h-4 w-4 flex-shrink-0 rounded-full object-cover"
-							/>
-							<p class="text-sm font-semibold text-gray-600">{selectedJob.company}</p>
-						</div>
-
-						<h2 class="text-xl font-bold">{selectedJob.title}</h2>
-
-						<div class="my-2 flex items-center gap-2 text-sm text-black">
-							<MapPin class="mt-0.5 h-4 w-4" />
-							{selectedJob.location}
-						</div>
-
-						<div class="my-2 flex gap-4 text-sm text-gray-500">
-							<span>Open: {selectedJob.posted}</span>
-							<span>Close: {selectedJob.closeDate}</span>
-						</div>
+					<div class="h-full overflow-y-auto">
+						<JobDetailCard 
+							job={selectedJob}
+							{companyInfo}
+							onApply={applyJob}
+							onBookmark={toggleBookmark}
+							{isBookmarked}
+							isApplied={appliedJobs.has(selectedJob.id)}
+						/>
 					</div>
-
-					<!-- Tags -->
-					<div class="flex gap-2">
-						{#each selectedJob.tags as tag, i (i)}
-							<span class="rounded-full bg-gray-100 px-2 py-1 text-sm">{tag}</span>
-						{/each}
-					</div>
-
-					<!-- Apply / Bookmark -->
-					<div class="mb-4 flex gap-2">
-						{#if new Date(selectedJob.closeDate) < new Date()}
-							<button
-								class="cursor-not-allowed rounded-lg bg-gray-400 px-4 py-2 text-sm text-white"
-								disabled
-							>
-								Closed
-							</button>
-						{:else if new Date(selectedJob.posted) > new Date()}
-							<button
-								class="cursor-not-allowed rounded-lg bg-gray-400 px-4 py-2 text-sm text-white"
-								disabled
-							>
-								Not Open Yet
-							</button>
-						{:else}
-							<button
-								class={`rounded-lg px-4 py-2 text-sm text-white transition-colors duration-200 ${
-									isApplying ? 'cursor-not-allowed bg-gray-500' : 'bg-green-600'
-								}`}
-								onclick={() => applyJob(selectedJob)}
-								disabled={isApplying}
-							>
-								{isApplying ? 'Applying…' : 'Apply'}
-							</button>
-						{/if}
-
-						<button class="rounded-lg bg-yellow-400 px-4 py-2 text-sm">Bookmark</button>
-					</div>
-
-					<!-- Job Description -->
-					<h3 class="text-lg font-semibold">Job Description</h3>
-					<div class="space-y-4">
-						<SafeHTML html={selectedJob.description} />
-					</div>
-
-					<h3 class="text-lg font-semibold">About the company</h3>
-					{#if companyInfo}
-						<div class="mt-2 space-y-2 rounded-lg bg-gray-50 p-4 shadow">
-							<div class="flex items-start gap-4">
-								<img
-									src={companyInfo.logo ||
-										'https://images.unsplash.com/photo-1534237710431-e2fc698436d0?fm=jpg&q=60&w=3000'}
-									alt={companyInfo.name}
-									class="h-16 w-16 flex-shrink-0 rounded-full object-cover"
-								/>
-								<div class="flex flex-1 flex-col space-y-1">
-									<h3 class="text-lg font-semibold">{companyInfo.name}</h3>
-
-									{#if companyInfo.location}
-										<p class="flex gap-1 text-sm text-gray-600">
-											<MapPin class="mt-0.5 h-4 w-4" />
-											{companyInfo.location}
-										</p>
-									{/if}
-								</div>
-							</div>
-
-							{#if companyInfo.size || companyInfo.industry}
-								<div class="flex gap-6 text-sm text-gray-700">
-									{#if companyInfo.size}
-										<span class="flex items-center gap-1">
-											<Users class="mt-0.5 h-4 w-4" />
-											{companyInfo.size}
-										</span>
-									{/if}
-									{#if companyInfo.industry}
-										<span class="flex items-center gap-1">
-											<Building class="mt-0.5 h-4 w-4" />
-											{companyInfo.industry}
-										</span>
-									{/if}
-								</div>
-							{/if}
-
-							{#if companyInfo.aboutUs}
-								<p class="mt-1 text-sm text-gray-700">{companyInfo.aboutUs}</p>
-							{/if}
-						</div>
-					{:else}
-						<div class="mt-4 text-gray-500">Company information not available.</div>
-					{/if}
 				{:else}
 					<div class="flex flex-1 items-center justify-center text-gray-500">No job selected.</div>
 				{/if}
@@ -496,3 +384,12 @@
 		</div>
 	</main>
 </div>
+
+
+<!-- Apply Modal -->
+{#if jobToApply}
+	<ApplyModal 
+		bind:isOpen={showApplyModal}
+		job={jobToApply}
+	/>
+{/if}
