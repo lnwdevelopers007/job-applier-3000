@@ -156,7 +156,7 @@
       <h2 class="text-gray-600">Active Jobs</h2>
       <p class="text-gray-800 text-2xl font-medium">{stats.activeJobs}</p>
       <p class={stats.trend.activeJobs >= 0 ? 'text-green-500 text-sm' : 'text-red-500 text-sm'}>
-        {stats.trend.activeJobs >= 0 ? '↑' : '↓'} {Math.abs(stats.trend.activeJobs)} this month
+        {stats.trend.activeJobs >= 0 ? '↑' : '↓'} {Math.abs(stats.trend.activeJobs)} from lastmonth
       </p>
     </div>
 
@@ -164,7 +164,7 @@
       <h2 class="text-gray-600">Total Applicants</h2>
       <p class="text-gray-800 text-2xl font-medium">{stats.totalApplicants}</p>
       <p class={stats.trend.totalApplicants >= 0 ? 'text-green-500 text-sm' : 'text-red-500 text-sm'}>
-        {stats.trend.totalApplicants >= 0 ? '↑' : '↓'} {Math.abs(stats.trend.totalApplicants)} this month
+        {stats.trend.totalApplicants >= 0 ? '↑' : '↓'} {Math.abs(stats.trend.totalApplicants)} from last month
       </p>
     </div>
 
@@ -172,7 +172,7 @@
       <h2 class="text-gray-600">Pending Review</h2>
       <p class="text-gray-800 text-2xl font-medium">{stats.pendingReview}</p>
       <p class={stats.trend.pendingReview >= 0 ? 'text-green-500 text-sm' : 'text-red-500 text-sm'}>
-        {stats.trend.pendingReview >= 0 ? '↑' : '↓'} {Math.abs(stats.trend.pendingReview)} today
+        {stats.trend.pendingReview >= 0 ? '↑' : '↓'} {Math.abs(stats.trend.pendingReview)} new today
       </p>
     </div>
 
@@ -180,7 +180,7 @@
       <h2 class="text-gray-600">Offers Accepted</h2>
       <p class="text-gray-800 text-2xl font-medium">{stats.offersAccepted}</p>
       <p class={stats.trend.offersAccepted >= 0 ? 'text-green-500 text-sm' : 'text-red-500 text-sm'}>
-        {stats.trend.offersAccepted >= 0 ? '↑' : '↓'} {Math.abs(stats.trend.offersAccepted)} this month
+        {stats.trend.offersAccepted >= 0 ? '↑' : '↓'} {Math.abs(stats.trend.offersAccepted)} from last month
       </p>
     </div>
   </div>

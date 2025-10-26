@@ -8,6 +8,7 @@
 	import { toast } from 'svelte-french-toast';
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import type { PageData } from './$types';
+	import { getJobseekerStats, type JobseekerStats } from '$lib/utils/jobseekerStats';
 
 	let { data }: { data: PageData } = $props();
 
@@ -17,7 +18,19 @@
 	let openDropdown = $state<string | null>(null);
 	let dropdownTriggers = $state<Record<string, HTMLElement>>({});
 	let showAllApplications = $state(false);
-	
+	let stats: JobseekerStats = $state({
+		totalApplications: 0,
+		inReview: 0,
+		offerReceived: 0,
+		responseRate: 0,
+		trend: {
+			totalApplications: 0,
+			inReview: 0,
+			offerReceived: 0,
+			responseRate: 0
+		}
+	});
+
 	// Cancel modal state
 	let showCancelModal = $state(false);
 	let isCancelling = $state(false);
@@ -33,6 +46,7 @@
 			const queryParams = new URLSearchParams({ applicantID: data.user.userID });
 			if (status !== 'All') queryParams.append('status', status.toUpperCase());
 
+			stats = await getJobseekerStats(data.user.userID);
 			// fetch job application where status = status and applicantID = userID.
 			const res = await fetch(`/apply/query?${queryParams.toString()}`, {
 				credentials: 'include'
@@ -112,10 +126,6 @@
 		}
 	}
 
-	onMount(async () => {
-		applications = await fetchApplications('All');
-	});
-
 	// When user clicks a status filter button
 	async function handleFilter(status: string) {
 		filterStatus = status;
@@ -174,7 +184,12 @@
 		} finally {
 			isCancelling = false;
 		}
-	}
+	}	
+
+	onMount(async () => {
+		applications = await fetchApplications('All');
+	});
+
 </script>
 
 <div class="">
@@ -185,28 +200,40 @@
 		</p>
 	</div>
 	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+		<!-- Total Applications -->
 		<div class="rounded-xl bg-white p-4 border border-gray-200">
 			<h2 class="text-sm text-gray-500 mb-2">Total Applications</h2>
-			<p class="text-2xl font-medium text-gray-900">24</p>
-			<p class="text-sm text-green-600 mt-1">↑ 12% from last month</p>
+			<p class="text-2xl font-medium text-gray-900">{stats.totalApplications}</p>
+			<p class={`text-sm mt-1 ${stats.trend.totalApplications >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+				{stats.trend.totalApplications >= 0 ? '↑' : '↓'} {Math.abs(stats.trend.totalApplications)} from last month
+			</p>
 		</div>
 
+		<!-- In Review -->
 		<div class="rounded-xl bg-white p-4 border border-gray-200">
 			<h2 class="text-sm text-gray-500 mb-2">In Review</h2>
-			<p class="text-2xl font-medium text-gray-900">8</p>
-			<p class="text-sm text-green-600 mt-1">↑ 2 new this week</p>
+			<p class="text-2xl font-medium text-gray-900">{stats.inReview}</p>
+			<p class={`text-sm mt-1 ${stats.trend.inReview >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+				{stats.trend.inReview >= 0 ? '↑' : '↓'} {Math.abs(stats.trend.inReview)} new this week
+			</p>
 		</div>
 
+		<!-- Offer Received -->
 		<div class="rounded-xl bg-white p-4 border border-gray-200">
 			<h2 class="text-sm text-gray-500 mb-2">Offer Received</h2>
-			<p class="text-2xl font-medium text-gray-900">3</p>
-			<p class="text-sm text-green-600 mt-1">↑ 2 pending response</p>
+			<p class="text-2xl font-medium text-gray-900">{stats.offerReceived}</p>
+			<p class={`text-sm mt-1 ${stats.trend.offerReceived >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+				{stats.trend.offerReceived >= 0 ? '↑' : '↓'} {Math.abs(stats.trend.offerReceived)} new this week
+			</p>
 		</div>
 
+		<!-- Response Rate -->
 		<div class="rounded-xl bg-white p-4 border border-gray-200">
 			<h2 class="text-sm text-gray-500 mb-2">Response Rate</h2>
-			<p class="text-2xl font-medium text-gray-900">67%</p>
-			<p class="text-sm text-green-600 mt-1">↑ Above average</p>
+			<p class="text-2xl font-medium text-gray-900">{stats.responseRate}%</p>
+			<p class={`text-sm mt-1 ${stats.trend.responseRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+				{stats.trend.responseRate >= 0 ? '↑' : '↓'} {Math.abs(stats.trend.responseRate)}% from last month
+			</p>
 		</div>
 	</div>
 	<div class="flex justify-between items-center mb-6">
