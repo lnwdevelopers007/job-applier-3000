@@ -36,19 +36,13 @@
   });
 
   const colorClasses = $derived(() => {
-    if (type === 'sort') {
-      return isActive 
-        ? 'bg-blue-600 text-white hover:bg-blue-700' 
-        : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300';
-    } else {
-      return isActive 
-        ? 'bg-green-600 text-white hover:bg-green-700' 
-        : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300';
-    }
+    return isActive 
+      ? 'bg-green-600 text-white hover:bg-green-700' 
+      : 'text-gray-700 border border-gray-400 hover:border-gray-500';
   });
 
   const highlightClasses = $derived(() => {
-    return type === 'sort' ? 'bg-blue-50 text-blue-700' : 'bg-green-50 text-green-700';
+    return 'bg-green-50 text-green-700';
   });
 
   function toggleDropdown() {

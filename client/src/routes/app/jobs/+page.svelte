@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Search, ArrowUpDown, MapPin } from 'lucide-svelte';
+	import { Search, ChevronLeft, ChevronRight } from 'lucide-svelte';
 	import ApplyModal from '$lib/components/job/ApplyModal.svelte';
 	import JobDetailCard from '$lib/components/job/JobDetailCard.svelte';
 	import JobCard from '$lib/components/job/JobCard.svelte';
@@ -294,9 +294,9 @@
 
 		<div class="grid w-full grid-cols-3 gap-6">
 			<!-- Jobs List -->
-			<section class="col-span-1 flex flex-col h-[calc(100vh-200px)]">
+			<section class="col-span-1 flex flex-col h-[calc(100vh-280px)]">
 				<div class="flex-1 overflow-y-auto p-2 min-h-0">
-					<div class="space-y-3 h-full">
+					<div class="space-y-3">
 						{#if paginatedJobs.length === 0}
 							<div class="flex items-center justify-center h-full text-gray-500">
 								No jobs match your search or filters.
@@ -314,43 +314,48 @@
 									/>
 								</div>
 							{/each}
+
+							<!-- Pagination inside scrollable area -->
+							{#if totalPages > 1}
+								<div class="flex items-center justify-center gap-3 py-3">
+									<button
+										aria-label="Previous page"
+										class="flex items-center gap-2 px-2 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+										onclick={() => (currentPage = Math.max(1, currentPage - 1))}
+										disabled={currentPage === 1}
+									>
+										<ChevronLeft class="w-4 h-4" />
+									</button>
+
+									<div class="flex items-center gap-2">
+										<span class="text-sm text-gray-600">Page</span>
+										<span class="text-sm text-gray-600 font-medium">
+											{currentPage}
+										</span>
+										<span class="text-sm text-gray-600">of</span>
+										<span class="text-sm text-gray-600 font-medium">
+											{totalPages}
+										</span>
+									</div>
+
+									<button
+										aria-label="Next page"
+										class="flex items-center gap-2 px-2 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+										onclick={() => (currentPage = Math.min(totalPages, currentPage + 1))}
+										disabled={currentPage === totalPages}
+									>
+										<ChevronRight class="w-4 h-4" />
+									</button>
+								</div>
+							{/if}
 						{/if}
 					</div>
-				</div>
-
-				<!-- Fixed Pagination controls -->
-				<div class="flex-shrink-0 py-4">
-					{#if totalPages > 1}
-						<div class="flex justify-center gap-2">
-							<button
-								class="rounded bg-gray-200 px-3 py-1 disabled:opacity-50"
-								onclick={() => (currentPage = Math.max(1, currentPage - 1))}
-								disabled={currentPage === 1}
-							>
-								Prev
-							</button>
-
-							<span class="px-3 py-1 text-sm">
-								Page {currentPage} of {totalPages}
-							</span>
-
-							<button
-								class="rounded bg-gray-200 px-3 py-1 disabled:opacity-50"
-								onclick={() => (currentPage = Math.min(totalPages, currentPage + 1))}
-								disabled={currentPage === totalPages}
-							>
-								Next
-							</button>
-						</div>
-					{:else}
-						<div class="h-10"></div> <!-- Spacer to maintain consistent height -->
-					{/if}
 				</div>
 			</section>
 
 			<!-- Job Detail -->
 			<section
-				class="col-span-2 flex flex-col h-[calc(100vh-200px)] overflow-hidden"
+				class="col-span-2 flex flex-col h-[calc(100vh-280px)] overflow-hidden"
 			>
 				{#if selectedJob}
 					<div class="h-full overflow-y-auto">
