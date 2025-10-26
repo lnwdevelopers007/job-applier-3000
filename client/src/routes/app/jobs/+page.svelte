@@ -1,8 +1,9 @@
-<script>
+<script lang="ts">
 	import { Search, ArrowUpDown, MapPin } from 'lucide-svelte';
 	import ApplyModal from '$lib/components/job/ApplyModal.svelte';
 	import JobDetailCard from '$lib/components/job/JobDetailCard.svelte';
 	import JobCard from '$lib/components/job/JobCard.svelte';
+	import FilterPill from '$lib/components/forms/FilterPill.svelte';
 	import { onMount } from 'svelte';
 	import { jobSearchStore } from '$lib/stores/jobSearch';
 	import { get } from 'svelte/store';
@@ -52,21 +53,35 @@
 	});
 
 	let activeFilters = $state({
-		type: null,
-		posted: null,
-		arrangement: null
+		workType: '',
+		postTime: '',
+		arrangement: ''
 	});
-	let sortBy = $state(null);
+	let sortBy = $state('');
 
-	const typeCycle = ['Full-time', 'Part-time', 'Contract', 'Casual'];
-	const arrangementCycle = ['On-site', 'Remote', 'Hybrid'];
-	const sortOptions = [null, 'dateAsc', 'dateDesc', 'title'];
-	const sortLabels = {
-		null: 'Sort',
-		dateAsc: 'Oldest',
-		dateDesc: 'Newest',
-		title: 'Title A-Z'
-	};
+	const workTypeOptions = [
+		{ value: 'Full-time', label: 'Full-time' },
+		{ value: 'Part-time', label: 'Part-time' },
+		{ value: 'Contract', label: 'Contract' },
+		{ value: 'Casual', label: 'Casual' }
+	];
+
+	const postTimeOptions = [
+		{ value: '1d', label: 'Past 24 hours' },
+		{ value: '6w', label: 'Past 6 weeks' }
+	];
+
+	const arrangementOptions = [
+		{ value: 'On-site', label: 'On-site' },
+		{ value: 'Remote', label: 'Remote' },
+		{ value: 'Hybrid', label: 'Hybrid' }
+	];
+
+	const sortOptions = [
+		{ value: 'dateDesc', label: 'Newest first' },
+		{ value: 'dateAsc', label: 'Oldest first' },
+		{ value: 'title', label: 'Title A-Z' }
+	];
 
 	async function fetchAppliedJobs() {
 		if (!isLoggedIn || !userInfo?.userID) return;
@@ -108,13 +123,23 @@
 		}
 	}
 
-	async function fetchJobs(query = '', filters = {}, sort = null) {
+	async function fetchJobs(query = '', filters = {}, sort = '') {
 		try {
 			const params = new URLSearchParams();
 			if (query) params.set('title', query);
-			if (filters.type) params.set('workType', filters.type);
-			if (filters.posted) params.set('postOpenDate', filters.posted);
-			if (filters.arrangement) params.set('workArrangement', filters.arrangement);
+			
+			if (filters.workType) {
+				params.set('workType', filters.workType);
+			}
+			
+			if (filters.postTime) {
+				params.set('postOpenDate', filters.postTime);
+			}
+			
+			if (filters.arrangement) {
+				params.set('workArrangement', filters.arrangement);
+			}
+			
 			if (sort) params.set('sort', sort);
 			const res = await fetch(`/jobs/query?${params.toString()}`);
 
@@ -172,40 +197,8 @@
 		showApplyModal = true;
 	}
 
-
-
-	function toggleCycle(field) {
-		if (field === 'type') {
-			let idx = typeCycle.indexOf(activeFilters.type);
-			activeFilters.type =
-				idx === -1 ? typeCycle[0] : idx + 1 < typeCycle.length ? typeCycle[idx + 1] : null;
-		} else if (field === 'arrangement') {
-			let idx = arrangementCycle.indexOf(activeFilters.arrangement);
-			activeFilters.arrangement =
-				idx === -1
-					? arrangementCycle[0]
-					: idx + 1 < arrangementCycle.length
-						? arrangementCycle[idx + 1]
-						: null;
-		}
-		activeFilters = { ...activeFilters };
-		fetchJobs(searchQuery, activeFilters);
-	}
-
-	function toggleFilter(type, value) {
-		activeFilters[type] = activeFilters[type] === value ? null : value;
-		activeFilters = { ...activeFilters };
+	function refreshJobs() {
 		fetchJobs(searchQuery, activeFilters, sortBy);
-	}
-
-	function toggleSort() {
-		let idx = sortOptions.indexOf(sortBy);
-		sortBy = idx === -1 || idx + 1 === sortOptions.length ? sortOptions[0] : sortOptions[idx + 1];
-		fetchJobs(searchQuery, activeFilters, sortBy);
-	}
-
-	function onSearchInput() {
-		fetchJobs(searchQuery, activeFilters);
 	}
 
 	onMount(async () => {
@@ -255,7 +248,7 @@
 						placeholder="Search for jobs..."
 						class="w-full pl-12 pr-4 py-3 text-gray-900 placeholder-gray-500 bg-white border border-gray-200 rounded-full shadow-sm focus:ring-1 focus:ring-gray-300 focus:border-transparent transition-all duration-200 outline-none"
 						bind:value={searchQuery}
-						oninput={onSearchInput}
+						oninput={refreshJobs}
 					/>
 				</div>
 
@@ -264,63 +257,36 @@
 					<div class="flex items-center gap-2">
 						<span class="text-sm font-medium text-gray-600">Filters:</span>
 						
-						<button
-							class={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-								activeFilters.type && typeCycle.includes(activeFilters.type) 
-								? 'bg-green-600 text-white shadow-md hover:bg-green-700' 
-								: 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-							}`}
-							onclick={() => toggleCycle('type')}
-						>
-							{activeFilters.type || 'Work Type'}
-						</button>
+						<FilterPill
+							label="Work Type"
+							options={workTypeOptions}
+							bind:selectedValue={activeFilters.workType}
+							onSelectionChange={refreshJobs}
+						/>
 
-						<button
-							class={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-								activeFilters.posted === '1d' 
-								? 'bg-green-600 text-white shadow-md hover:bg-green-700' 
-								: 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-							}`}
-							onclick={() => toggleFilter('posted', '1d')}
-						>
-							Past 24h
-						</button>
+						<FilterPill
+							label="Post Time"
+							options={postTimeOptions}
+							bind:selectedValue={activeFilters.postTime}
+							onSelectionChange={refreshJobs}
+						/>
 
-						<button
-							class={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-								activeFilters.posted === '6w' 
-								? 'bg-green-600 text-white shadow-md hover:bg-green-700' 
-								: 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-							}`}
-							onclick={() => toggleFilter('posted', '6w')}
-						>
-							Past 6 weeks
-						</button>
-
-						<button
-							class={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-								activeFilters.arrangement && arrangementCycle.includes(activeFilters.arrangement) 
-								? 'bg-green-600 text-white shadow-md hover:bg-green-700' 
-								: 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-							}`}
-							onclick={() => toggleCycle('arrangement')}
-						>
-							{activeFilters.arrangement || 'Location'}
-						</button>
+						<FilterPill
+							label="Work Arrangement"
+							options={arrangementOptions}
+							bind:selectedValue={activeFilters.arrangement}
+							onSelectionChange={refreshJobs}
+						/>
 
 						<div class="h-4 w-px bg-gray-300"></div>
 
-						<button
-							class={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-								sortBy 
-								? 'bg-blue-600 text-white shadow-md hover:bg-blue-700' 
-								: 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-							}`}
-							onclick={toggleSort}
-						>
-							<ArrowUpDown class="mr-2 h-4 w-4" />
-							{sortBy ? sortLabels[sortBy] : 'Sort by'}
-						</button>
+						<FilterPill
+							label="Sort"
+							options={sortOptions}
+							bind:selectedValue={sortBy}
+							onSelectionChange={refreshJobs}
+							type="sort"
+						/>
 					</div>
 				</div>
 			</div>
