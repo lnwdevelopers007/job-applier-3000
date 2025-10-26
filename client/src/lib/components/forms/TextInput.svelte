@@ -39,6 +39,8 @@
 	
 	// Track if user has started typing to hide error
 	let hideError = $state(false);
+	// Track hover state for error icon
+	let isErrorHovered = $state(false);
 	
 	// Hide error when user starts typing
 	function handleInput() {
@@ -87,17 +89,25 @@
 		/>
 		
 		{#if showError && error && !hideError}
-			<!-- Error icon -->
-			<div class="absolute inset-y-0 right-0 flex items-center pr-3">
-				<AlertCircle class="w-5 h-5 text-white" fill="red" />
+			<!-- Error icon with hover detection -->
+			<div 
+				class="absolute inset-y-0 right-0 flex items-center pr-3"
+				onmouseenter={() => isErrorHovered = true}
+				onmouseleave={() => isErrorHovered = false}
+				role="img"
+				aria-label="Error"
+			>
+				<AlertCircle class="w-5 h-5 text-white cursor-help" fill="red" />
 			</div>
 			
-			<!-- Floating error tooltip positioned below input -->
-			<div class="absolute z-50 right-1 top-full mt-1 px-3 py-2 bg-red-500 text-white text-xs rounded-md shadow-sm whitespace-nowrap">
-				<!-- Arrow pointing up to the alert icon -->
-				<div class="absolute -top-1 right-4 w-2 h-2 bg-red-500 transform rotate-45"></div>
-				{error}
-			</div>
+			<!-- Floating error tooltip - only show on hover -->
+			{#if isErrorHovered}
+				<div class="absolute z-50 right-1 top-full mt-1 px-3 py-2 bg-red-500 text-white text-xs rounded-md shadow-sm whitespace-nowrap transition-opacity duration-200">
+					<!-- Arrow pointing up to the alert icon -->
+					<div class="absolute -top-1 right-4 w-2 h-2 bg-red-500 transform rotate-45"></div>
+					{error}
+				</div>
+			{/if}
 		{/if}
 	</div>
 	

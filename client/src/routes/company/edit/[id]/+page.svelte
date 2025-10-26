@@ -1,6 +1,5 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { get } from 'svelte/store';
   import { onMount } from 'svelte';
   import BasicInfoForm from '$lib/components/job-post-creation/forms/BasicInfoForm.svelte';
   import DescriptionForm from '$lib/components/job-post-creation/forms/DescriptionForm.svelte';
@@ -51,9 +50,50 @@
     isPreviewOpen = true;
   }
 
-  function updateValidation(validation) {
+  function updateValidation(validation: { errors: Record<string, string>; showErrors: boolean }) {
     validationErrors = validation.errors;
     showValidationErrors = validation.showErrors;
+    
+    // If there are errors, switch to the first tab that has errors
+    if (validation.showErrors && Object.keys(validation.errors).length > 0) {
+      switchToFirstErrorTab(validation.errors);
+    }
+  }
+  
+  function switchToFirstErrorTab(errors: Record<string, string>) {
+    // Define which fields belong to which section
+    const fieldToSection: Record<string, string> = {
+      // Basic Info fields
+      jobTitle: 'basic-info',
+      location: 'basic-info',
+      workType: 'basic-info',
+      workArrangement: 'basic-info',
+      minSalary: 'basic-info',
+      maxSalary: 'basic-info',
+      currency: 'basic-info',
+      
+      // Description fields
+      jobDescription: 'description',
+      
+      // Requirements fields
+      yearsExperience: 'requirements',
+      educationLevel: 'requirements',
+      requiredSkills: 'requirements',
+      
+      // Settings fields
+      postingOpenDate: 'settings',
+      postingCloseDate: 'settings',
+      applicationRequirements: 'settings'
+    };
+    
+    // Find the first section with errors
+    for (const errorField of Object.keys(errors)) {
+      const section = fieldToSection[errorField];
+      if (section && section !== activeSection) {
+        activeSection = section;
+        break;
+      }
+    }
   }
 
   function handleSectionClick(sectionId: string) {
@@ -76,7 +116,6 @@
     
     if (isValid) {
       // Save the job
-      jobId = get(page).params.id;
       const result = await JobService.handleFormSubmit(formData, updateValidation, true, jobId);
       if (result) {
         toast.success('Job saved successfully!');
@@ -89,11 +128,13 @@
   }
 
   onMount(async () => {
-    const result = await JobService.loadJob(jobId);
-    if (result.success && result.data) {
-      formData = { ...formData, ...result.data };
-    } else {
-      console.error('Error loading job:', result.error);
+    if (jobId) {
+      const result = await JobService.loadJob(jobId);
+      if (result.success && result.data) {
+        formData = { ...formData, ...result.data };
+      } else {
+        console.error('Error loading job:', result.error);
+      }
     }
   });
 
