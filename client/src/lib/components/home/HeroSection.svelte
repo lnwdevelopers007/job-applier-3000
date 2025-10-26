@@ -61,7 +61,7 @@
 					bind:value={searchQuery}
 					type="text"
 					placeholder="Search for jobs, companies, or skills..."
-					class="block w-full pl-12 pr-32 py-4 text-md border border-gray-200 focus:shadow focus:shadow-gray-300 rounded-xl focus:ring-0 outline-none transition-all"
+					class="block w-full pl-12 pr-32 py-4 text-md border border-gray-200 focus:shadow focus:shadow-gray-300 rounded-full focus:ring-0 outline-none transition-all"
 					onkeydown={(e) => e.key === 'Enter' && handleSearch()}
 				/>
 			</div>
