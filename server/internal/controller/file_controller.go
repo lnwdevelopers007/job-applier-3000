@@ -94,20 +94,23 @@ func (fc FileController) Upload(c *gin.Context) {
 		return
 	}
 
-	// Check user role in database matches the role from context
+	// Check user role in database matches the role from context (only when auth is enabled)
 	db := database.GetDatabase()
-	userCollection := db.Collection("users")
-	var userDoc struct {
-		Role string `bson:"role"`
-	}
-	err = userCollection.FindOne(c.Request.Context(), bson.M{"_id": userID}).Decode(&userDoc)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to verify user role"})
-		return
-	}
-	if !strings.EqualFold(userDoc.Role, userRole) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "role mismatch: user role in system does not match current context"})
-		return
+	enableAuth, _ := strconv.ParseBool(os.Getenv("ENABLE_AUTH"))
+	if enableAuth {
+		userCollection := db.Collection("users")
+		var userDoc struct {
+			Role string `bson:"role"`
+		}
+		err = userCollection.FindOne(c.Request.Context(), bson.M{"_id": userID}).Decode(&userDoc)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to verify user role"})
+			return
+		}
+		if !strings.EqualFold(userDoc.Role, userRole) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "role mismatch: user role in system does not match current context"})
+			return
+		}
 	}
 
 	// Parse multipart form
