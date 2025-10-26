@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/lnwdevelopers007/job-applier-3000/server/docs"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/auth"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/middleware"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
@@ -26,6 +27,7 @@ func NewRouter() *gin.Engine {
 		authGroup.GET("/:provider/callback", auth.OAuthCallback)
 		authGroup.GET("/:provider/logout", auth.Logout)
 		authGroup.POST("/refresh", auth.RefreshToken)
+		authGroup.GET("/me", middleware.AuthMiddleware(), auth.Me)
 	}
 
 	jobs := router.Group("/jobs")
@@ -64,11 +66,13 @@ func NewRouter() *gin.Engine {
 
 	file := NewFileController()
 	fileRoutes := router.Group("/files")
+	fileRoutes.Use(middleware.AuthMiddleware())
 	{
 		fileRoutes.POST("/upload", file.Upload)
 		fileRoutes.GET("/download/:id", file.Download)
 		fileRoutes.GET("/user/:userId", file.ListByUser)
 		fileRoutes.DELETE("/:id", file.Delete)
+		fileRoutes.GET("/application/:applicationId", file.GetApplicantFiles)
 	}
 
 	router.GET("/health", func(c *gin.Context) {
@@ -85,7 +89,7 @@ func setUpCors() cors.Config {
 			os.Getenv("FRONTEND"),
 		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-User-Id", "X-User-Role"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,

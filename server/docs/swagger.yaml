@@ -491,6 +491,65 @@ paths:
       summary: Download a file
       tags:
       - Files
+  /files/applicant/{applicationId}:
+    get:
+      consumes:
+      - application/json
+      description: Allows a company to view files (resume, cover_letter, certification)
+        of an applicant for a specific job application. Only the company who owns
+        the job can access.
+      parameters:
+      - description: Job Application ID
+        in: path
+        name: applicationId
+        required: true
+        type: string
+      - description: ID of the requesting user (company)
+        in: query
+        name: requestingUserID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Metadata of applicant's files
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get applicant files for a job application
+      tags:
+      - Files
   /files/upload:
     post:
       consumes:

@@ -3,7 +3,10 @@ package controller
 import (
 	"io"
 	"net/http"
+	"os"
 	"time"
+	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/database"
@@ -24,6 +27,50 @@ func NewFileController() FileController {
 		},
 	}
 }
+// getUserFromContext extracts user info from context (set by auth middleware)
+func getUserFromContext(c *gin.Context) (userID primitive.ObjectID, role string, err error) {
+	enableAuth, _ := strconv.ParseBool(os.Getenv("ENABLE_AUTH"))
+
+	if enableAuth {
+		// Get from context (set by auth middleware)
+		userIDStr, exists := c.Get("userID")
+		if !exists {
+			err = http.ErrNotSupported
+			return
+		}
+
+		userID, err = primitive.ObjectIDFromHex(userIDStr.(string))
+		if err != nil {
+			return
+		}
+
+		roleVal, _ := c.Get("role")
+		role, _ = roleVal.(string)
+	} else {
+		// When auth disabled, use context from middleware (simulated headers)
+		userIDStr, exists := c.Get("userID")
+		if !exists {
+			userID = primitive.NewObjectID()
+			role = "jobSeeker"
+			err = nil
+			return
+		}
+
+		userID, err = primitive.ObjectIDFromHex(userIDStr.(string))
+		if err != nil {
+			userID = primitive.NewObjectID()
+		}
+
+		roleVal, _ := c.Get("role")
+		role, _ = roleVal.(string)
+		if role == "" {
+			role = "jobSeeker"
+		}
+		err = nil
+	}
+
+	return
+}
 
 // Upload godoc
 // @Summary      Upload a file
@@ -40,16 +87,30 @@ func NewFileController() FileController {
 // @Failure      500  {object}  map[string]string
 // @Router       /files/upload [post]
 func (fc FileController) Upload(c *gin.Context) {
-	// TODO: Get authenticated user from context (after auth middleware is implemented)
-	// For now, accept userID from form
-	userIDStr := c.PostForm("userID")
-	userRole := c.PostForm("userRole") // "jobSeeker" or "company"
-
-	// Validate userID
-	userID, err := primitive.ObjectIDFromHex(userIDStr)
+	// Get authenticated user
+	userID, userRole, err := getUserFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid userID"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
 		return
+	}
+
+	// Check user role in database matches the role from context (only when auth is enabled)
+	db := database.GetDatabase()
+	enableAuth, _ := strconv.ParseBool(os.Getenv("ENABLE_AUTH"))
+	if enableAuth {
+		userCollection := db.Collection("users")
+		var userDoc struct {
+			Role string `bson:"role"`
+		}
+		err = userCollection.FindOne(c.Request.Context(), bson.M{"_id": userID}).Decode(&userDoc)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to verify user role"})
+			return
+		}
+		if !strings.EqualFold(userDoc.Role, userRole) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "role mismatch: user role in system does not match current context"})
+			return
+		}
 	}
 
 	// Parse multipart form
@@ -95,7 +156,6 @@ func (fc FileController) Upload(c *gin.Context) {
 	}
 
 	// Save to database
-	db := database.GetDatabase()
 	collection := db.Collection(fc.baseController.collectionName)
 	result, err := collection.InsertOne(c.Request.Context(), fileDoc)
 	if err != nil {
@@ -140,17 +200,10 @@ func (fc FileController) Download(c *gin.Context) {
 		return
 	}
 
-	// TODO: Get authenticated user from context (after auth middleware)
-	// For now, accept userID from query param for testing
-	requestingUserID := c.Query("requestingUserID")
-	if requestingUserID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
-
-	requestingUserObjectID, err := primitive.ObjectIDFromHex(requestingUserID)
+	// Get authenticated user
+	requestingUserID, _, err := getUserFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid requesting user ID"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
 		return
 	}
 
@@ -165,7 +218,7 @@ func (fc FileController) Download(c *gin.Context) {
 	}
 
 	// Authorization check: User can only download their own files
-	if fileDoc.UserID != requestingUserObjectID {
+	if fileDoc.UserID != requestingUserID {
 		c.JSON(http.StatusForbidden, gin.H{
 			"error": "you do not have permission to access this file",
 		})
@@ -200,27 +253,21 @@ func (fc FileController) ListByUser(c *gin.Context) {
 		return
 	}
 
-	// TODO: Authorization check - user can only list their own files
-	// For now, accept requestingUserID from query param
-	requestingUserID := c.Query("requestingUserID")
-	if requestingUserID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
-
-	requestingUserObjectID, err := primitive.ObjectIDFromHex(requestingUserID)
+	// Get authenticated user
+	requestingUserID, _, err := getUserFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid requesting user ID"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
 		return
 	}
 
 	// Check if requesting user is trying to access their own files
-	if objectID != requestingUserObjectID {
-		c.JSON(http.StatusForbidden, gin.H{
-			"error": "you can only access your own files",
-		})
-		return
-	}
+	enableAuth, _ := strconv.ParseBool(os.Getenv("ENABLE_AUTH"))
+	if enableAuth && objectID != requestingUserID {
+    c.JSON(http.StatusForbidden, gin.H{
+        "error": "you can only access your own files",
+    })
+    return
+}
 
 	db := database.GetDatabase()
 	collection := db.Collection(fc.baseController.collectionName)
@@ -285,17 +332,10 @@ func (fc FileController) Delete(c *gin.Context) {
 		return
 	}
 
-	// TODO: Get authenticated user from context (after auth middleware)
-	// For now, accept userID from query param
-	requestingUserID := c.Query("requestingUserID")
-	if requestingUserID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
-
-	requestingUserObjectID, err := primitive.ObjectIDFromHex(requestingUserID)
+	// Get authenticated user
+	requestingUserID, _, err := getUserFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid requesting user ID"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
 		return
 	}
 
@@ -311,7 +351,7 @@ func (fc FileController) Delete(c *gin.Context) {
 	}
 
 	// Authorization check
-	if fileDoc.UserID != requestingUserObjectID {
+	if fileDoc.UserID != requestingUserID {
 		c.JSON(http.StatusForbidden, gin.H{
 			"error": "you do not have permission to delete this file",
 		})
@@ -331,4 +371,122 @@ func (fc FileController) Delete(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "file deleted successfully"})
+}
+
+// GetApplicantFiles godoc
+// @Summary      Get applicant files for a job application
+// @Description  Allows a company to view files (resume, cover_letter, certification) of an applicant for a specific job application. Only the company who owns the job can access.
+// @Tags         Files
+// @Accept       json
+// @Produce      json
+// @Param        applicationId   path      string  true  "Job Application ID"
+// @Param        requestingUserID query     string  true  "ID of the requesting user (company)"
+// @Success      200 {object} map[string]interface{} "Metadata of applicant's files"
+// @Failure      400 {object} map[string]string
+// @Failure      401 {object} map[string]string
+// @Failure      403 {object} map[string]string
+// @Failure      404 {object} map[string]string
+// @Failure      500 {object} map[string]string
+// @Router       /files/applicant/{applicationId} [get]
+func (fc FileController) GetApplicantFiles(c *gin.Context) {
+	applicationID := c.Param("applicationId")
+	appObjectID, err := primitive.ObjectIDFromHex(applicationID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid application ID"})
+		return
+	}
+
+	// Get authenticated user
+	requestingUserID, requestingUserRole, err := getUserFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
+		return
+	}
+
+	// Only companies can access this endpoint
+	if requestingUserRole != "company" {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "only companies can access applicant files",
+		})
+		return
+	}
+
+	db := database.GetDatabase()
+
+	// 1. Find the job application
+	var application schema.JobApplication
+	err = db.Collection("job_applications").FindOne(
+		c.Request.Context(),
+		bson.M{"_id": appObjectID},
+	).Decode(&application)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "application not found"})
+		return
+	}
+
+	// 2. Find the job to verify company ownership
+	var job schema.Job
+	err = db.Collection("jobs").FindOne(
+		c.Request.Context(),
+		bson.M{"_id": application.JobID},
+	).Decode(&job)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "job not found"})
+		return
+	}
+
+	// 3. Verify the requesting user (company) owns the job
+	if job.CompanyID != requestingUserID {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "you can only access files for applications to your own jobs",
+		})
+		return
+	}
+
+	// 4. Get applicant's files (only relevant categories: resume, cover_letter, certification)
+	cursor, err := db.Collection("files").Find(
+		c.Request.Context(),
+		bson.M{
+			"userID": application.ApplicantID,
+			"category": bson.M{
+				"$in": []string{"resume", "cover_letter", "certification"},
+			},
+		},
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve files"})
+		return
+	}
+	defer cursor.Close(c.Request.Context())
+
+	var files []gin.H
+	for cursor.Next(c.Request.Context()) {
+		var file schema.File
+		if err := cursor.Decode(&file); err != nil {
+			continue
+		}
+
+		// Return metadata only
+		files = append(files, gin.H{
+			"id":            file.ID,
+			"userID":        file.UserID,
+			"filename":      file.Filename,
+			"fileExtension": file.FileExtension,
+			"contentType":   file.ContentType,
+			"size":          file.Size,
+			"category":      file.Category,
+			"uploadDate":    file.UploadDate,
+		})
+	}
+
+	if files == nil {
+		files = []gin.H{}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"applicationID": application.ID,
+		"applicantID":   application.ApplicantID,
+		"jobID":         application.JobID,
+		"files":         files,
+	})
 }
