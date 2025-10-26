@@ -331,7 +331,7 @@
   </p>
   <!-- View Switch Buttons -->
   <div class="flex flex-wrap gap-2 mb-6">
-    {#each viewOptions as opt}
+    {#each viewOptions as opt, i (i)}
       <button
         class="px-4 py-2 rounded-lg font-medium transition-colors duration-200 
                border border-gray-300
