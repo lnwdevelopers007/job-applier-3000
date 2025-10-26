@@ -1,11 +1,21 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	
+	import { goto } from '$app/navigation';
+
 	onMount(async () => {
+		// Token is now stored as HttpOnly cookie by the backend
+		// No need to store it in localStorage (more secure!)
+		console.log('Authentication completed - token stored in secure cookie');
+
 		// Clean up any pending actions
 		sessionStorage.removeItem('pendingSearch');
 		sessionStorage.removeItem('pendingNavigation');
 		sessionStorage.removeItem('pendingJobApplication');
+
+		// Redirect to home or dashboard after a short delay
+		setTimeout(() => {
+			goto('/');
+		}, 1000);
 	});
 </script>
 

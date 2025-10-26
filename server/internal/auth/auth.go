@@ -2,6 +2,8 @@ package auth
 
 import (
 	"fmt"
+	"os"
+	"strconv"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -71,8 +73,19 @@ func OAuthCallback(c *gin.Context) {
 		true,
 	)
 
-	// Build redirect URL for frontend
-	redirectURL := config.LoadEnv("FRONTEND") + "/callback?token=" + accessToken
+	// Set access token as HttpOnly cookie (more secure than localStorage)
+	// Access tokens typically have shorter lifespan (e.g., 1 hour = 3600 seconds)
+	c.SetCookie(
+		"access_token",
+		accessToken,
+		3600, // 1 hour
+		"/", "localhost",
+		false,
+		true,
+	)
+
+	// Redirect to frontend callback without token in URL
+	redirectURL := config.LoadEnv("FRONTEND") + "/callback"
 
 	c.Redirect(http.StatusFound, redirectURL)
 }
@@ -95,4 +108,33 @@ func Logout(c *gin.Context) {
 
 	c.SetCookie("refresh_token", "", -1, "/", c.Request.URL.Hostname(), false, true)
 	c.Redirect(http.StatusPermanentRedirect, config.LoadEnv("FRONTEND"))
+}
+
+// Me returns the current authenticated user's information from JWT
+func Me(c *gin.Context) {
+	enableAuth, _ := strconv.ParseBool(os.Getenv("ENABLE_AUTH"))
+	if !enableAuth {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "authentication is disabled in this environment",
+		})
+		return
+	}
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "not authenticated"})
+		return
+	}
+
+	role, _ := c.Get("role")
+	email, _ := c.Get("email")
+	name, _ := c.Get("name")
+
+	c.JSON(http.StatusOK, gin.H{
+		"userID": userID,
+		"role":   role,
+		"email":  email,
+		"name":   name,
+		// Note: 'verified' status is managed by admin and stored in database
+		// Query user document if you need verification status
+	})
 }
