@@ -2,6 +2,7 @@
   import { goto } from '$app/navigation';
   import { authStore } from '$lib/stores/auth.svelte';
   import { apiFetch } from '$lib/utils/api';
+  import { getCompanyAnalytics } from '$lib/utils/companyStats';
 
   let jobs = $state([]);
   let selectedJob = $state(null);
@@ -11,6 +12,18 @@
   let deleteReason = $state('');
   let jobToDelete = $state(null);
   let deleting = $state(false);
+  let stats = $state({
+    activeJobs: 0,
+    totalApplicants: 0,
+    pendingReview: 0,
+    offersAccepted: 0,
+    trend: {
+      activeJobs: 0,
+      totalApplicants: 0,
+      pendingReview: 0,
+      offersAccepted: 0
+    }
+  });
 
   function selectRow(index) {
     selectedJob = selectedJob === index ? null : index;
@@ -68,7 +81,7 @@
         return;
       }
       const companyID = user.userID;
-
+      stats = await getCompanyAnalytics(companyID);
       const res = await apiFetch(`/jobs/query?companyID=${companyID}`);
 
       if (!res.ok) {
@@ -81,24 +94,48 @@
 
       const data = await res.json();
 
-      jobs = data.map(job => ({
-        id: job.id,
-        title: job.title,
-        status: job.status || 'Active',
-        applicants: job.applicants || 0,
-        views: job.views || 0,
-        posted: job.postOpenDate
-          ? new Date(job.postOpenDate).toLocaleDateString()
-          : "None",
-        expires: job.applicationDeadline
-          ? new Date(job.applicationDeadline).toLocaleDateString()
-          : "None",
-        actions: [
-          { label: 'View', disabled: false },
-          { label: 'Edit', disabled: false },
-          { label: 'Delete', disabled: false }
-        ]
-      }));
+      const jobWithCounts = await Promise.all(
+        data.map(async (job) => {
+          const jobID = job.id;
+          let applicantCount = 0;
+
+          try {
+            const applyRes = await apiFetch(`/apply?jobID=${jobID}`);
+            if (applyRes.ok) {
+              const applications = await applyRes.json();
+              if (Array.isArray(applications)) applicantCount = applications.length;
+            }
+          } catch (err) {
+            console.warn(`Failed to fetch applicants for job ${jobID}`, err);
+          }
+
+          const now = new Date();
+          const deadline = job.applicationDeadline ? new Date(job.applicationDeadline) : null;
+          const isClosed = deadline && deadline < now;
+          const status = isClosed ? 'Closed' : 'Active';
+
+          return {
+            id: job.id,
+            title: job.title,
+            status: status || 'Active',
+            applicants: applicantCount,
+            views: job.views || 0,
+            posted: job.postOpenDate
+              ? new Date(job.postOpenDate).toLocaleDateString()
+              : 'None',
+            expires: job.applicationDeadline
+              ? new Date(job.applicationDeadline).toLocaleDateString()
+              : 'None',
+            actions: [
+              { label: 'View', disabled: false },
+              { label: 'Edit', disabled: false },
+              { label: 'Delete', disabled: false }
+            ]
+          };
+        })
+      );
+
+      jobs = jobWithCounts;
     } catch {
       jobs = [];
     }
@@ -114,29 +151,37 @@
   </p>
 
   <!-- Summary cards -->
-  <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+   <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
     <div class="p-4 bg-white rounded-lg shadow">
       <h2 class="text-gray-600">Active Jobs</h2>
-      <p class="text-gray-800 text-xl font-bold">8</p>
-      <p class="text-green-500 text-sm">↑ 2 from last month</p>
+      <p class="text-gray-800 text-2xl font-medium">{stats.activeJobs}</p>
+      <p class={stats.trend.activeJobs >= 0 ? 'text-green-500 text-sm' : 'text-red-500 text-sm'}>
+        {stats.trend.activeJobs >= 0 ? '↑' : '↓'} {Math.abs(stats.trend.activeJobs)} this month
+      </p>
     </div>
 
     <div class="p-4 bg-white rounded-lg shadow">
       <h2 class="text-gray-600">Total Applicants</h2>
-      <p class="text-gray-800 text-xl font-bold">156</p>
-      <p class="text-green-500 text-sm">↑ 23 this week</p>
+      <p class="text-gray-800 text-2xl font-medium">{stats.totalApplicants}</p>
+      <p class={stats.trend.totalApplicants >= 0 ? 'text-green-500 text-sm' : 'text-red-500 text-sm'}>
+        {stats.trend.totalApplicants >= 0 ? '↑' : '↓'} {Math.abs(stats.trend.totalApplicants)} this month
+      </p>
     </div>
 
     <div class="p-4 bg-white rounded-lg shadow">
       <h2 class="text-gray-600">Pending Review</h2>
-      <p class="text-gray-800 text-xl font-bold">18</p>
-      <p class="text-red-500 text-sm">↓ 5 from yesterday</p>
+      <p class="text-gray-800 text-2xl font-medium">{stats.pendingReview}</p>
+      <p class={stats.trend.pendingReview >= 0 ? 'text-green-500 text-sm' : 'text-red-500 text-sm'}>
+        {stats.trend.pendingReview >= 0 ? '↑' : '↓'} {Math.abs(stats.trend.pendingReview)} today
+      </p>
     </div>
 
     <div class="p-4 bg-white rounded-lg shadow">
-      <h2 class="text-gray-600">Offers Extended</h2>
-      <p class="text-gray-800 text-xl font-bold">12</p>
-      <p class="text-red-500 text-sm">↓ 3 this week</p>
+      <h2 class="text-gray-600">Offers Accepted</h2>
+      <p class="text-gray-800 text-2xl font-medium">{stats.offersAccepted}</p>
+      <p class={stats.trend.offersAccepted >= 0 ? 'text-green-500 text-sm' : 'text-red-500 text-sm'}>
+        {stats.trend.offersAccepted >= 0 ? '↑' : '↓'} {Math.abs(stats.trend.offersAccepted)} this month
+      </p>
     </div>
   </div>
 
