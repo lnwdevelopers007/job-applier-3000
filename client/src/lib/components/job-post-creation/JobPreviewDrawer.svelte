@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { MapPin } from 'lucide-svelte';
 	import SideDrawer from '$lib/components/ui/SideDrawer.svelte';
 	import JobDetailCard from '$lib/components/job/JobDetailCard.svelte';
 	import JobCard from '../job/JobCard.svelte';
@@ -12,7 +11,7 @@
 	
 	let activeTab = $state('detail'); // 'detail' or 'search'
 	let companyData = $state<CompanyUserData | null>(null);
-	let loadingCompany = $state(false);
+	// let loadingCompany = $state(false);
 	
 	function formatSalary() {
 		if (!formData.minSalary || !formData.maxSalary) return 'Not specified';
@@ -29,14 +28,14 @@
 
 	async function loadCompanyData() {
 		try {
-			loadingCompany = true;
+			// loadingCompany = true;
 			companyData = await SettingsService.loadUserData<CompanyUserData>('company');
 		} catch (error) {
 			console.error('Failed to load company data:', error);
 			// Use default data if loading fails
 			companyData = null;
 		} finally {
-			loadingCompany = false;
+			// loadingCompany = false;
 		}
 	}
 

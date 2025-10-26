@@ -24,7 +24,7 @@
   }: Props = $props();
 
   let isOpen = $state(false);
-  let dropdownRef: HTMLDivElement;
+  // let dropdownRef: HTMLDivElement;
 
   const isActive = $derived(selectedValue !== '');
   const displayLabel = $derived(() => {
@@ -60,7 +60,7 @@
   }
 </script>
 
-<div class="relative" bind:this={dropdownRef} use:clickOutside={handleClickOutside}>
+<div class="relative" use:clickOutside={handleClickOutside}>
   <button
     type="button"
     onclick={toggleDropdown}
@@ -86,7 +86,7 @@
           >
             {type === 'sort' ? 'Default' : `All ${label}`}
           </button>
-          {#each options as option}
+          {#each options as option (option.value)}
             <button
               type="button"
               onclick={() => handleOptionSelect(option.value)}

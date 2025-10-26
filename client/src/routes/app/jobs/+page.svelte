@@ -236,7 +236,7 @@
 <div class="flex">
 	<main class="w-full min-w-0 flex-1 space-y-6">
 		<!-- Search and Filters -->
-		<div class="-mt-5 pb-8 pt-8" style="margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%); padding-left: calc(50vw - 50%); padding-right: calc(50vw - 50%); background: #f5fffc; background: radial-gradient(circle,rgba(245, 255, 252, 1) 0%, rgba(248, 255, 249, 1) 25%, rgba(243, 255, 245, 1) 50%, rgba(237, 254, 244, 1) 75%, rgba(232, 254, 240, 1) 100%);">
+		<div class="-mt-5 pb-8 pt-8" style="margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%); padding-left: calc(50vw - 50%); padding-right: calc(50vw - 50%); background: radial-gradient(circle,rgba(245, 255, 252, 1) 0%, rgba(248, 255, 249, 1) 25%, rgba(243, 255, 245, 1) 50%, rgba(237, 254, 244, 1) 75%, rgba(232, 254, 240, 1) 100%);">
 			<div class="max-w-7xl mx-auto space-y-4">
 				<!-- Search Bar -->
 				<div class="relative max-w-3xl mx-auto">

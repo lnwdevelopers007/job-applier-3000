@@ -1,8 +1,8 @@
 <script>
   let { 
-    formData = $bindable(),
-    validationErrors = {},
-    showValidationErrors = false
+    formData = $bindable()
+    // validationErrors = {},
+    // showValidationErrors = false
   } = $props();
   
   let skillInput = $state('');

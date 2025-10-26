@@ -2,7 +2,6 @@
 	import TextInput from '$lib/components/forms/TextInput.svelte';
 	import Select from '$lib/components/forms/Select.svelte';
 	import Textarea from '$lib/components/forms/Textarea.svelte';
-	import FileUpload from '$lib/components/forms/FileUpload.svelte';
 	import { Globe } from 'lucide-svelte';
 	
 	let {

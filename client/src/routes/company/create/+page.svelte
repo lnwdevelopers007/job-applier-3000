@@ -1,7 +1,6 @@
 <script>
-  import { goto } from '$app/navigation';
   import { fly } from 'svelte/transition';
-  import { ArrowLeft, ArrowRight, ChevronLeft } from 'lucide-svelte';
+  import { ArrowLeft, ArrowRight } from 'lucide-svelte';
   import Stepper from '$lib/components/job-post-creation/Stepper.svelte';
   import BasicInfoForm from '$lib/components/job-post-creation/forms/BasicInfoForm.svelte';
   import DescriptionForm from '$lib/components/job-post-creation/forms/DescriptionForm.svelte';

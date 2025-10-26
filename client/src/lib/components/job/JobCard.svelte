@@ -117,7 +117,7 @@
     
     <!-- Required Skills -->
     {#if job.tags && job.tags.length > 0}
-      {#each visibleSkills as skill}
+      {#each visibleSkills as skill, index (skill + index)}
         <Badge variant="secondary" text={skill} />
       {/each}
       

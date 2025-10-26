@@ -39,10 +39,10 @@
 	}
 
 	function handleApply() {
-		if (isAuthenticated()) {
+		if (isAuthenticated() && job?.id) {
 			// User is logged in - proceed to job application
 			navigateWithAuth('/app/jobs/' + job.id);
-		} else {
+		} else if (job?.id) {
 			// User not logged in - show auth modal
 			showAuthModal = true;
 			// Store job ID for after login
