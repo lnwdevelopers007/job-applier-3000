@@ -51,6 +51,7 @@
 		"@tiptap/extension-placeholder": "^3.3.0",
 		"@tiptap/pm": "^3.3.0",
 		"@tiptap/starter-kit": "^3.3.0",
+		"chart.js": "^4.5.1",
 		"dompurify": "^3.2.7",
 		"jwt-decode": "^4.0.0",
 		"lucide-svelte": "^0.541.0",
