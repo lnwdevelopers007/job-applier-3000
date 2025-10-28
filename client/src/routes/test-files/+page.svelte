@@ -39,26 +39,29 @@
 	}
 
 	async function uploadFile() {
-		if (!selectedFile || !userID) {
-			error = 'Please select a file and enter a user ID';
-			return;
-		}
+    if (!selectedFile || !userID) {
+        error = 'Please select a file and enter a user ID';
+        return;
+    }
 
-		uploading = true;
-		error = '';
-		success = '';
+    uploading = true;
+    error = '';
+    success = '';
 
-		const formData = new FormData();
-		formData.append('file', selectedFile);
-		formData.append('category', category);
-		formData.append('userID', userID);
-		formData.append('userRole', userRole);
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('category', category);
 
-		try {
-			const response = await fetch(`${Backend_URL}/files/upload`, {
-				method: 'POST',
-				body: formData
-			});
+    try {
+        const response = await fetch(`${Backend_URL}/files/upload`, {
+            method: 'POST',
+            credentials: 'include', // Send cookies automatically
+            headers: {
+				'X-User-Id': userID,
+    			'X-User-Role': userRole
+            },
+            body: formData
+        });
 
 			if (!response.ok) {
 				const errorData = await response.json();
@@ -87,7 +90,14 @@
 	async function downloadFile(fileId: string, filename: string) {
 		try {
 			const response = await fetch(
-				`${Backend_URL}/files/download/${fileId}?requestingUserID=${userID}`
+				`${Backend_URL}/files/download/${fileId}?requestingUserID=${userID}`,
+				{
+					credentials: 'include', // Send cookies automatically
+					headers: {
+						'X-User-Id': userID,
+   						'X-User-Role': userRole
+					}
+				}
 			);
 
 			if (!response.ok) {
@@ -120,7 +130,14 @@
 
 		try {
 			const response = await fetch(
-				`${Backend_URL}/files/user/${userID}?requestingUserID=${userID}`
+				`${Backend_URL}/files/user/${userID}?requestingUserID=${userID}`,
+				{
+					credentials: 'include', // Send cookies automatically
+					headers: {
+						'X-User-Id': userID,
+						'X-User-Role': userRole
+					}
+				}
 			);
 			if (!response.ok) {
 				const errorData = await response.json();
@@ -144,7 +161,12 @@
 			const response = await fetch(
 				`${Backend_URL}/files/${fileId}?requestingUserID=${userID}`,
 				{
-					method: 'DELETE'
+					method: 'DELETE',
+					credentials: 'include', // Send cookies automatically
+					headers: {
+						'X-User-Id': userID,
+    					'X-User-Role': userRole
+					}
 				}
 			);
 

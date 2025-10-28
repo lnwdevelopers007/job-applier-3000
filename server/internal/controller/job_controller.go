@@ -31,7 +31,28 @@ func NewJobController() JobController {
 	}
 }
 
-// Query adds advanced filtering (title, company, location, salary range, etc.)
+// Query godoc
+// @Summary Query jobs with filters
+// @Description Get jobs by filtering fields like title, location, salary, company, etc.
+// @Tags jobs
+// @Accept  json
+// @Produce  json
+// @Param id query string false "Job ID (ObjectID)"
+// @Param title query string false "Title (regex match)"
+// @Param companyID query string false "Company ID (ObjectID)"
+// @Param location query string false "Location (regex match)"
+// @Param minSalary query integer false "Minimum salary"
+// @Param maxSalary query integer false "Maximum salary"
+// @Param workType query string false "Work type (e.g., Full-time, Part-time)"
+// @Param workArrangement query string false "Work arrangement (e.g., Remote, On-site)"
+// @Param postOpenDate query string false "Post open date (1d or 6w)"
+// @Param latest query bool false "If true, returns the latest 3 jobs"
+// @Param sort query string false "Sorting: dateAsc | dateDesc | title"
+// @Success 200 {array} schema.Job
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /jobs/query [get]
 func (jc JobController) Query(c *gin.Context) {
 	db := database.GetDatabase()
 	collection := db.Collection(jc.baseController.collectionName)
@@ -146,6 +167,11 @@ func (jc JobController) Query(c *gin.Context) {
 					salaryFilter["$lte"] = val
 				case "postOpenDate":
 					filter["postOpenDate"] = val
+				case "latest":
+					now := time.Now()
+					filter["postOpenDate"] = bson.M{"$lte": now}
+					findOptions.SetSort(bson.D{{Key: "postOpenDate", Value: -1}})
+					findOptions.SetLimit(3)
 				default:
 					filter[key] = val
 				}
@@ -165,7 +191,7 @@ func (jc JobController) Query(c *gin.Context) {
 	if latestParam == "true" {
 		now := time.Now()
 		filter["postOpenDate"] = bson.M{"$lte": now}
-		findOptions.SetSort(bson.D{{"postOpenDate", -1}})
+		findOptions.SetSort(bson.D{{Key: "postOpenDate",Value:  -1}})
 		findOptions.SetLimit(3)
 	}
 
@@ -173,11 +199,11 @@ func (jc JobController) Query(c *gin.Context) {
 	sortParam := c.Query("sort")
 	switch sortParam {
 	case "dateAsc":
-		findOptions.SetSort(bson.D{{"postOpenDate", 1}})
+		findOptions.SetSort(bson.D{{Key: "postOpenDate", Value: 1}})
 	case "dateDesc":
-		findOptions.SetSort(bson.D{{"postOpenDate", -1}})
+		findOptions.SetSort(bson.D{{Key: "postOpenDate", Value: -1}})
 	case "title":
-		findOptions.SetSort(bson.D{{"title", 1}})
+		findOptions.SetSort(bson.D{{Key: "title", Value: 1}})
 	case "", "null":
 		// no sorting
 	default:
@@ -214,23 +240,63 @@ func toInt(s string) int {
 	return n
 }
 
-// Create() inserts one document (row) to collectionName collection.
+// Create godoc
+// @Summary Create a new job
+// @Description Add a new job posting to the database
+// @Tags jobs
+// @Accept  json
+// @Produce  json
+// @Param job body schema.Job true "Job data"
+// @Success 201 {object} schema.Job
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /jobs/ [post]
 func (jc JobController) Create(c *gin.Context) {
 	jc.baseController.Create(c)
 }
 
-// RetrieveAll retrieves all jobs
-// from collectionName collection
+// RetrieveAll godoc
+// @Summary Get all jobs
+// @Description Retrieve all job postings
+// @Tags jobs
+// @Produce  json
+// @Success 200 {array} schema.Job
+// @Failure 500 {object} map[string]string
+// @Router /jobs/ [get]
 func (jc JobController) RetrieveAll(c *gin.Context) {
 	jc.baseController.RetrieveAll(c)
 }
 
-// Update() updates a job by ID.
+// Update godoc
+// @Summary Update a job
+// @Description Update a job posting by ID
+// @Tags jobs
+// @Accept  json
+// @Produce  json
+// @Param id path string true "Job ID"
+// @Param job body schema.Job true "Updated job data"
+// @Success 200 {object} schema.Job
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /jobs/{id} [put]
 func (jc JobController) Update(c *gin.Context) {
 	jc.baseController.Update(c)
 }
 
-// Delete() deletes a job by ID.
+// Delete godoc
+// @Summary Delete a job
+// @Description Delete a job posting by ID and notify applicants
+// @Tags jobs
+// @Accept  json
+// @Produce  json
+// @Param id path string true "Job ID"
+// @Param reason body object false "Reason for deletion"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /jobs/{id} [delete]
 func (jc JobController) Delete(c *gin.Context) {
 	shouldReturn := notifyJobDeletion(c)
 	if shouldReturn {
@@ -316,7 +382,16 @@ func notifyJobDeletion(c *gin.Context) bool {
 	return false
 }
 
-// RetrieveOne fetches a single job by ID.
+// RetrieveOne godoc
+// @Summary Get a job by ID
+// @Description Retrieve details of a specific job posting
+// @Tags jobs
+// @Produce  json
+// @Param id path string true "Job ID"
+// @Success 200 {object} schema.Job
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /jobs/{id} [get]
 func (jc JobController) RetrieveOne(c *gin.Context) {
 	jc.baseController.RetrieveOne(c)
 }
