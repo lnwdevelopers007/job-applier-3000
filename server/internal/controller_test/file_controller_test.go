@@ -302,12 +302,12 @@ func TestFileListUserFiles(t *testing.T) {
 		bson.M{
 			"_id":           primitive.NewObjectID(),
 			"userID":        testFileUserID1,
-			"filename":      "cover-letter.pdf",
+			"filename":      "transcript.pdf",
 			"fileExtension": "pdf",
 			"contentType":   "application/pdf",
 			"size":          int64(500),
-			"category":      "cover_letter",
-			"content":       []byte("Cover letter"),
+			"category":      "transcript",
+			"content":       []byte("Transcript content"),
 			"uploadDate":    time.Now(),
 		},
 	})
@@ -388,12 +388,12 @@ func TestFileCompanyAccessApplicantFilesSuccess(t *testing.T) {
 		bson.M{
 			"_id":           primitive.NewObjectID(),
 			"userID":        testFileUserID1,
-			"filename":      "cover-letter.pdf",
+			"filename":      "transcript.pdf",
 			"fileExtension": "pdf",
 			"contentType":   "application/pdf",
 			"size":          int64(500),
-			"category":      "cover_letter",
-			"content":       []byte("Cover"),
+			"category":      "transcript",
+			"content":       []byte("Transcript content"),
 			"uploadDate":    time.Now(),
 		},
 	})

@@ -195,7 +195,7 @@
 	function getCategoryLabel(category: string): string {
 		const labels: Record<string, string> = {
 			resume: 'Resume',
-			cover_letter: 'Cover Letter',
+			transcript: 'Transcript',
 			certification: 'Certification',
 			verification: 'Verification'
 		};
@@ -277,7 +277,7 @@
 						>
 							{#if userRole === 'jobSeeker'}
 								<option value="resume">Resume</option>
-								<option value="cover_letter">Cover Letter</option>
+								<option value="transcript">Transcript</option>
 								<option value="certification">Certification</option>
 							{:else}
 								<option value="verification">Verification</option>
@@ -286,7 +286,7 @@
 						</select>
 						<p class="mt-1 text-xs text-gray-500">
 							{#if userRole === 'jobSeeker'}
-								Job seekers can upload: Resume, Cover Letter, Certification
+								Job seekers can upload: Resume, Transcript, Certification
 							{:else}
 								Companies can upload: Verification, Certification
 							{/if}
@@ -483,7 +483,7 @@
 						<p class="mb-1 font-semibold">👤 Job Seeker can upload:</p>
 						<ul class="ml-2 list-inside list-disc space-y-1">
 							<li>Resume</li>
-							<li>Cover Letter</li>
+							<li>Transcript</li>
 							<li>Certification</li>
 						</ul>
 					</div>

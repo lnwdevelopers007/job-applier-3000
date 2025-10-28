@@ -339,7 +339,7 @@ const docTemplate = `{
         },
         "/files/applicant/{applicationId}": {
             "get": {
-                "description": "Allows a company to view files (resume, cover_letter, certification) of an applicant for a specific job application. Only the company who owns the job can access.",
+                "description": "Allows a company to view files (resume, transcript, certification) of an applicant for a specific job application. Only the company who owns the job can access.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1500,13 +1500,13 @@ const docTemplate = `{
             "type": "string",
             "enum": [
                 "resume",
-                "cover_letter",
+                "transcript",
                 "certification",
                 "verification"
             ],
             "x-enum-varnames": [
                 "CategoryResume",
-                "CategoryCoverLetter",
+                "CategoryTranscript",
                 "CategoryCertification",
                 "CategoryVerification"
             ]

@@ -4,7 +4,7 @@
   if (!formData.applicationRequirements) {
     formData.applicationRequirements = {
       resume: false,
-      coverLetter: false,
+      transcript: false,
       portfolio: false,
       linkedin: false
     };
@@ -72,10 +72,10 @@
       <label class="flex items-center">
         <input
           type="checkbox"
-          bind:checked={formData.applicationRequirements.coverLetter}
+          bind:checked={formData.applicationRequirements.transcript}
           class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
         />
-        <span class="ml-2 text-sm text-gray-700">Cover letter required</span>
+        <span class="ml-2 text-sm text-gray-700">Transcript required</span>
       </label>
       
       <label class="flex items-center">

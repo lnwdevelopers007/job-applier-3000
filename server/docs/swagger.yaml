@@ -35,13 +35,13 @@ definitions:
   schema.FileCategory:
     enum:
     - resume
-    - cover_letter
+    - transcript
     - certification
     - verification
     type: string
     x-enum-varnames:
     - CategoryResume
-    - CategoryCoverLetter
+    - CategoryTranscript
     - CategoryCertification
     - CategoryVerification
   schema.Job:
@@ -495,7 +495,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Allows a company to view files (resume, cover_letter, certification)
+      description: Allows a company to view files (resume, transcript, certification)
         of an applicant for a specific job application. Only the company who owns
         the job can access.
       parameters:

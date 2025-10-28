@@ -26,8 +26,8 @@ func TestValidateFileCategoryJobSeekerResume(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestValidateFileCategoryJobSeekerCoverLetter(t *testing.T) {
-	err := ValidateFileCategory(CategoryCoverLetter, RoleJobSeeker)
+func TestValidateFileCategoryJobSeekerTranscript(t *testing.T) {
+	err := ValidateFileCategory(CategoryTranscript, RoleJobSeeker)
 	assert.NoError(t, err)
 }
 
@@ -58,8 +58,8 @@ func TestValidateFileCategoryCompanyResume(t *testing.T) {
 	assert.Contains(t, err.Error(), "companies can only upload")
 }
 
-func TestValidateFileCategoryCompanyCoverLetter(t *testing.T) {
-	err := ValidateFileCategory(CategoryCoverLetter, RoleCompany)
+func TestValidateFileCategoryCompanyTranscript(t *testing.T) {
+	err := ValidateFileCategory(CategoryTranscript, RoleCompany)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "companies can only upload")
 }

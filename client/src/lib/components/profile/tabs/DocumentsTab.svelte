@@ -36,7 +36,7 @@
 		<div class="grid grid-cols-4 gap-8 items-start">
 			<div>
 				<label class="text-sm font-medium text-gray-700">Documents</label>
-				<p class="text-xs text-gray-500 mt-1">Upload documents for recruiters such as resume, cover letter, portfolio, transcripts, or certificates</p>
+				<p class="text-xs text-gray-500 mt-1">Upload documents for recruiters such as resume, transcript, portfolio, transcripts, or certificates</p>
 			</div>
 			<div class="col-span-2">
 				<div class="space-y-4">

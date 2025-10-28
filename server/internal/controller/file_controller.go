@@ -375,7 +375,7 @@ func (fc FileController) Delete(c *gin.Context) {
 
 // GetApplicantFiles godoc
 // @Summary      Get applicant files for a job application
-// @Description  Allows a company to view files (resume, cover_letter, certification) of an applicant for a specific job application. Only the company who owns the job can access.
+// @Description  Allows a company to view files (resume, transcript, certification) of an applicant for a specific job application. Only the company who owns the job can access.
 // @Tags         Files
 // @Accept       json
 // @Produce      json
@@ -443,13 +443,13 @@ func (fc FileController) GetApplicantFiles(c *gin.Context) {
 		return
 	}
 
-	// 4. Get applicant's files (only relevant categories: resume, cover_letter, certification)
+	// 4. Get applicant's files (only relevant categories: resume, transcript, certification)
 	cursor, err := db.Collection("files").Find(
 		c.Request.Context(),
 		bson.M{
 			"userID": application.ApplicantID,
 			"category": bson.M{
-				"$in": []string{"resume", "cover_letter", "certification"},
+				"$in": []string{"resume", "transcript", "certification"},
 			},
 		},
 	)
