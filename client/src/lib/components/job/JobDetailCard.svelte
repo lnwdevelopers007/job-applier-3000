@@ -2,7 +2,6 @@
 	import { MapPin, Banknote, Share2, ExternalLink, Bookmark } from 'lucide-svelte';
 	import ApplyButton from './ApplyButton.svelte';
 	import SafeHTML from '$lib/utils/SafeHTML.svelte';
-	import Badge from './Badge.svelte';
 	import WorkInfoBadge from './WorkInfoBadge.svelte';
 	import SkillTag from './SkillTag.svelte';
 	import CompanyCard from './CompanyCard.svelte';

@@ -17,7 +17,6 @@
   let companyJobs: any[] = [];
 
   let company: any = null;
-  let pendingCount: number = 0;
   let currentPage: number = 1;
   let itemsPerPage: number = 5;
   let totalPages: number = 1;
@@ -209,7 +208,6 @@
       });
 
       const results = await Promise.all(candidatePromises);
-      pendingCount = results.filter(c => c.status === 'Pending').length;
       return results;
 
     } catch (err) {
@@ -325,7 +323,7 @@
           bind:value={selectedJobFilter}
         >
           <option value="all">All Jobs</option>
-          {#each companyJobs as job}
+          {#each companyJobs as job (job.id)}
             <option value={job.title}>{job.title}</option>
           {/each}
         </select>

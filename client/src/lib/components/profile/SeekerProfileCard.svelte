@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { FileText, Download, BriefcaseBusiness, Globe, MapPin, StickyNote, Check, X } from 'lucide-svelte';
-	import Badge from '$lib/components/job/Badge.svelte';
 	import SkillTag from '$lib/components/job/SkillTag.svelte';
 	
 	let { 
@@ -40,15 +39,6 @@
 	
 	const age = $derived(calculateAge(userData.dateOfBirth));
 	
-	// Helper function for status badge variant
-	function getStatusVariant(status: string) {
-		switch (status) {
-			case 'Accepted': return 'success';  // green
-			case 'Rejected': return 'danger';   // red
-			case 'Pending': return 'warning';   // yellow
-			default: return 'secondary';
-		}
-	}
 	
 	// Helper to check if status allows actions
 	const canTakeAction = $derived(candidateStatus === 'Pending');
@@ -111,21 +101,21 @@
 			<div class="flex gap-2">
 				<button 
 					class="flex items-center px-3 py-1.5 text-sm bg-white font-medium rounded-md border border-gray-200 hover:bg-gray-50"
-					on:click={onNotes}
+					onclick={onNotes}
 				>
 					<StickyNote class="w-4 h-4 mr-2" />Notes
 				</button>
 				{#if canTakeAction}
 					<button 
 						class="flex items-center px-3 py-1.5 text-sm bg-green-600 font-medium text-white rounded-md hover:bg-green-700 disabled:opacity-50"
-						on:click={() => onAccept(candidateId)}
+						onclick={() => onAccept(candidateId)}
 						disabled={isUpdatingStatus}
 					>
 						<Check class="w-4 h-4 mr-2" />Accept
 					</button>
 					<button 
 						class="flex items-center px-3 py-1.5 text-sm bg-red-500 font-medium text-white rounded-md hover:bg-red-600 disabled:opacity-50"
-						on:click={() => onReject(candidateId)}
+						onclick={() => onReject(candidateId)}
 						disabled={isUpdatingStatus}
 					>
 						<X class="w-4 h-4 mr-2" />Reject

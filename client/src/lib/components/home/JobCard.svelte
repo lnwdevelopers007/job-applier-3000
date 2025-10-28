@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { MapPin, Clock } from 'lucide-svelte';
 	import AuthModal from '$lib/components/ui/AuthModal.svelte';
-	import Badge from '$lib/components/job/Badge.svelte';
 	import WorkInfoBadge from '$lib/components/job/WorkInfoBadge.svelte';
 	import { isAuthenticated, navigateWithAuth } from '$lib/utils/auth';
 
