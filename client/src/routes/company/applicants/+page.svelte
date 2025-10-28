@@ -1,22 +1,20 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import {
-    Search,
-    GraduationCap,
-    Briefcase,
-    Clock,
-    FileText,
-    Github,
-    Link
-  } from 'lucide-svelte';
+  import { Search } from 'lucide-svelte';
   import { getUserInfo, isAuthenticated } from '$lib/utils/auth';
   import { authStore } from '$lib/stores/auth.svelte';
   import { goto } from '$app/navigation';
   import SeekerProfileCard from '$lib/components/profile/SeekerProfileCard.svelte';
+  import Badge from '$lib/components/job/Badge.svelte';
+  
+  type BadgeVariant = 'primary' | 'secondary' | 'warning' | 'danger' | 'success' | 'info' | 'purple';
 
   let candidates: any[] = [];
   let selectedCandidate: any = null;
-  let currentStatusFilter: string = '';
+  let currentStatusFilter: string = 'all';
+  let searchQuery: string = '';
+  let selectedJobFilter: string = 'all';
+  let companyJobs: any[] = [];
 
   let company: any = null;
   let pendingCount: number = 0;
@@ -25,15 +23,46 @@
   let totalPages: number = 1;
   let isUpdatingStatus: boolean = false;
 
-  $: paginatedCandidates = candidates.slice(
-  (currentPage - 1) * itemsPerPage,
-  currentPage * itemsPerPage
+  $: filteredCandidates = candidates.filter(c => {
+    // Status filter
+    if (currentStatusFilter !== 'all' && c.status.toLowerCase() !== currentStatusFilter.toLowerCase()) {
+      return false;
+    }
+    
+    // Job filter
+    if (selectedJobFilter !== 'all' && c.applied !== selectedJobFilter) {
+      return false;
+    }
+    
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      return (
+        c.name?.toLowerCase().includes(query) ||
+        c.email?.toLowerCase().includes(query) ||
+        c.role?.toLowerCase().includes(query) ||
+        c.skills?.some((skill: string) => skill.toLowerCase().includes(query))
+      );
+    }
+    
+    return true;
+  });
+
+  $: paginatedCandidates = filteredCandidates.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
-  function getDocIcon(doc: string) {
-    if (doc.toLowerCase().endsWith('.pdf')) return FileText;
-    if (doc.toLowerCase().includes('github')) return Github;
-    return Link;
+  $: totalPages = Math.ceil(filteredCandidates.length / itemsPerPage);
+
+
+  function getStatusVariant(status: string): BadgeVariant {
+    switch (status) {
+      case 'Accepted': return 'success';  // green
+      case 'Rejected': return 'danger';   // red
+      case 'Pending': return 'warning';   // yellow
+      default: return 'secondary';
+    }
   }
 
   function normalizeUser(user: any) {
@@ -63,6 +92,24 @@
       skills: skillsArray,
       documents: user.documents || []
     };
+  }
+
+  async function fetchCompanyJobs() {
+    if (!company?.userID) return [];
+    
+    try {
+      const jobsRes = await fetch(`/jobs/query?companyID=${company.userID}`);
+      if (!jobsRes.ok) return [];
+      
+      const jobsData = await jobsRes.json();
+      return jobsData.map((job: any) => ({
+        id: job.id || job._id,
+        title: job.title
+      }));
+    } catch (err) {
+      console.error('Error fetching company jobs:', err);
+      return [];
+    }
   }
 
   async function fetchCandidates(status: string = '') {
@@ -163,7 +210,6 @@
 
       const results = await Promise.all(candidatePromises);
       pendingCount = results.filter(c => c.status === 'Pending').length;
-      totalPages = Math.ceil(results.length / itemsPerPage);
       return results;
 
     } catch (err) {
@@ -194,7 +240,8 @@
 
       if (!res.ok) throw new Error('Failed to update status');
 
-      candidates = await fetchCandidates(currentStatusFilter);
+      // Fetch all candidates (no filter) to keep the full list, then apply client-side filtering
+      candidates = await fetchCandidates();
       if (selectedCandidate)
         selectedCandidate = candidates.find((c) => c.id === candidateID) || null;
     } catch (err) {
@@ -205,16 +252,17 @@
   }
 
   function handleStatusFilter(status: string) {
-    currentStatusFilter = status;
-    fetchCandidates(status).then((data) => {
-      candidates = data;
-      selectedCandidate = data.length > 0 ? data[0] : null;
-    });
+    currentStatusFilter = status.toLowerCase();
+    currentPage = 1; // Reset to first page when filtering
+    // Select first candidate from filtered results
+    if (filteredCandidates.length > 0) {
+      selectedCandidate = filteredCandidates[0];
+    }
   }
 
   function changePage(page: number) {
-  if (page < 1 || page > totalPages) return;
-  currentPage = page;
+    if (page < 1 || page > totalPages) return;
+    currentPage = page;
   }
 
   onMount(async () => {
@@ -227,7 +275,16 @@
     
     if (company) {
       console.log('Fetching candidates for company:', company.userID);
-      candidates = await fetchCandidates();
+      // Fetch jobs and candidates in parallel
+      const [jobsData, candidatesData] = await Promise.all([
+        fetchCompanyJobs(),
+        fetchCandidates()
+      ]);
+      
+      companyJobs = jobsData;
+      candidates = candidatesData;
+      
+      console.log('Fetched jobs:', companyJobs);
       console.log('Fetched candidates:', candidates);
       if (candidates.length > 0) selectedCandidate = candidates[0];
     } else {
@@ -240,128 +297,158 @@
   });
 </script>
 
-<div class="pt-8 h-[calc(100vh-80px)] flex flex-col">
-  <h1 class="text-2xl font-semibold text-gray-900">
+<div class="h-[calc(100vh-110px)] flex flex-col">
+  <h1 class="text-2xl font-semibold text-gray-900 mb-1">
     All Applicants
   </h1>
-  <p class="my-3 text-base text-gray-600">
+  <p class="mb-6 text-base text-gray-600">
     Manage candidates across all job postings
   </p>
-  
-  <div class="flex flex-col gap-3 mb-6">
-    <div class="flex items-center bg-white rounded-lg shadow px-3 py-2 max-w-md">
-      <Search class="w-5 h-5 text-gray-500" />
-      <input
-        type="text"
-        placeholder="Search candidates by name, email, skills or position..."
-        class="flex-1 ml-2 outline-none border-none text-sm"
-      />
-    </div>
 
-    <div class="flex gap-2">      
-      <select class="pr-8 pl-3 py-1 bg-white border border-gray-200 rounded text-sm text-left">
-        <option>All Jobs</option>
-        <option>AI Researcher</option>
-        <option>Developer</option>
-        <option>Tester</option>
-      </select>
-
-      <select
-        class="pr-8 pl-3 py-1 bg-white border border-gray-200 rounded text-sm text-left"
-        on:change={(e) => handleStatusFilter((e.target as HTMLSelectElement).value.toUpperCase())}
-      >
-        <option value="">All Statuses</option>
-        <option value="Accepted">Accepted</option>
-        <option value="Pending">Pending</option>
-        <option value="Rejected">Rejected</option>
-      </select>
-
-      <div class="border-l border-gray-300 h-6 py-1"></div>
-        <button class="px-3 py-1 bg-white border-1 border-gray-200 rounded-full text-sm">All</button>
-        <button class="px-3 py-1 bg-white border-1 border-gray-200  rounded-full text-sm">New ({pendingCount})</button>
-        <button class="px-3 py-1 bg-white border-1 border-gray-200  rounded-full text-sm">High Match</button>
-        <button class="px-3 py-1 bg-white border-1 border-gray-200  rounded-full text-sm">Recent Grads</button>
-        <button class="px-3 py-1 bg-white border-1 border-gray-200  rounded-full text-sm">Experienced</button>
+  <div class="mb-6">
+    <div class="flex gap-3">
+      <div class="flex-1 relative">
+        <div class="absolute left-3 top-1/2 -translate-y-1/2">
+          <Search class="w-5 h-5 text-gray-400" />
+        </div>
+        <input
+          type="text"
+          placeholder="Search candidates..."
+          class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-full text-sm placeholder:text-gray-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 transition-all"
+          bind:value={searchQuery}
+        />
       </div>
+
+      <div class="relative">
+        <select 
+          class="appearance-none px-4 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 font-medium hover:bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 transition-all cursor-pointer"
+          bind:value={selectedJobFilter}
+        >
+          <option value="all">All Jobs</option>
+          {#each companyJobs as job}
+            <option value={job.title}>{job.title}</option>
+          {/each}
+        </select>
+        <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="grid grid-cols-3 gap-4 flex-1 overflow-hidden">
     <div class="col-span-1 rounded-xl border border-gray-200 overflow-hidden flex flex-col">
       <div class="bg-slate-50 p-4 border-b border-gray-200">
-        <h2 class="text-lg font-semibold text-gray-800">All Candidates</h2>
-        <div class="flex gap-1 mt-2">
-          <button class="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-xs">All</button>
-          <button class="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-xs">New</button>
-          <button class="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-xs">Shortlisted</button>
-          <button class="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-xs">Rejected</button>
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-lg font-semibold text-gray-800">Applicants</h2>
+          <span class="text-sm text-gray-500">{filteredCandidates.length} total</span>
+        </div>
+        <div class="flex gap-1">
+          <button 
+            class="px-3 py-1.5 rounded-full text-xs transition-colors {currentStatusFilter === 'all' ? 'bg-green-600 text-white' : 'bg-white border border-gray-200 hover:bg-gray-50'}"
+            onclick={() => handleStatusFilter('all')}
+          >
+            All
+          </button>
+          <button 
+            class="px-3 py-1.5 rounded-full text-xs transition-colors {currentStatusFilter === 'pending' ? 'bg-green-600 text-white' : 'bg-white border border-gray-200 hover:bg-gray-50'}"
+            onclick={() => handleStatusFilter('pending')}
+          >
+            Pending
+          </button>
+          <button 
+            class="px-3 py-1.5 rounded-full text-xs transition-colors {currentStatusFilter === 'accepted' ? 'bg-green-600 text-white' : 'bg-white border border-gray-200 hover:bg-gray-50'}"
+            onclick={() => handleStatusFilter('accepted')}
+          >
+            Accepted
+          </button>
+          <button 
+            class="px-3 py-1.5 rounded-full text-xs transition-colors {currentStatusFilter === 'rejected' ? 'bg-green-600 text-white' : 'bg-white border border-gray-200 hover:bg-gray-50'}"
+            onclick={() => handleStatusFilter('rejected')}
+          >
+            Rejected
+          </button>
         </div>
       </div>
       
       <div class="bg-white p-4 space-y-3 flex-1 overflow-y-auto">
         {#each paginatedCandidates as candidate, i (i)}
           <button
-            class="flex items-start gap-4 p-4 border rounded-xl bg-white hover:bg-gray-50 shadow-sm hover:shadow-lg transition-all duration-200 cursor-pointer w-full
-              {selectedCandidate?.name === candidate.name ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-500 shadow-green-200/50' : 'border-gray-200'}"
-            on:click={() => (selectedCandidate = candidate)}
+            class="relative flex items-start gap-4 px-4 py-5 border rounded-xl bg-white hover:bg-gray-50 transition-all duration-200 cursor-pointer w-full
+              {selectedCandidate?.id === candidate.id 
+                ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-600 shadow-green-200/50' 
+                : selectedCandidate?.name === candidate.name 
+                  ? 'border-green-600' 
+                  : 'border-gray-200'}"
+            onclick={() => (selectedCandidate = candidate)}
           >
+            <!-- Status Badge - Top Right -->
+            <div class="absolute top-3 right-3">
+              <Badge 
+                variant={getStatusVariant(candidate.status) as any} 
+                size="sm" 
+                text={candidate.status} 
+              />
+            </div>
+            
             <div class="relative">
               <img src={candidate.avatar} alt={candidate.name} class="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-sm" />
-              <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
             </div>
-            <div class="flex-1 flex flex-col items-start gap-1.5">
-              <h3 class="font-semibold text-gray-900 text-sm tracking-tight">{candidate.name}</h3>
-              <p class="text-start text-xs font-medium text-gray-700">{candidate.role}</p>
-              <p class="text-start text-[11px] text-gray-500 font-light">Applied for: <span class="font-medium text-gray-600">{candidate.applied}</span></p>
-              <div class="flex items-center text-[10px] text-gray-500 gap-3 mt-1">
+            <div class="flex-1 flex flex-col items-start gap-1 pr-16">
+              <h3 class="font-semibold text-gray-900 text-md tracking-tight">{candidate.name}</h3>
+              <p class="text-start text-sm font-medium text-gray-700">{candidate.role}</p>
+              <p class="text-start text-xs text-gray-500 font-light">Applied for: <span class="font-medium text-gray-600">{candidate.applied}</span></p>
+              <div class="flex items-center text-xs text-gray-500 gap-3 mt-1">
                 <span class="flex items-center gap-1">
-                  <Briefcase class="w-3.5 h-3.5 text-gray-400" />
-                  <span class="font-medium">{candidate.year || 'N/A'}</span>
-                </span>
-                <span class="flex items-center gap-1">
-                  <Clock class="w-3.5 h-3.5 text-gray-400" />
                   <span class="font-medium">{candidate.time}</span>
                 </span>
               </div>
-              <span
-                class="inline-block mt-2 text-[11px] px-2.5 py-1 rounded-full font-semibold tracking-wide
-                  {candidate.status === 'Pending' ? 'bg-blue-50 text-blue-700 border border-blue-200' : ''}
-                  {candidate.status === 'Accepted' ? 'bg-green-50 text-green-700 border border-green-200' : ''}
-                  {candidate.status === 'Shortlisted' ? 'bg-purple-50 text-purple-700 border border-purple-200' : ''}
-                  {candidate.status === 'Rejected' ? 'bg-red-50 text-red-700 border border-red-200' : ''}
-                  {candidate.status === 'Reviewed' ? 'bg-amber-50 text-amber-700 border border-amber-200' : ''}"
-              >
-                {candidate.status}
-              </span>
             </div>
           </button>
         {/each}
-        <div class="flex justify-center items-center gap-2 mt-4">
-          <button
-            on:click={() => changePage(currentPage - 1)}
-            class="px-3 py-1 bg-gray-200 border border-gray-300 rounded disabled:opacity-50"
-            disabled={currentPage === 1}
-          >
-            Prev
-          </button>
+        {#if totalPages > 1}
+          <div class="flex items-center justify-center gap-3 py-3">
+            <button
+              aria-label="Previous page"
+              class="flex items-center gap-2 px-2 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              onclick={() => changePage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
 
-          <span class="text-sm text-gray-600">
-            Page {currentPage} of {totalPages}
-          </span>
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-gray-600">Page</span>
+              <span class="text-sm text-gray-600 font-medium">
+                {currentPage}
+              </span>
+              <span class="text-sm text-gray-600">of</span>
+              <span class="text-sm text-gray-600 font-medium">
+                {totalPages}
+              </span>
+            </div>
 
-          <button
-            on:click={() => changePage(currentPage + 1)}
-            class="px-3 py-1 bg-gray-200 border border-gray-300 rounded disabled:opacity-50"
-            disabled={currentPage === totalPages}
-          >
-            Next
-          </button>
-        </div>
+            <button
+              aria-label="Next page"
+              class="flex items-center gap-2 px-2 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              onclick={() => changePage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        {/if}
       </div>
     </div>
 
     <div class="col-span-2 bg-white rounded-xl border border-gray-200 overflow-y-auto">
       {#if selectedCandidate}
-        <!-- Profile Card with integrated header -->
         <SeekerProfileCard 
           userData={{
             fullName: selectedCandidate.fullName,
@@ -382,8 +469,8 @@
           showApplicationInfo={true}
           isPreviewMode={false}
           appliedJobTitle={selectedCandidate.applied}
-          onAccept={(id) => updateStatus(id, 'ACCEPTED')}
-          onReject={(id) => updateStatus(id, 'REJECTED')}
+          onAccept={(id: string) => updateStatus(id, 'ACCEPTED')}
+          onReject={(id: string) => updateStatus(id, 'REJECTED')}
           onNotes={() => console.log('Notes clicked')}
           isUpdatingStatus={isUpdatingStatus}
           candidateStatus={selectedCandidate.status}
