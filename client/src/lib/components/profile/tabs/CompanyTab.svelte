@@ -3,6 +3,7 @@
 	import Select from '$lib/components/forms/Select.svelte';
 	import Textarea from '$lib/components/forms/Textarea.svelte';
 	import { Globe } from 'lucide-svelte';
+	import FileUpload from '$lib/components/forms/FileUpload.svelte';
 	
 	let {
 		companyData = $bindable({})
@@ -18,6 +19,32 @@
 				<TextInput 
 					bind:value={companyData.companyName}
 					placeholder="Enter your company name"
+				/>
+			</div>
+		</div>
+	</div>
+
+	<div class="py-5">
+		<div class="grid grid-cols-3 gap-8 items-start">
+			<div>
+				<label class="text-sm font-medium text-gray-700">Company logo</label>
+				<p class="text-xs text-gray-500 mt-1">This will be displayed on job postings and your profile</p>
+			</div>
+			<div class="col-span-2">
+				<FileUpload 
+					currentImage={companyData.companyLogo}
+					maxSize="2MB"
+					onFileSelect={(file) => {
+						companyData.companyLogoFile = file;
+						// Create a preview URL for immediate feedback
+						const reader = new FileReader();
+						reader.onload = (e) => {
+							if (e.target?.result) {
+								companyData.companyLogo = e.target.result;
+							}
+						};
+						reader.readAsDataURL(file);
+					}}
 				/>
 			</div>
 		</div>

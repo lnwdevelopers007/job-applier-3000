@@ -75,7 +75,7 @@
         {#each navItems as item (item.href)}
           <a 
             href={item.href} 
-            class="text-sm font-medium hover:text-gray-900 transition-colors whitespace-nowrap {$page.url.pathname === item.href ? 'text-gray-900' : 'text-gray-800'}"
+            class="text-sm font-medium hover:text-green-700 transition-colors duration-200 whitespace-nowrap {$page.url.pathname === item.href ? 'text-gray-900' : 'text-gray-800'}"
           >
             {item.label}
           </a>
