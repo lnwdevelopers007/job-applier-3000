@@ -3,6 +3,7 @@
 	import PersonalInfoTab from './tabs/PersonalInfoTab.svelte';
 	import CompanyTab from './tabs/CompanyTab.svelte';
 	import DocumentsTab from './tabs/DocumentsTab.svelte';
+	import ProfileSidebar from './ProfileSidebar.svelte';
 	import SeekerProfilePreviewDrawer from './SeekerProfilePreviewDrawer.svelte';
 	import { userService } from '$lib/services/userService';
 	import { Plus, LoaderCircle } from 'lucide-svelte';
@@ -306,85 +307,88 @@
 	const activeTabData = $derived(tabs.find((tab: Tab) => tab.id === activeTab));
 </script>
 
-<div class="">
-	<!-- Header -->
-	<div class="p-2">
-		<div class="flex justify-between items-center mb-6">
-			<h1 class="text-2xl font-semibold text-gray-900">{title}</h1>
-			{#if userType === 'seeker'}
-				<button
-					onclick={handlePreview}
-					class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors flex items-center gap-2 hover:cursor-pointer"
-				>
-					Preview Profile
-				</button>
-			{/if}
-		</div>
-		
-		<!-- Tabs -->
-		<nav class="flex border-b border-gray-200 -mb-px">
-			{#each tabs as tab (tab.id)}
-				<button
-					onclick={() => handleTabChange(tab.id)}
-					class="px-4 py-3 text-sm font-medium border-b-2 transition-all cursor-pointer {activeTab === tab.id ? 'border-green-600 text-green-700' : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'}"
-				>
-					{tab.label}
-				</button>
-			{/each}
-		</nav>
-	</div>
+<div>
+	<!-- Page Header -->
+	<h1 class="text-2xl font-semibold text-gray-900 mb-8">{title}</h1>
 	
-	<!-- Tab header with actions -->
-	<div class="flex justify-between items-start border-b border-gray-200 px-6 py-4">
-		<div>
-			<h2 class="text-lg font-medium text-gray-900">{activeTabData?.title || ''}</h2>
-			<p class="text-sm text-gray-500 mt-1">{activeTabData?.description || ''}</p>
-		</div>
+	<div class="flex gap-10">
+		<!-- Sidebar -->
+		<ProfileSidebar 
+			{tabs}
+			{activeTab}
+			onTabClick={handleTabChange}
+		/>
 		
-		<div class="flex items-center gap-3">
-			{#if activeTab === 'documents'}
-				<button
-					onclick={() => document.getElementById('file-upload')?.click()}
-					class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors flex items-center gap-2"
-				>
-					<Plus class="w-4 h-4" />
-					Add Documents
-				</button>
-			{:else if hasChanges}
-				<button
-					onclick={handleSave}
-					disabled={isSaving}
-					class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center gap-2 hover:cursor-pointer"
-				>
-					{#if isSaving}
-						<LoaderCircle class="w-4 h-4 animate-spin" />
-						Saving...
-					{:else}
-						Save Changes
-					{/if}
-				</button>
-				<button
-					onclick={resetChanges}
-					disabled={isSaving}
-					class="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50 disabled:opacity-50 transition-colors flex items-center gap-2 hover:cursor-pointer"
-				>
-					Cancel
-				</button>
-			{/if}
+		<!-- Main Content -->
+		<div class="flex-1 min-w-0 pl-8 pb-10">
+			<!-- Section Header with Actions -->
+			<div class="pb-4 border-b border-gray-200">
+				<div class="flex justify-between items-start">
+					<div>
+						<h2 class="text-lg font-medium text-gray-900">{activeTabData?.title || ''}</h2>
+						<p class="text-sm text-gray-500 mt-1">{activeTabData?.description || ''}</p>
+					</div>
+					
+					<div class="flex items-center gap-3">
+						{#if userType === 'seeker' && activeTab !== 'documents'}
+							<button
+								onclick={handlePreview}
+								type="button"
+								class="px-4 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors font-medium"
+							>
+								Preview Profile
+							</button>
+						{/if}
+						
+						{#if activeTab === 'documents'}
+							<button
+								onclick={() => document.getElementById('file-upload')?.click()}
+								type="button"
+								class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors flex items-center gap-2"
+							>
+								<Plus class="w-4 h-4" />
+								Add Documents
+							</button>
+						{:else if hasChanges}
+							<button
+								onclick={resetChanges}
+								disabled={isSaving}
+								type="button"
+								class="px-4 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors font-medium disabled:opacity-50"
+							>
+								Cancel
+							</button>
+							<button
+								onclick={handleSave}
+								disabled={isSaving}
+								type="button"
+								class="px-4 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-medium disabled:opacity-50 flex items-center gap-2"
+							>
+								{#if isSaving}
+									<LoaderCircle class="w-4 h-4 animate-spin" />
+									Saving...
+								{:else}
+									Save Changes
+								{/if}
+							</button>
+						{/if}
+					</div>
+				</div>
+			</div>
+			
+			<!-- Tab content -->
+			<div>
+				{#if activeTab === 'user'}
+					<UserTab bind:userData onDirectSave={handleDirectSave} />
+				{:else if activeTab === 'personal' && userType === 'seeker'}
+					<PersonalInfoTab bind:profileData={userData} />
+				{:else if activeTab === 'company' && userType === 'company'}
+					<CompanyTab bind:companyData={userData} />
+				{:else if activeTab === 'documents'}
+					<DocumentsTab bind:documents={userData.documents} />
+				{/if}
+			</div>
 		</div>
-	</div>
-	
-	<!-- Tab content -->
-	<div>
-		{#if activeTab === 'user'}
-			<UserTab bind:userData onDirectSave={handleDirectSave} />
-		{:else if activeTab === 'personal' && userType === 'seeker'}
-			<PersonalInfoTab bind:profileData={userData} />
-		{:else if activeTab === 'company' && userType === 'company'}
-			<CompanyTab bind:companyData={userData} />
-		{:else if activeTab === 'documents'}
-			<DocumentsTab bind:documents={userData.documents} />
-		{/if}
 	</div>
 </div>
 

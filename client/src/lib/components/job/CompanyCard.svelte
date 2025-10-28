@@ -33,14 +33,26 @@
         <span>{company.industry}</span>
       </div>
     </div>
-    <p class="text-sm text-gray-700 leading-relaxed mb-2">
-      {expanded ? company.description : company.description.slice(0, 120) + '...'}
+    <p class="text-sm text-gray-700 leading-relaxed">
+      {#if company.description.length <= 200}
+        {company.description}
+      {:else if expanded}
+        {company.description}
+        <button 
+          onclick={() => expanded = !expanded}
+          class="text-sm text-green-600 hover:text-green-700 transition-colors font-medium ml-1"
+        >
+          Show less
+        </button>
+      {:else}
+        {company.description.slice(0, 200)}...
+        <button 
+          onclick={() => expanded = !expanded}
+          class="text-sm text-green-600 hover:text-green-700 transition-colors font-medium ml-1"
+        >
+          Show more
+        </button>
+      {/if}
     </p>
-    <button 
-      onclick={() => expanded = !expanded}
-      class="text-sm text-green-600 hover:text-green-700 transition-colors font-medium"
-    >
-      {expanded ? 'Show less' : 'Show more'}
-    </button>
   </div>
 </div>

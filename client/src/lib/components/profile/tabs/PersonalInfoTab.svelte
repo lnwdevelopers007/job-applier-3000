@@ -31,7 +31,7 @@
 </script>
 
 <div class="divide-y divide-gray-200">
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-center">
 			<label class="text-sm font-medium text-gray-700">Full name</label>
 			<div class="col-span-1">
@@ -43,7 +43,7 @@
 		</div>
 	</div>
 
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-center">
 			<label class="text-sm font-medium text-gray-700">Date of birth</label>
 			<div class="col-span-1">
@@ -55,7 +55,7 @@
 		</div>
 	</div>
 	
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-center">
 			<label class="text-sm font-medium text-gray-700">Location</label>
 			<div class="col-span-1">
@@ -67,7 +67,7 @@
 		</div>
 	</div>
 	
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-start">
 			<div>
 				<label class="text-sm font-medium text-gray-700">Desired role</label>
@@ -82,7 +82,7 @@
 		</div>
 	</div>
 	
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-start">
 			<div>
 				<label class="text-sm font-medium text-gray-700">About me</label>
@@ -98,7 +98,7 @@
 		</div>
 	</div>
 	
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-center">
 			<label class="text-sm font-medium text-gray-700">Phone number</label>
 			<div class="col-span-1">
@@ -111,7 +111,7 @@
 		</div>
 	</div>
 	
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-start">
 			<div>
 				<label class="text-sm font-medium text-gray-700">LinkedIn profile</label>
@@ -128,7 +128,7 @@
 		</div>
 	</div>
 	
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-start">
 			<div>
 				<label class="text-sm font-medium text-gray-700">Portfolio website</label>
@@ -145,7 +145,7 @@
 		</div>
 	</div>
 	
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-start">
 			<div>
 				<label class="text-sm font-medium text-gray-700">GitHub profile</label>
@@ -162,7 +162,7 @@
 		</div>
 	</div>
 
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-start">
 			<div>
 				<label class="text-sm font-medium text-gray-700">Skills</label>

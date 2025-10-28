@@ -9,10 +9,21 @@
 	} = $props();
 	
 	let fileInput;
+	let previewImage = $state(null);
+	
+	// Display priority: previewImage (newly selected) > currentImage (existing)
+	let displayImage = $derived(previewImage || currentImage);
 	
 	function handleFileSelect(event) {
 		const file = event.target.files[0];
 		if (file) {
+			// Create preview URL for the selected file
+			const reader = new FileReader();
+			reader.onload = (e) => {
+				previewImage = e.target.result;
+			};
+			reader.readAsDataURL(file);
+			
 			onFileSelect(file);
 		}
 	}
@@ -24,9 +35,9 @@
 	{/if}
 	
 	<div class="flex items-center gap-4">
-		{#if currentImage}
+		{#if displayImage}
 			<img 
-				src={currentImage} 
+				src={displayImage} 
 				alt="Current" 
 				class="w-16 h-16 rounded-full object-cover"
 			/>

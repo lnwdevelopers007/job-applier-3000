@@ -1,26 +1,6 @@
-<div class="min-h-screen bg-slate-50/50 flex flex-col mx-auto">
-
-  <LayoutHeader />
-
-  <div class="flex flex-1 py-6 px-12 gap-6 items-start">
-    <SidebarNav {navItems} />
-
-    <main class="flex-1 p-1 min-w-0">
-      <slot />
-    </main>
-  </div>
+<div class="min-h-screen flex flex-col px-6 max-w-7xl mx-auto">
+  <main class="flex-1 py-6 pt-20">
+    <slot />
+  </main>
 </div>
 
-<script>
-  import LayoutHeader from '$lib/components/LayoutHeader.svelte';
-  import SidebarNav from '$lib/components/SidebarNav.svelte';
-  import { Cog, ChartColumn, ChartLine, Users, CirclePlus } from 'lucide-svelte';
-  
-  const navItems = [
-    { href: '/company/dashboard', label: 'Dashboard', icon: ChartColumn },
-    { href: '/company/applicants', label: 'Applicants', icon: Users },
-    { href: '/company/analytics', label: 'Analytics', icon: ChartLine },
-    { href: '/company/create', label: 'Post New Job', icon: CirclePlus, separatorBefore: true },
-    { href: '/company/settings', label: 'Settings', icon: Cog }
-  ];
-</script>

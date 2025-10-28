@@ -3,9 +3,38 @@
   import { Editor } from '@tiptap/core';
   import StarterKit from '@tiptap/starter-kit';
   import Placeholder from '@tiptap/extension-placeholder';
-  import { Bold, Italic, List, ListOrdered, Heading2 } from 'lucide-svelte';
+  import { Bold, Italic, List, ListOrdered, Heading2, AlertCircle } from 'lucide-svelte';
   
-  let { value = $bindable(''), placeholder = '' } = $props();
+  interface Props {
+    value?: string;
+    placeholder?: string;
+    height?: string;
+    error?: string;
+    showError?: boolean;
+  }
+  
+  let { 
+    value = $bindable(''), 
+    placeholder = '', 
+    height = '300px',
+    error = '',
+    showError = false
+  }: Props = $props();
+  
+  // Track if user has started typing to hide error
+  let hideError = $state(false);
+  
+  // Hide error when user starts typing
+  function handleInput() {
+    hideError = true;
+  }
+  
+  // Reset hideError when new validation occurs
+  $effect(() => {
+    if (showError && error) {
+      hideError = false;
+    }
+  });
   
   let element: HTMLDivElement;
   let editor = $state<Editor | null>(null);
@@ -25,10 +54,11 @@
       },
       onUpdate: ({ editor }) => {
         value = editor.getHTML();
+        handleInput(); // Hide error when user types
       },
       editorProps: {
         attributes: {
-          class: 'tiptap-editor min-h-[200px] px-3 py-2 focus:outline-none text-sm'
+          class: 'tiptap-editor px-3 py-2 focus:outline-none text-sm h-full overflow-y-auto'
         }
       }
     });
@@ -47,7 +77,8 @@
   });
 </script>
 
-<div class="border border-gray-300 rounded-md focus-within:ring-1 focus-within:ring-gray-500 focus-within:border-gray-400">
+<div class="relative">
+<div class="border rounded-md focus-within:ring-1 focus-within:ring-gray-500 focus-within:border-gray-400 {showError && error && !hideError ? 'border-red-500' : 'border-gray-300'}">
   <!-- Toolbar -->
   <div class="border-b border-gray-200 bg-gray-50 px-3 py-2 flex items-center gap-1 rounded-t-md">
     <button
@@ -106,7 +137,24 @@
   </div>
   
   <!-- Editor -->
-  <div bind:this={element}></div>
+  <div bind:this={element} style="height: {height}" class="overflow-hidden"></div>
+  
+  {#if showError && error && !hideError}
+    <!-- Error icon -->
+    <div class="absolute top-2 right-2">
+      <AlertCircle class="w-5 h-5 text-white" fill="red" />
+    </div>
+  {/if}
+</div>
+
+  {#if showError && error && !hideError}
+    <!-- Floating error tooltip positioned above the alert icon -->
+    <div class="absolute z-50 right-0 top-2 -translate-y-full -mt-2 px-3 py-2 bg-red-500 text-white text-xs rounded-md shadow-sm whitespace-nowrap">
+      <!-- Arrow pointing down to the alert icon -->
+      <div class="absolute -bottom-1 right-4 w-2 h-2 bg-red-500 transform rotate-45"></div>
+      {error}
+    </div>
+  {/if}
 </div>
 
 <style>
