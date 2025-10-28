@@ -1,5 +1,4 @@
 <script>
-	import { goto } from '$app/navigation';
 	import { fly } from 'svelte/transition';
 	import { ArrowLeft, ArrowRight } from 'lucide-svelte';
 	import Stepper from '$lib/components/job-post-creation/Stepper.svelte';
