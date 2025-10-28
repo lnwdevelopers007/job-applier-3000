@@ -9,7 +9,7 @@ declare global {
 				name: string;
 				avatarURL?: string;
 				userID: string;
-				role: 'jobSeeker' | 'company' | 'admin';
+				role: 'jobSeeker' | 'company' | 'faculty' | 'admin';
 				verified: boolean;
 				isAuthenticated: boolean;
 			};
