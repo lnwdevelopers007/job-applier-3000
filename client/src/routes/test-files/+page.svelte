@@ -281,14 +281,13 @@
 								<option value="certification">Certification</option>
 							{:else}
 								<option value="verification">Verification</option>
-								<option value="certification">Certification</option>
 							{/if}
 						</select>
 						<p class="mt-1 text-xs text-gray-500">
 							{#if userRole === 'jobSeeker'}
 								Job seekers can upload: Resume, Transcript, Certification
 							{:else}
-								Companies can upload: Verification, Certification
+								Companies can upload: Verification
 							{/if}
 						</p>
 					</div>
@@ -491,7 +490,6 @@
 						<p class="mb-1 font-semibold">🏢 Company can upload:</p>
 						<ul class="ml-2 list-inside list-disc space-y-1">
 							<li>Verification</li>
-							<li>Certification</li>
 						</ul>
 					</div>
 					<div class="mt-2 rounded bg-purple-100 p-2">

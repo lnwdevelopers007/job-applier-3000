@@ -47,11 +47,6 @@ func TestValidateFileCategoryCompanyVerification(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestValidateFileCategoryCompanyCertification(t *testing.T) {
-	err := ValidateFileCategory(CategoryCertification, RoleCompany)
-	assert.NoError(t, err)
-}
-
 func TestValidateFileCategoryCompanyResume(t *testing.T) {
 	err := ValidateFileCategory(CategoryResume, RoleCompany)
 	assert.Error(t, err)

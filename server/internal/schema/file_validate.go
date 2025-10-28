@@ -53,7 +53,7 @@ func ValidateFileCategory(category FileCategory, userRole string) error {
 		}
 	case RoleCompany:
 		if !companyCategories[category] {
-			return fmt.Errorf("companies can only upload verification or certification files")
+			return fmt.Errorf("companies can upload verification files only")
 		}
 	default:
 		return fmt.Errorf("invalid user role")
