@@ -9,7 +9,6 @@
 	import { getUserInfo} from '$lib/utils/auth';
 	import JobPreviewDrawer from '$lib/components/job-post-creation/JobPreviewDrawer.svelte';
   import { JobService } from '$lib/services/jobService';
-  import toast from 'svelte-french-toast';
 
   let jobId = $derived($page.params.id);
   let isPreviewOpen = $state(false);
@@ -116,10 +115,7 @@
     
     if (isValid) {
       // Save the job
-      const result = await JobService.handleFormSubmit(formData, updateValidation, true, jobId);
-      if (result) {
-        toast.success('Job saved successfully!');
-      }
+      await JobService.handleFormSubmit(formData, updateValidation, true, jobId);
     }
   }
 

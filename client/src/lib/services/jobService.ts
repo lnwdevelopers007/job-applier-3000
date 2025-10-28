@@ -1,5 +1,6 @@
 import { goto } from '$app/navigation';
 import { withDeadlineTime } from '$lib/utils/datetime';
+import toast from 'svelte-french-toast';
 
 interface JobFormData {
   // Basic Info
@@ -17,22 +18,15 @@ interface JobFormData {
   jobSummary?: string;
   
   // Requirements
-  requiredSkills?: string[] | string;
-  experienceLevel?: string;
-  education?: string;
-  niceToHave?: string;
-  screeningQuestions?: string;
+  requiredSkills?: string[];
   yearsOfExperience?: string;
   educationLevel?: string;
   
   // Post Settings
   postingOpenDate?: string;
   postingCloseDate?: string;
-  applicationDeadline?: string;
-  numberOfPositions?: number;
-  visibility?: string;
+  screeningQuestions?: string;
   emailNotifications?: boolean;
-  autoReject?: boolean;
   
   // Application Requirements
   applicationRequirements?: {
@@ -40,11 +34,6 @@ interface JobFormData {
     coverLetter?: boolean;
     portfolio?: boolean;
     linkedin?: boolean;
-  };
-  
-  // Notification Settings
-  notificationSettings?: {
-    notifyOnApply?: boolean;
   };
 }
 
@@ -71,20 +60,15 @@ export class JobService {
       jobSummary: '',
       
       // Requirements
-      requiredSkills: '',
-      experienceLevel: '',
-      education: '',
-      niceToHave: '',
-      screeningQuestions: '',
+      requiredSkills: [],
+      yearsOfExperience: '',
+      educationLevel: '',
       
       // Post Settings
       postingOpenDate: '',
       postingCloseDate: '',
-      applicationDeadline: '',
-      numberOfPositions: 1,
-      visibility: 'public',
+      screeningQuestions: '',
       emailNotifications: false,
-      autoReject: false,
       
       // Application Requirements
       applicationRequirements: {
@@ -92,11 +76,6 @@ export class JobService {
         coverLetter: false,
         portfolio: false,
         linkedin: false
-      },
-      
-      // Notification Settings
-      notificationSettings: {
-        notifyOnApply: false
       }
     };
   }
@@ -124,7 +103,7 @@ export class JobService {
           : "JS, Node",
       experienceLevel: formData.yearsOfExperience || "Mid-Level",
       education: formData.educationLevel || "Bachelor",
-      niceToHave: formData.niceToHave || "",
+      niceToHave: "",
       questions: formData.screeningQuestions || "What is your expected salary?",
 
       // Post Settings
@@ -134,10 +113,10 @@ export class JobService {
       applicationDeadline: formData.postingCloseDate
         ? withDeadlineTime(formData.postingCloseDate)
         : withDeadlineTime(new Date().toISOString()),
-      numberOfPositions: Number(formData.numberOfPositions || 1),
-      visibility: formData.visibility || "public",
+      numberOfPositions: 1,
+      visibility: "public",
       emailNotifications: Boolean(formData.emailNotifications),
-      autoReject: Boolean(formData.autoReject)
+      autoReject: false
     };
   }
 
@@ -347,10 +326,18 @@ export class JobService {
       : await this.createJob(formData);
 
     if (result.success) {
+      // Show success toast with appropriate message
+      if (isEdit) {
+        toast.success('Job updated successfully!');
+      } else {
+        toast.success('Job created successfully!');
+      }
       goto('/company/dashboard');
       return true;
     } else {
       console.error('Operation failed:', result.error);
+      // Show error toast
+      toast.error(result.error || 'Failed to save job. Please try again.');
       return false;
     }
   }
