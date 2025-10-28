@@ -6,10 +6,10 @@
 	import CareerPathCard from '$lib/components/home/CareerPathCard.svelte';
 	import CTASection from '$lib/components/home/CTASection.svelte';
 	import Footer from '$lib/components/home/Footer.svelte';
-	import LayoutHeader from '$lib/components/LayoutHeader.svelte';
 	import { ArrowRight, Code, ChartLine, Brush, Shield, Smartphone, Cloud, Bot, Gamepad2, ChevronLeft, ChevronRight } from 'lucide-svelte';
 	import { isAuthenticated, navigateWithAuth } from '$lib/utils/auth';
 	import AuthModal from '$lib/components/ui/AuthModal.svelte';
+	import { fetchCompanyNameLogo } from '$lib/utils/fetcher';
 
 	let showAuthModal = $state(false);
 	let authModalTitle = $state('Sign in required');
@@ -34,9 +34,10 @@
 	let recentJobs = $state<Array<{
 		id: string;
 		company: string;
+		companyLogo: string;
 		title: string;
 		location: string;
-		locationType: string | null;
+		locationType: 'on-site' | 'remote' | 'hybrid' | null;
 		minSalary: number;
 		maxSalary: number;
 		currency: string;
@@ -53,8 +54,9 @@
 			const res = await fetch('/jobs/query/?latest=true');
 			if (res.ok) {
 				const data = await res.json();
-				// Get the 3 most recent jobs and map to home page format
-				recentJobs = data.slice(0, 3).map((job: {
+				
+				// Get the 3 most recent jobs and fetch company info for each
+				const jobPromises = data.slice(0, 3).map(async (job: {
 					id: string;
 					title?: string;
 					location?: string;
@@ -65,44 +67,53 @@
 					workType?: string;
 					requiredSkills?: string;
 					postOpenDate?: string;
-				}) => ({
-					id: job.id,
-					company: "Unknown Company",
-					title: job.title || "Untitled Position",
-					location: job.location || "N/A",
-					locationType: job.workArrangement?.toLowerCase() === 'remote' ? 'remote' : 
-								  job.workArrangement?.toLowerCase() === 'hybrid' ? 'hybrid' : 
-								  job.workArrangement?.toLowerCase() === 'on-site' ? 'on-site' : null,
-					minSalary: job.minSalary || 0,
-					maxSalary: job.maxSalary || 0,
-					currency: job.currency || 'THB',
-					type: job.workType ? job.workType.charAt(0).toUpperCase() + job.workType.slice(1) : null,
-					tags: job.requiredSkills 
-						? job.requiredSkills.split(',').map((skill: string) => skill.trim()).slice(0, 3)
-						: [],
-					postedAt: job.postOpenDate && job.postOpenDate !== "0001-01-01T00:00:00Z"
-						? `Posted ${Math.floor((Date.now() - new Date(job.postOpenDate).getTime()) / (1000 * 60 * 60 * 24))} days ago`
-						: 'Recently posted',
-					badge: (() => {
-						// Show "Remote" badge for remote jobs
-						if (job.workArrangement?.toLowerCase() === 'remote') {
-							return { text: 'Remote', type: 'remote' };
-						}
-						// Show "Internship" badge for internship/casual positions
-						if (job.workType?.toLowerCase().includes('intern') || job.workType?.toLowerCase() === 'casual') {
-							return { text: 'Internship', type: 'internship' };
-						}
-						// Show "New" badge for jobs posted within last 3 days
-						if (job.postOpenDate && job.postOpenDate !== "0001-01-01T00:00:00Z") {
-							const daysAgo = Math.floor((Date.now() - new Date(job.postOpenDate).getTime()) / (1000 * 60 * 60 * 24));
-							if (daysAgo <= 3) {
-								return { text: 'New', type: 'new' };
+					companyID?: string;
+				}) => {
+					// Fetch company name and logo
+					let [companyName, companyLogo] = await fetchCompanyNameLogo(job.companyID || '');
+					
+					return {
+						id: job.id,
+						company: companyName,
+						companyLogo: companyLogo,
+						title: job.title || "Untitled Position",
+						location: job.location || "N/A",
+						locationType: job.workArrangement?.toLowerCase() === 'remote' ? 'remote' : 
+									  job.workArrangement?.toLowerCase() === 'hybrid' ? 'hybrid' : 
+									  job.workArrangement?.toLowerCase() === 'on-site' ? 'on-site' : null,
+						minSalary: job.minSalary || 0,
+						maxSalary: job.maxSalary || 0,
+						currency: job.currency || 'THB',
+						type: job.workType ? job.workType.charAt(0).toUpperCase() + job.workType.slice(1) : null,
+						tags: job.requiredSkills 
+							? job.requiredSkills.split(',').map((skill: string) => skill.trim()).slice(0, 3)
+							: [],
+						postedAt: job.postOpenDate && job.postOpenDate !== "0001-01-01T00:00:00Z"
+							? `Posted ${Math.floor((Date.now() - new Date(job.postOpenDate).getTime()) / (1000 * 60 * 60 * 24))} days ago`
+							: 'Recently posted',
+						badge: (() => {
+							// Show "Remote" badge for remote jobs
+							if (job.workArrangement?.toLowerCase() === 'remote') {
+								return { text: 'Remote', type: 'remote' };
 							}
-						}
-						return null;
-					})(),
-					logoStyle: 'bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600'
-				}));
+							// Show "Internship" badge for internship/casual positions
+							if (job.workType?.toLowerCase().includes('intern') || job.workType?.toLowerCase() === 'casual') {
+								return { text: 'Internship', type: 'internship' };
+							}
+							// Show "New" badge for jobs posted within last 3 days
+							if (job.postOpenDate && job.postOpenDate !== "0001-01-01T00:00:00Z") {
+								const daysAgo = Math.floor((Date.now() - new Date(job.postOpenDate).getTime()) / (1000 * 60 * 60 * 24));
+								if (daysAgo <= 3) {
+									return { text: 'New', type: 'new' };
+								}
+							}
+							return null;
+						})(),
+						logoStyle: 'bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600'
+					};
+				});
+				
+				recentJobs = await Promise.all(jobPromises);
 			}
 		} catch (error) {
 			console.error('Failed to fetch recent jobs:', error);
@@ -201,10 +212,7 @@
 	<meta name="description" content="Connect with leading tech companies and discover opportunities tailored for KU Computer Engineering students" />
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50">
-	<!-- Layout Header with transparent background for home page -->
-	<LayoutHeader transparent={true} absolute={true} />
-	
+<div class="min-h-screen">
 	<main>
 		<HeroSection />
 
