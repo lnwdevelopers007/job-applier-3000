@@ -1,5 +1,5 @@
 <script lang="ts">
-  type BadgeVariant = 'primary' | 'secondary' | 'warning' | 'success' | 'info' | 'purple';
+  type BadgeVariant = 'primary' | 'secondary' | 'warning' | 'danger' | 'success' | 'info' | 'purple';
   
   let {
     variant = 'secondary',
@@ -26,7 +26,8 @@
   const variantClasses = {
     primary: 'bg-green-50 text-green-700 ring-green-600/15',
     secondary: 'bg-gray-100 text-gray-700 ring-gray-600/15',
-    warning: 'bg-amber-50 text-amber-700 ring-amber-600/15',
+    warning: 'bg-yellow-50 text-yellow-700 ring-yellow-600/15',
+    danger: 'bg-red-50 text-red-700 ring-red-600/15',
     success: 'bg-green-50 text-green-700 ring-green-600/15',
     info: 'bg-sky-50 text-sky-700 ring-sky-600/15',
     purple: 'bg-purple-50 text-purple-700 ring-purple-600/15'
