@@ -3,6 +3,7 @@
 	import ApplyButton from './ApplyButton.svelte';
 	import SafeHTML from '$lib/utils/SafeHTML.svelte';
 	import Badge from './Badge.svelte';
+	import WorkInfoBadge from './WorkInfoBadge.svelte';
 	import SkillTag from './SkillTag.svelte';
 	import CompanyCard from './CompanyCard.svelte';
 	import { formatRelativeTime } from '$lib/utils/datetime';
@@ -131,8 +132,8 @@
 
 		<!-- Job Type and Work Arrangement Badges -->
 		<div class="flex flex-wrap gap-2 mb-4">
-			<Badge variant="purple" text={job.workArrangement || 'full-time'} />
-			<Badge variant="info" text={job.workType || 'on-site'} />
+			<WorkInfoBadge type="workArrangement" value={job.workArrangement || 'on-site'} />
+			<WorkInfoBadge type="workType" value={job.workType || 'full-time'} />
 		</div>
 
 		<!-- Action Buttons -->

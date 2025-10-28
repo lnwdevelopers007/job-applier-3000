@@ -2,6 +2,7 @@
 	import { MapPin, Clock } from 'lucide-svelte';
 	import AuthModal from '$lib/components/ui/AuthModal.svelte';
 	import Badge from '$lib/components/job/Badge.svelte';
+	import WorkInfoBadge from '$lib/components/job/WorkInfoBadge.svelte';
 	import { isAuthenticated, navigateWithAuth } from '$lib/utils/auth';
 
 	type Job = {
@@ -180,10 +181,10 @@
 			{job ? formatSalary(job.minSalary, job.maxSalary, job.currency) : ''}
 		</span>
 		{#if job?.type}
-			<Badge variant="purple" size="xs" text={job.type} />
+			<WorkInfoBadge type="workType" value={job.type} size="xs" />
 		{/if}
 		{#if job?.locationType}
-			<Badge variant="info" size="xs" text={job.locationType} />
+			<WorkInfoBadge type="workArrangement" value={job.locationType} size="xs" />
 		{/if}
 	</div>
 
