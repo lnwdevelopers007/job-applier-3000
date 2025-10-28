@@ -1,5 +1,5 @@
 <script lang="ts">
-  type BadgeVariant = 'primary' | 'secondary' | 'warning' | 'danger' | 'success' | 'info' | 'purple';
+  type BadgeVariant = 'primary' | 'secondary' | 'warning' | 'danger' | 'success' | 'info' | 'purple' | 'indigo' | 'pink' | 'teal' | 'orange' | 'cyan' | 'lime' | 'rose';
   
   let {
     variant = 'secondary',
@@ -30,7 +30,14 @@
     danger: 'bg-red-50 text-red-700 ring-red-600/15',
     success: 'bg-green-50 text-green-700 ring-green-600/15',
     info: 'bg-sky-50 text-sky-700 ring-sky-600/15',
-    purple: 'bg-purple-50 text-purple-700 ring-purple-600/15'
+    purple: 'bg-purple-50 text-purple-700 ring-purple-600/15',
+    indigo: 'bg-indigo-50 text-indigo-700 ring-indigo-600/15',
+    pink: 'bg-pink-50 text-pink-700 ring-pink-600/15',
+    teal: 'bg-teal-50 text-teal-700 ring-teal-600/15',
+    orange: 'bg-orange-50 text-orange-700 ring-orange-600/15',
+    cyan: 'bg-cyan-50 text-cyan-700 ring-cyan-600/15',
+    lime: 'bg-lime-50 text-lime-700 ring-lime-600/15',
+    rose: 'bg-rose-50 text-rose-700 ring-rose-600/15'
   };
 
   const sizeClasses = {
