@@ -33,6 +33,19 @@ interface JobFormData {
   visibility?: string;
   emailNotifications?: boolean;
   autoReject?: boolean;
+  
+  // Application Requirements
+  applicationRequirements?: {
+    resume?: boolean;
+    coverLetter?: boolean;
+    portfolio?: boolean;
+    linkedin?: boolean;
+  };
+  
+  // Notification Settings
+  notificationSettings?: {
+    notifyOnApply?: boolean;
+  };
 }
 
 interface ValidationState {
@@ -62,6 +75,7 @@ export class JobService {
       experienceLevel: '',
       education: '',
       niceToHave: '',
+      screeningQuestions: '',
       
       // Post Settings
       postingOpenDate: '',
@@ -69,8 +83,21 @@ export class JobService {
       applicationDeadline: '',
       numberOfPositions: 1,
       visibility: 'public',
-      emailNotifications: true,
-      autoReject: false
+      emailNotifications: false,
+      autoReject: false,
+      
+      // Application Requirements
+      applicationRequirements: {
+        resume: false,
+        coverLetter: false,
+        portfolio: false,
+        linkedin: false
+      },
+      
+      // Notification Settings
+      notificationSettings: {
+        notifyOnApply: false
+      }
     };
   }
 
