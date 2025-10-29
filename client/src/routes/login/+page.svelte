@@ -35,7 +35,7 @@
     <p class="text-sm text-gray-500">Welcome back! Please login to continue.</p>
   </div>
 
-  <form onsubmit={e => { e.preventDefault(); handleLogin(); }} class="space-y-6">
+  <!-- <form onsubmit={e => { e.preventDefault(); handleLogin(); }} class="space-y-6">
     <FormInput
       id="email"
       type="email"
@@ -57,7 +57,7 @@
     <FormButton type="submit">Login</FormButton>
   </form>
 
-  <OrDivider />
+  <OrDivider /> -->
   
   <GoogleOAuthButton text="Continue with Google" userType="login" />
   

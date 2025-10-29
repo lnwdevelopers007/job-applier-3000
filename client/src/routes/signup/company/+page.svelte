@@ -71,11 +71,11 @@
   {#if currentStep === 1}
     <div class="mb-8" in:fly={{ x: -20, duration: 200 }}>
       <h1 class="text-3xl font-semibold text-gray-900 mb-2">Sign up</h1>
-      <p class="text-sm text-gray-500">Enter your email to start hiring talents</p>
+      <p class="text-sm text-gray-500">Register as a recruiter to start hiring talents</p>
     </div>
     
-    <form onsubmit={e => { e.preventDefault(); handleEmailStep(); }} class="space-y-6">
-      <FormInput
+    <!-- <form onsubmit={e => { e.preventDefault(); handleEmailStep(); }} class="space-y-6"> -->
+      <!-- <FormInput
         id="email"
         type="email"
         label="Email"
@@ -87,7 +87,7 @@
       <FormButton type="submit">Continue with Email</FormButton>
     </form>
 
-    <OrDivider />
+    <OrDivider /> -->
     <GoogleOAuthButton text="Continue with Google" userType="company" />
 
     <p class="text-center text-sm text-gray-500 mt-8">
