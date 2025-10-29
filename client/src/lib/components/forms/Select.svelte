@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	let {
 		label = '',
 		value = $bindable(''),
@@ -8,7 +8,8 @@
 		helpText = '',
 		error = '',
 		class: className = '',
-		onchange = () => {}
+		onchange = (event: Event & { currentTarget: HTMLSelectElement }) => {},
+		disabled = false
 	} = $props();
 </script>
 

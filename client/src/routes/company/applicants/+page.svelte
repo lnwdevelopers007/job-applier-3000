@@ -238,7 +238,7 @@
 
       <select
         class="pr-8 pl-3 py-1 bg-white border border-gray-200 rounded text-sm text-left"
-        on:change={(e) => handleStatusFilter(e.target.value.toUpperCase())}
+        on:change={(e) => handleStatusFilter((e.target as HTMLSelectElement).value.toUpperCase())}
       >
         <option value="">All Statuses</option>
         <option value="Accepted">Accepted</option>
