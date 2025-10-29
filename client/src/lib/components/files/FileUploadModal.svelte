@@ -112,6 +112,7 @@
     
     <!-- Category Selection -->
     <div class="mb-4">
+      <!-- svelte-ignore a11y_label_has_associated_control -->
       <label class="block text-sm font-medium text-gray-700 mb-2">
         Document Category
       </label>

@@ -73,22 +73,6 @@
     <!-- Header -->
     <div class="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
       <h3 class="text-lg font-medium text-gray-900 truncate">{filename}</h3>
-      <div class="flex items-center gap-2">
-        <button
-          onclick={handleDownload}
-          class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-          title="Download"
-        >
-          <Download class="w-5 h-5" />
-        </button>
-        <button
-          onclick={handleClose}
-          class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-          title="Close"
-        >
-          <X class="w-5 h-5" />
-        </button>
-      </div>
     </div>
     
     <!-- Content -->
