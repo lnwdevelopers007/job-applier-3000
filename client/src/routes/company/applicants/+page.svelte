@@ -1,5 +1,6 @@
-<script lang="ts">
+ <script lang="ts">
   import { onMount } from 'svelte';
+  import ApplicantFilesSection from '$lib/components/files/ApplicantFilesSection.svelte';
   import {
     Search,
     GraduationCap,
@@ -9,10 +10,7 @@
     Check,
     X,
     User,
-    CodeXml,
-    FileText,
-    Github,
-    Link
+    CodeXml
   } from 'lucide-svelte';
   import { getUserInfo, isAuthenticated } from '$lib/utils/auth';
   import { goto } from '$app/navigation';
@@ -29,15 +27,9 @@
   let isUpdatingStatus: boolean = false;
 
   $: paginatedCandidates = candidates.slice(
-  (currentPage - 1) * itemsPerPage,
-  currentPage * itemsPerPage
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
-
-  function getDocIcon(doc: string) {
-    if (doc.toLowerCase().endsWith('.pdf')) return FileText;
-    if (doc.toLowerCase().includes('github')) return Github;
-    return Link;
-  }
 
   function normalizeUser(user: any) {
     const infoArray = user.userInfo || [];
@@ -67,7 +59,7 @@
     }
 
     if (!company?.userID) {
-      console.error('Company not found in localStorage');
+      console.error('Company not found');
       goto('/login');
       return [];
     }
@@ -75,6 +67,7 @@
     try {
       // Get all jobs owned by this company
       const jobsRes = await fetch(`/jobs/query?companyID=${company.userID}`, {
+        credentials: 'include'
       });
       if (!jobsRes.ok) throw new Error('Failed to fetch company jobs');
 
@@ -89,6 +82,7 @@
         if (!jobID) continue;
 
         const applyRes = await fetch(`/apply?jobID=${jobID}`, {
+          credentials: 'include'
         });
         if (!applyRes.ok) continue;
 
@@ -115,6 +109,7 @@
         const applicantID = app.jobApplication.applicantID;
 
         const userRes = await fetch(`/users/query?id=${applicantID}`, {
+          credentials: 'include'
         });
         const userData = await userRes.json();
         const user = normalizeUser(userData[0] || {});
@@ -171,6 +166,7 @@
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           id: candidate.id,
           applicantID: candidate.applicantID,
@@ -201,8 +197,8 @@
   }
 
   function changePage(page: number) {
-  if (page < 1 || page > totalPages) return;
-  currentPage = page;
+    if (page < 1 || page > totalPages) return;
+    currentPage = page;
   }
 
   onMount(async () => {
@@ -219,40 +215,40 @@
   <p class="my-3 text-base text-gray-600">
     Manage candidates across all job postings
   </p>
-      <div class="flex-1 flex items-center bg-white rounded-lg shadow px-3 py-1">
-        <Search class="w-5 h-5 text-gray-500" />
-        <input
-          type="text"
-          placeholder="Search candidates by name, email, skills or position..."
-          class="flex-1 ml-2 outline-none border-none text-sm"
-        />
-      </div>
+  <div class="flex-1 flex items-center bg-white rounded-lg shadow px-3 py-1">
+    <Search class="w-5 h-5 text-gray-500" />
+    <input
+      type="text"
+      placeholder="Search candidates by name, email, skills or position..."
+      class="flex-1 ml-2 outline-none border-none text-sm"
+    />
+  </div>
 
-      <div class="flex gap-2 my-2">      
-      <select class="pr-8 pl-3 py-1 bg-white border border-gray-200 rounded text-sm text-left">
-        <option>All Jobs</option>
-        <option>AI Researcher</option>
-        <option>Developer</option>
-        <option>Tester</option>
-      </select>
+  <div class="flex gap-2 my-2">
+    <select class="pr-8 pl-3 py-1 bg-white border border-gray-200 rounded text-sm text-left">
+      <option>All Jobs</option>
+      <option>AI Researcher</option>
+      <option>Developer</option>
+      <option>Tester</option>
+    </select>
 
-      <select
-        class="pr-8 pl-3 py-1 bg-white border border-gray-200 rounded text-sm text-left"
-        on:change={(e) => handleStatusFilter((e.target as HTMLSelectElement).value.toUpperCase())}
-      >
-        <option value="">All Statuses</option>
-        <option value="Accepted">Accepted</option>
-        <option value="Pending">Pending</option>
-        <option value="Rejected">Rejected</option>
-      </select>
+    <select
+      class="pr-8 pl-3 py-1 bg-white border border-gray-200 rounded text-sm text-left"
+      on:change={(e) => handleStatusFilter((e.currentTarget as HTMLSelectElement).value.toUpperCase())}
+    >
+      <option value="">All Statuses</option>
+      <option value="Accepted">Accepted</option>
+      <option value="Pending">Pending</option>
+      <option value="Rejected">Rejected</option>
+    </select>
 
-      <div class="border-l border-gray-300 h-6 py-1"></div>
-        <button class="px-3 py-1 bg-white border-1 border-gray-200 rounded-full text-sm">All</button>
-        <button class="px-3 py-1 bg-white border-1 border-gray-200  rounded-full text-sm">New ({pendingCount})</button>
-        <button class="px-3 py-1 bg-white border-1 border-gray-200  rounded-full text-sm">High Match</button>
-        <button class="px-3 py-1 bg-white border-1 border-gray-200  rounded-full text-sm">Recent Grads</button>
-        <button class="px-3 py-1 bg-white border-1 border-gray-200  rounded-full text-sm">Experienced</button>
-      </div>
+    <div class="border-l border-gray-300 h-6 py-1"></div>
+    <button class="px-3 py-1 bg-white border-1 border-gray-200 rounded-full text-sm">All</button>
+    <button class="px-3 py-1 bg-white border-1 border-gray-200  rounded-full text-sm">New ({pendingCount})</button>
+    <button class="px-3 py-1 bg-white border-1 border-gray-200  rounded-full text-sm">High Match</button>
+    <button class="px-3 py-1 bg-white border-1 border-gray-200  rounded-full text-sm">Recent Grads</button>
+    <button class="px-3 py-1 bg-white border-1 border-gray-200  rounded-full text-sm">Experienced</button>
+  </div>
 
   <div class="grid grid-cols-3 gap-4 mt-4">
     <div class="col-span-1 bg-white p-4 rounded-lg shadow">
@@ -263,7 +259,7 @@
         <button class="px-2 py-1 bg-white border-1 border-gray-200  rounded-full text-xs">Shortlisted</button>
         <button class="px-2 py-1 bg-white border-1 border-gray-200  rounded-full text-xs">Rejected</button>
       </div>
-    <div class="mt-3 space-y-3">
+      <div class="mt-3 space-y-3">
         {#each paginatedCandidates as candidate, i (i)}
           <button
             class="flex items-start gap-3 p-3 border rounded-lg shadow-sm hover:shadow-md transition cursor-pointer w-full
@@ -326,12 +322,12 @@
               <div class="flex gap-2 font-semibold">
                 <button class="flex px-4 py-1 text-xs bg-gray-100 rounded border border-gray-300 hover:bg-gray-500"><StickyNote class="w-4 h-4 mx-1" />Notes</button>
                 <button class="flex px-4 py-1 text-xs bg-green-500 text-white rounded border border-green-300 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                on:click={() => updateStatus(selectedCandidate.id, 'ACCEPTED')}
-                disabled={isUpdatingStatus || selectedCandidate.status === 'Accepted' || selectedCandidate.status === 'Rejected'}
+                  on:click={() => updateStatus(selectedCandidate.id, 'ACCEPTED')}
+                  disabled={isUpdatingStatus || selectedCandidate.status === 'Accepted' || selectedCandidate.status === 'Rejected'}
                 ><Check class="w-4 h-4 mx-1" />Accept</button>
                 <button class="flex px-4 py-1 text-xs bg-red-500 text-white rounded border border-red-300 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                on:click={() => updateStatus(selectedCandidate.id, 'REJECTED')}
-                disabled={isUpdatingStatus || selectedCandidate.status === 'Accepted' || selectedCandidate.status === 'Rejected'}
+                  on:click={() => updateStatus(selectedCandidate.id, 'REJECTED')}
+                  disabled={isUpdatingStatus || selectedCandidate.status === 'Accepted' || selectedCandidate.status === 'Rejected'}
                 ><X class="w-4 h-4 mx-1" />Reject</button>
               </div>
             </div>
@@ -356,25 +352,25 @@
         </div>
         <div class="p-4">       
           <hr class="w-full my-4 border-gray-300" />
-            <h3 class="flex gap-1 font-semibold text-gray-800 text-lg my-4"><User class="mt-0.5" />Contact Information</h3>
-            <div class="grid grid-cols-2 gap-4 w-full text-sm text-gray-700">
-              <div class="flex flex-col">
-                <span class="font-semibold text-gray-500 text-xs">Email</span>
-                <span class="text-gray-800">{selectedCandidate.email || "alice.johnson@gmail.com"}</span>
-              </div>
-              <div class="flex flex-col">
-                <span class="font-semibold text-gray-500 text-xs">Phone</span>
-                <span class="text-gray-800">{selectedCandidate.phone || "+66 123 4567"}</span>
-              </div>
-              <div class="flex flex-col">
-                <span class="font-semibold text-gray-500 text-xs">Address</span>
-                <span class="text-gray-800">{selectedCandidate.address || "Bangkok, Thailand"}</span>
-              </div>
-              <div class="flex flex-col">
-                <span class="font-semibold text-gray-500 text-xs">LinkedIn</span>
-                <span class="text-gray-800 break-all whitespace-normal">{selectedCandidate.linkedin || "None"}</span>
-              </div>
+          <h3 class="flex gap-1 font-semibold text-gray-800 text-lg my-4"><User class="mt-0.5" />Contact Information</h3>
+          <div class="grid grid-cols-2 gap-4 w-full text-sm text-gray-700">
+            <div class="flex flex-col">
+              <span class="font-semibold text-gray-500 text-xs">Email</span>
+              <span class="text-gray-800">{selectedCandidate.email || "alice.johnson@gmail.com"}</span>
             </div>
+            <div class="flex flex-col">
+              <span class="font-semibold text-gray-500 text-xs">Phone</span>
+              <span class="text-gray-800">{selectedCandidate.phone || "+66 123 4567"}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="font-semibold text-gray-500 text-xs">Address</span>
+              <span class="text-gray-800">{selectedCandidate.address || "Bangkok, Thailand"}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="font-semibold text-gray-500 text-xs">LinkedIn</span>
+              <span class="text-gray-800 break-all whitespace-normal">{selectedCandidate.linkedin || "None"}</span>
+            </div>
+          </div>
         </div>
         <div class="px-4 py-2">
           <h3 class="flex gap-1 font-semibold text-gray-800 text-lg mt-2"><GraduationCap class="mt-0.5" />Education</h3>
@@ -406,31 +402,10 @@
             {/if}
           </div>
         </div>
-        <div class="px-4 py-2 mb-2">
-          <h3 class="flex gap-1 font-semibold text-gray-800 text-lg mt-2">
-            <FileText class="mt-0.5" />Documents & Portfolio
-          </h3>
-          <div class="flex flex-col gap-4 mt-3">
-            {#if selectedCandidate.documents && selectedCandidate.documents.length > 0}
-              {#each selectedCandidate.documents as doc, i (i)}
-                <a href={doc.name.startsWith('http') ? doc.name : '#'} target="_blank" class="flex items-center gap-4 bg-gray-100 border border-gray-300 rounded p-3 hover:bg-gray-200 transition">
-                  {#await Promise.resolve(getDocIcon(doc.name)) then Icon}
-                    <Icon class="w-8 h-8 text-gray-600" />
-                  {/await}
-                  <div class="flex flex-col">
-                    <span class="text-sm font-semibold text-gray-800">{doc.name}</span>
-                    <span class="text-xs text-gray-500">{doc.description}</span>
-                  </div>
-                </a>
-              {/each}
-            {:else}
-              <span class="text-gray-500 text-xs">No documents uploaded</span>
-            {/if}
-          </div>
-        </div>
+        
+        <!-- Applicant Files Section - NEW -->
+        <ApplicantFilesSection applicationId={selectedCandidate.id} />
       {/if}
     </div>
   </div>
 </div>
-
-
