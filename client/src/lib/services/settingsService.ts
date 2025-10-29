@@ -175,7 +175,7 @@ export class SettingsService {
 	// Map backend user data to frontend format
 	static mapUserToUserData<T extends UserData>(user: User, userType: 'seeker' | 'company'): T {
 		const baseData: BaseUserData = {
-			id: user.id || (user as Record<string, unknown>)._id as string,
+			id: user.id || ((user as unknown as Record<string, unknown>)._id as string),
 			name: user.name || '',
 			email: user.email || '',
 			avatar: user.avatarURL || '',
