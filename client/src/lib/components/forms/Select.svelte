@@ -27,7 +27,6 @@
     error = '',
     showError = false,
     class: className = '',
-    onchange = (event: Event & { currentTarget: HTMLSelectElement }) => {},
     disabled = false
   }: Props = $props();
   
@@ -51,6 +50,7 @@
 
 <div class={className}>
   {#if label}
+    <!-- svelte-ignore a11y_label_has_associated_control -->
     <label class="block text-sm font-medium text-gray-700 mb-1">
       {label}
       {#if required}

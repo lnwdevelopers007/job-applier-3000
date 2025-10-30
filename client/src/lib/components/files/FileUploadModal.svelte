@@ -8,7 +8,7 @@
 	let {
 		isOpen = $bindable(false),
 		userRole = 'jobSeeker',
-		onUploadSuccess = (file: any) => {}
+		onUploadSuccess = () => {}
 	} = $props();
 
 	let selectedFile = $state<File | null>(null);

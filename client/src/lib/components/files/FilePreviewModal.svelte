@@ -1,6 +1,6 @@
 <script lang="ts">
   import Modal from '../ui/Modal.svelte';
-  import { X, Download, Loader } from 'lucide-svelte';
+  import { Loader } from 'lucide-svelte';
   import { fileService } from '$lib/services/fileService';
   
   let {
@@ -26,20 +26,6 @@
       console.error('Preview error:', err);
     } finally {
       isLoading = false;
-    }
-  }
-  
-  async function handleDownload() {
-    try {
-      const blob = await fileService.downloadFile(fileId);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('Download error:', err);
     }
   }
   

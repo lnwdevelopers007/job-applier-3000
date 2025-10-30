@@ -8,7 +8,7 @@
 		onFileSelect = () => {}
 	} = $props();
 	
-	// @ts-ignore
+
 	/**
 	 * @type {HTMLInputElement}
 	 */
@@ -17,8 +17,8 @@
 	
 	// Display priority: previewImage (newly selected) > currentImage (existing)
 	let displayImage = $derived(previewImage || currentImage);
-	
-	// @ts-ignore
+
+	// @ts-expect-error: event target may be undefined, safe to ignore
 	function handleFileSelect(event) {
 		const file = event.target.files[0];
 		if (file) {
