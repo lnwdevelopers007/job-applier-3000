@@ -38,7 +38,7 @@ class FileService {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({ error: 'Upload failed' }));
       throw new Error(error.error || 'Failed to upload file');
     }
 
@@ -54,7 +54,7 @@ class FileService {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({ error: 'Failed to fetch files' }));
       throw new Error(error.error || 'Failed to fetch files');
     }
 
@@ -71,7 +71,7 @@ class FileService {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({ error: 'Download failed' }));
       throw new Error(error.error || 'Failed to download file');
     }
 
