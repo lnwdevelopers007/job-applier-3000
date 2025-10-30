@@ -50,14 +50,16 @@ func TestValidateFileCategoryCompanyVerification(t *testing.T) {
 func TestValidateFileCategoryCompanyResume(t *testing.T) {
 	err := ValidateFileCategory(CategoryResume, RoleCompany)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "companies can only upload")
+	assert.Contains(t, err.Error(), "companies can upload verification files only") 
 }
+
 
 func TestValidateFileCategoryCompanyTranscript(t *testing.T) {
 	err := ValidateFileCategory(CategoryTranscript, RoleCompany)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "companies can only upload")
+	assert.Contains(t, err.Error(), "companies can upload verification files only")
 }
+
 
 func TestValidateFileCategoryInvalidRole(t *testing.T) {
 	err := ValidateFileCategory(CategoryResume, "invalid_role")
@@ -153,5 +155,5 @@ func TestValidateFileCompanyInvalidCategory(t *testing.T) {
 
 	err := ValidateFile(file, RoleCompany)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "companies can only upload")
+	assert.Contains(t, err.Error(), "companies can upload verification files only")
 }
