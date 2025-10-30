@@ -13,6 +13,7 @@
   import { fetchJob, fetchCompany, fetchCompanyNameLogo, DEFAULT_COMPANY_LOGO } from '$lib/utils/fetcher';
   import { isAuthenticated, getUserInfo } from '$lib/utils/auth';
 	import { formatDateDMY } from '$lib/utils/datetime';
+  import { bookmarkService } from '$lib/services/bookmarkService';
 
   let { data }: { data: { jobId: string } } = $props();
 
@@ -23,13 +24,35 @@
   let loading = $state(true);
   let error = $state<string | null>(null);
   let isBookmarked = $state(false);
-  let bookmarkedJobs = $state(new Set<string>());
   let appliedJobs = $state(new Set<string>());
   let userInfo: any = null;
   let showFloatingCard = $state(false);
   let applyButtonRef = $state<HTMLElement | undefined>();
   let showApplyModal = $state(false);
   let showAllSkills = $state(false);
+  
+  // Subscribe to bookmark changes
+  $effect(() => {
+    const unsubscribe = bookmarkService.subscribe((jobs) => {
+      if (job?.id) {
+        isBookmarked = jobs.has(job.id);
+      }
+    });
+    
+    return unsubscribe;
+  });
+  
+  // Initialize bookmarks when job loads
+  $effect(() => {
+    if (job?.id) {
+      const user = getUserInfo();
+      if (user?.userID) {
+        bookmarkService.initializeBookmarks(user.userID).then(() => {
+          isBookmarked = bookmarkService.isBookmarked(job.id);
+        });
+      }
+    }
+  });
 
   function getRelativeTime(dateString: string): string {
     if (!dateString || dateString === 'Unknown') return 'Unknown';
@@ -167,7 +190,6 @@
         job.logo = DEFAULT_COMPANY_LOGO;
       }
 
-      checkBookmarkStatus();
     } catch (err) {
       console.error('Error loading job:', err);
       error = 'Failed to load job details. Please try again.';
@@ -310,36 +332,24 @@
     }
   }
 
-  function checkBookmarkStatus() {
-    if (isAuthenticated() && userInfo?.userID && job?.id) {
-      isBookmarked = bookmarkedJobs.has(job.id);
-    }
-  }
 
   async function toggleBookmark() {
     if (!job?.id) return;
-
-    if (isBookmarked) {
-      bookmarkedJobs.delete(job.id);
-      isBookmarked = false;
-    } else {
-      bookmarkedJobs.add(job.id);
-      isBookmarked = true;
-    }
     
-    // TODO: Add backend API call when ready
-    // await fetch('/bookmarks', { method: isBookmarked ? 'POST' : 'DELETE', ... });
+    const user = getUserInfo();
+    if (user?.userID) {
+      const newState = await bookmarkService.toggleBookmark(job.id, user.userID);
+      isBookmarked = newState;
+    } else {
+      console.warn('User must be logged in to bookmark jobs');
+    }
   }
 
   async function toggleJobBookmark(jobId: string) {
-    if (bookmarkedJobs.has(jobId)) {
-      bookmarkedJobs.delete(jobId);
-    } else {
-      bookmarkedJobs.add(jobId);
+    const user = getUserInfo();
+    if (user?.userID) {
+      await bookmarkService.toggleBookmark(jobId, user.userID);
     }
-    
-    // TODO: Add backend API call when ready
-    // await fetch('/bookmarks', { method: bookmarkedJobs.has(jobId) ? 'POST' : 'DELETE', ... });
   }
 
   function handleShare() {

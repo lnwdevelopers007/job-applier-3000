@@ -1,6 +1,8 @@
 <script lang="ts">
-	import { MapPin, Users, ExternalLink } from 'lucide-svelte';
 	import SideDrawer from '$lib/components/ui/SideDrawer.svelte';
+	import JobDetailCard from '$lib/components/job/JobDetailCard.svelte';
+	import JobCard from '../job/JobCard.svelte';
+	import { SettingsService, type CompanyUserData } from '$lib/services/settingsService';
 	
 	let { 
 		isOpen = $bindable(false),
@@ -8,16 +10,66 @@
 	} = $props();
 	
 	let activeTab = $state('detail'); // 'detail' or 'search'
+	let companyData = $state<CompanyUserData | null>(null);
+	// let loadingCompany = $state(false);
 	
 	function formatSalary() {
-		if (!formData.salaryMin || !formData.salaryMax) return 'Not specified';
-		return `${formData.salaryMin.toLocaleString()}-${formData.salaryMax.toLocaleString()}`;
+		if (!formData.minSalary || !formData.maxSalary) return 'Not specified';
+		const currency = formData.currency || 'THB';
+		return `${currency} ${formData.minSalary.toLocaleString()}-${formData.maxSalary.toLocaleString()}`;
 	}
-	
-	function formatDate(dateString: string) {
-		if (!dateString) return '';
-		const date = new Date(dateString);
-		return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+	// Load company data when drawer opens
+	$effect(() => {
+		if (isOpen && !companyData) {
+			loadCompanyData();
+		}
+	});
+
+	async function loadCompanyData() {
+		try {
+			// loadingCompany = true;
+			companyData = await SettingsService.loadUserData<CompanyUserData>('company');
+		} catch (error) {
+			console.error('Failed to load company data:', error);
+			// Use default data if loading fails
+			companyData = null;
+		} finally {
+			// loadingCompany = false;
+		}
+	}
+
+	// Transform formData to match Job interface for JobDetailCard
+	const previewJob = $derived({
+		id: 'preview',
+		title: formData.jobTitle || 'Job Title',
+		company: companyData?.companyName || 'Your Company Name',
+		logo: companyData?.avatar || companyData?.companyLogo || '',
+		location: formData.location || companyData?.headquarters || 'Bangkok, Thailand',
+		workType: formData.workArrangement || 'on-site',
+		workArrangement: formData.workType || 'full-time',
+		salary: formatSalary(),
+		posted: formData.postingOpenDate || new Date().toISOString(),
+		closeDate: formData.postingCloseDate || '',
+		description: formData.jobDescription || 'No job description provided',
+		tags: formData.requiredSkills || []
+	});
+
+	// Transform company data for JobDetailCard
+	const previewCompany = $derived({
+		name: companyData?.companyName || 'Your Company Name',
+		logo: companyData?.avatar || companyData?.companyLogo || '',
+		location: companyData?.headquarters || formData.location || 'Bangkok, Thailand',
+		size: companyData?.companySize || '1-10 employees',
+		industry: companyData?.industry || 'Technology',
+		aboutUs: companyData?.aboutCompany || 'This is where your company description will appear. You can update your company information in your company profile settings.',
+		website: companyData?.companyWebsite || '',
+		linkedin: companyData?.companyLinkedin || '',
+		foundedYear: companyData?.foundedYear || ''
+	});
+
+	function handlePreviewApply() {
+		// Disabled for preview
 	}
 </script>
 
@@ -32,166 +84,31 @@
 		<div class="border-b border-gray-200">
 			<button 
 				onclick={() => activeTab = 'detail'}
-				class="pb-3 px-1 text-sm font-medium transition-colors {activeTab === 'detail' ? 'border-b-2 border-green-600 text-gray-900' : 'text-gray-500 hover:text-gray-700'}"
+				class="pb-3 px-1 text-sm font-medium transition-colors {activeTab === 'detail' ? 'border-b-2 border-green-600 text-gray-900' : 'text-gray-500 hover:text-gray-700'} hover:cursor-pointer"
 			>
 				Job detail
 			</button>
 			<button 
 				onclick={() => activeTab = 'search'}
-				class="pb-3 px-1 text-sm font-medium transition-colors {activeTab === 'search' ? 'border-b-2 border-green-600 text-gray-900' : 'text-gray-500 hover:text-gray-700'}"
+				class="pb-3 px-1 text-sm font-medium transition-colors {activeTab === 'search' ? 'border-b-2 border-green-600 text-gray-900' : 'text-gray-500 hover:text-gray-700'} hover:cursor-pointer"
 			>
 				Search result
 			</button>
 		</div>
 	</div>
-	
+	<div class="p-6">
 	{#if activeTab === 'detail'}
-		<!-- Job Detail View -->
-		<div class="p-6">
-			<div class="p-10 border border-gray-200 rounded-xl">
-			<div class="mb-6">
-				<div class="flex items-start gap-4">
-					<div class="w-12 h-12 rounded-lg bg-white border border-gray-200 flex items-center justify-center">
-						{#if formData.companyLogo}
-							<img src={formData.companyLogo} alt={formData.companyName} class="w-10 h-10 object-contain" />
-						{:else}
-							<span class="text-lg font-bold text-gray-400">
-								{formData.companyName ? formData.companyName.charAt(0) : 'C'}
-							</span>
-						{/if}
-					</div>
-					<div class="flex-1">
-						<h3 class="text-xs font-medium text-gray-600">{formData.companyName || 'Company Name'}</h3>
-						<h1 class="text-xl font-semibold text-gray-900 mt-1 flex items-center gap-2">
-							{formData.jobTitle || 'Job Title'}
-							<ExternalLink class="w-4 h-4 text-gray-400" />
-						</h1>
-					</div>
-				</div>
-			</div>
-			
-			<div class="flex items-center gap-4 text-sm text-gray-600 mb-6">
-				<span class="text-sm">{formatDate(formData.postingOpenDate) || '1 day ago'}</span>
-				<span class="text-gray-400">·</span>
-				<span>Be the first to apply</span>
-				<span class="text-gray-400">·</span>
-				<span>Salary: {formatSalary()}</span>
-			</div>
-			
-			<div class="flex flex-wrap gap-2 mb-6">
-				<span class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
-					{formData.employmentType || 'Full-time'}
-				</span>
-				<span class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
-					{formData.workLocation || 'On-site'}
-				</span>
-				<span class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
-					{formData.location || 'Bangkok, Thailand'}
-				</span>
-			</div>
-			
-			<div class="mb-8">
-				<button class="flex-1 px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors font-medium mr-1">
-					Apply
-				</button>
-				<button class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-50 transition-colors font-medium">
-					Bookmark
-				</button>
-			</div>
-			
-			<div class="mb-8">
-				<h3 class="text-lg font-semibold text-gray-900 mb-4">Job Description</h3>
-				{#if formData.jobDescription}
-					<div class="prose prose-sm text-gray-600 max-w-full overflow-hidden line-clamp-5">
-						<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-						{@html formData.jobDescription}
-					</div>
-					<button class="text-green-600 hover:text-green-700 text-sm font-medium mt-2">
-						Show more
-					</button>
-				{:else}
-					<p class="text-gray-500 text-sm">No job description provided</p>
-				{/if}
-			</div>
-			
-			{#if formData.requiredSkills?.length > 0 || formData.yearsOfExperience || formData.educationLevel}
-				<div class="mb-8">
-					<h3 class="text-lg font-semibold text-gray-900 mb-4">Requirements</h3>
-					
-					{#if formData.yearsOfExperience}
-						<div class="mb-3">
-							<h4 class="text-sm font-medium text-gray-700 mb-1">Experience</h4>
-							<p class="text-sm text-gray-600">{formData.yearsOfExperience}</p>
-						</div>
-					{/if}
-					
-					{#if formData.educationLevel}
-						<div class="mb-3">
-							<h4 class="text-sm font-medium text-gray-700 mb-1">Education</h4>
-							<p class="text-sm text-gray-600">{formData.educationLevel}</p>
-						</div>
-					{/if}
-					
-					{#if formData.requiredSkills?.length > 0}
-						<div class="mb-3">
-							<h4 class="text-sm font-medium text-gray-700 mb-2">Skills & Technologies</h4>
-							<div class="flex flex-wrap gap-2">
-								{#each formData.requiredSkills as skill, index (index)}
-									<span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
-										{skill}
-									</span>
-								{/each}
-							</div>
-						</div>
-					{/if}
-				</div>
-			{/if}
-			
-			<div class="mb-8">
-				<h3 class="text-lg font-semibold text-gray-900 mb-4">About the Company</h3>
-				
-				<div class="flex items-start gap-4 bg-slate-50 p-6 rounded-xl">
-					<div class="w-12 h-12 rounded-lg bg-white border border-gray-200 flex items-center justify-center">
-						{#if formData.companyLogo}
-							<img src={formData.companyLogo} alt={formData.companyName} class="w-10 h-10 object-contain" />
-						{:else}
-							<span class="text-lg font-bold text-gray-400">
-								{formData.companyName ? formData.companyName.charAt(0) : 'C'}
-							</span>
-						{/if}
-					</div>
-					<div class="flex-1">
-						<h4 class="font-semibold text-gray-900">{formData.companyName || 'Company Name'}</h4>
-						<p class="text-sm text-gray-600">{formData.industry || 'Software Development'}</p>
-						
-						<div class="flex items-center gap-4 mt-3 text-sm text-gray-600">
-							<div class="flex items-center gap-1">
-								<Users class="w-4 h-4" />
-								<span>{formData.companySize || '10,000+'} employees</span>
-							</div>
-						</div>
-						
-						{#if formData.companyDescription}
-							<p class="text-sm text-gray-600 mt-3 line-clamp-3">
-								{formData.companyDescription}
-							</p>
-						{:else}
-							<p class="text-sm text-gray-500 mt-3 line-clamp-3">
-								Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-							</p>
-						{/if}
-						
-						<button class="text-green-600 hover:text-green-700 text-sm font-medium mt-2">
-							Show more
-						</button>
-					</div>
-				</div>
-			</div>
+		<!-- Job Detail View using JobDetailCard -->
+		<div class="rounded-lg bg-white border border-gray-200 h-full overflow-hidden preview-mode">
+			<JobDetailCard 
+				job={previewJob} 
+				companyInfo={previewCompany}
+				onApply={handlePreviewApply}
+			/>
 		</div>
-	</div>
 	{:else}
 		<!-- Search Result View -->
-		<div class="space-y-4 p-6">
+		<div class="space-y-4 max-w-sm mx-auto">
 			<div class="p-4 border border-gray-200 rounded-lg animate-pulse">
 				<div class="flex items-start gap-3">
 					<div class="w-10 h-10 bg-gray-200 rounded"></div>
@@ -209,35 +126,10 @@
 			</div>
 
 			<!-- Active Job Card -->
-			<div class="p-4 border border-green-500 rounded-lg bg-white">
-				<div class="flex items-start gap-3">
-					<div class="w-10 h-10 rounded bg-white border border-gray-200 flex items-center justify-center flex-shrink-0">
-						{#if formData.companyLogo}
-							<img src={formData.companyLogo} alt={formData.companyName} class="w-8 h-8 object-contain" />
-						{:else}
-							<span class="text-sm font-bold text-gray-400">
-								{formData.companyName ? formData.companyName.charAt(0) : 'G'}
-							</span>
-						{/if}
-					</div>
-					<div class="flex-1">
-						<h3 class="font-semibold text-gray-900">{formData.jobTitle || 'Software Engineer, AI Acceleration'}</h3>
-						<p class="text-sm text-gray-600">{formData.companyName || 'Google'}</p>
-						<div class="flex items-center gap-2 mt-2">
-							<MapPin class="w-3 h-3 text-gray-400" />
-							<span class="text-sm text-gray-600">{formData.location || 'Bangkok, Thailand'}</span>
-						</div>
-					</div>
-				</div>
-				<div class="flex gap-2 mt-3">
-					<span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full uppercase font-medium">
-						{formData.employmentType || 'Full-time'}
-					</span>
-					<span class="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full uppercase font-medium">
-						{formData.workLocation || 'On-site'}
-					</span>
-				</div>
-				<p class="text-xs text-gray-500 mt-3">{formatDate(formData.postingOpenDate) || '1 day ago'}</p>
+			<div class="ring-2 ring-green-600 rounded-lg">
+				<JobCard
+					job={previewJob}
+				/>
 			</div>
 
 			<!-- Skeleton Card 2 -->
@@ -271,4 +163,19 @@
 			</div>
 		</div>
 	{/if}
+	</div>
 </SideDrawer>
+
+<style>
+	:global(.preview-mode a),
+	:global(.preview-mode button) {
+		pointer-events: none;
+		opacity: 0.6;
+		cursor: default;
+	}
+	
+	:global(.preview-mode a:hover),
+	:global(.preview-mode button:hover) {
+		background-color: initial;
+	}
+</style>

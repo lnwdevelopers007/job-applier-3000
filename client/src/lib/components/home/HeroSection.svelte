@@ -37,7 +37,7 @@
 	];
 </script>
 
-<section class="relative py-24 px-4 sm:px-6 lg:px-8 overflow-hidden bg-white">
+<section class="relative pb-24 pt-32 px-4 sm:px-6 lg:px-8 overflow-hidden bg-white">
 	<div class="absolute inset-0" style="background: radial-gradient(circle at center, #FDFFFE 0%, #EEFFF4 100%)"></div>
 	<div class="relative z-10 container mx-auto max-w-7xl">
 		<h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 text-center leading-tight mb-6">
@@ -61,7 +61,7 @@
 					bind:value={searchQuery}
 					type="text"
 					placeholder="Search for jobs, companies, or skills..."
-					class="block w-full pl-12 pr-32 py-4 text-md border border-gray-200 focus:shadow focus:shadow-gray-300 rounded-xl focus:ring-0 outline-none transition-all"
+					class="block w-full pl-12 pr-32 py-4 text-md border border-gray-200 focus:shadow focus:shadow-gray-300 rounded-full focus:ring-0 outline-none transition-all"
 					onkeydown={(e) => e.key === 'Enter' && handleSearch()}
 				/>
 			</div>

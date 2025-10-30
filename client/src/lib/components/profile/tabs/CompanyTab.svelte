@@ -2,8 +2,8 @@
 	import TextInput from '$lib/components/forms/TextInput.svelte';
 	import Select from '$lib/components/forms/Select.svelte';
 	import Textarea from '$lib/components/forms/Textarea.svelte';
-	import FileUpload from '$lib/components/forms/FileUpload.svelte';
 	import { Globe } from 'lucide-svelte';
+	import FileUpload from '$lib/components/forms/FileUpload.svelte';
 	
 	let {
 		companyData = $bindable({})
@@ -12,7 +12,7 @@
 </script>
 
 <div class="divide-y divide-gray-200">
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-center">
 			<label class="text-sm font-medium text-gray-700">Company name</label>
 			<div class="col-span-1">
@@ -23,8 +23,8 @@
 			</div>
 		</div>
 	</div>
-	
-	<div class="px-8 py-5">
+
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-start">
 			<div>
 				<label class="text-sm font-medium text-gray-700">Company logo</label>
@@ -36,13 +36,21 @@
 					maxSize="2MB"
 					onFileSelect={(file) => {
 						companyData.companyLogoFile = file;
+						// Create a preview URL for immediate feedback
+						const reader = new FileReader();
+						reader.onload = (e) => {
+							if (e.target?.result) {
+								companyData.companyLogo = e.target.result;
+							}
+						};
+						reader.readAsDataURL(file);
 					}}
 				/>
 			</div>
 		</div>
 	</div>
 	
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-center">
 			<label class="text-sm font-medium text-gray-700">Industry</label>
 			<div class="col-span-1">
@@ -50,21 +58,21 @@
 					bind:value={companyData.industry}
 					placeholder="Select industry..."
 					options={[
-						'Technology',
-						'Healthcare',
-						'Finance',
-						'Education',
-						'Manufacturing',
-						'Retail',
-						'Consulting',
-						'Other'
+						{ value: 'Technology', label: 'Technology' },
+						{ value: 'Healthcare', label: 'Healthcare' },
+						{ value: 'Finance', label: 'Finance' },
+						{ value: 'Education', label: 'Education' },
+						{ value: 'Manufacturing', label: 'Manufacturing' },
+						{ value: 'Retail', label: 'Retail' },
+						{ value: 'Consulting', label: 'Consulting' },
+						{ value: 'Other', label: 'Other' }
 					]}
 				/>
 			</div>
 		</div>
 	</div>
 	
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-center">
 			<label class="text-sm font-medium text-gray-700">Company size</label>
 			<div class="col-span-1">
@@ -72,19 +80,19 @@
 					bind:value={companyData.companySize}
 					placeholder="Select size..."
 					options={[
-						'1-10 employees',
-						'11-50 employees',
-						'51-200 employees',
-						'201-500 employees',
-						'501-1000 employees',
-						'1000+ employees'
+						{ value: '1-10 employees', label: '1-10 employees' },
+						{ value: '11-50 employees', label: '11-50 employees' },
+						{ value: '51-200 employees', label: '51-200 employees' },
+						{ value: '201-500 employees', label: '201-500 employees' },
+						{ value: '501-1000 employees', label: '501-1000 employees' },
+						{ value: '1000+ employees', label: '1000+ employees' }
 					]}
 				/>
 			</div>
 		</div>
 	</div>
 	
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-center">
 			<label class="text-sm font-medium text-gray-700">Founded</label>
 			<div class="col-span-1">
@@ -97,7 +105,7 @@
 		</div>
 	</div>
 	
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-start">
 			<div>
 				<label class="text-sm font-medium text-gray-700">Headquarters</label>
@@ -112,7 +120,7 @@
 		</div>
 	</div>
 	
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-start">
 			<div>
 				<label class="text-sm font-medium text-gray-700">About us</label>
@@ -128,7 +136,7 @@
 		</div>
 	</div>
 	
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-center">
 			<label class="text-sm font-medium text-gray-700">Website</label>
 			<div class="col-span-1">
@@ -142,7 +150,7 @@
 		</div>
 	</div>
 	
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-center">
 			<label class="text-sm font-medium text-gray-700">LinkedIn</label>
 			<div class="col-span-1">

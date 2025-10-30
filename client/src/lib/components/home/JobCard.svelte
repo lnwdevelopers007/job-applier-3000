@@ -10,7 +10,7 @@
 		companyLogo?: string; // Will be populated from backend in the future
 		title: string;
 		location: string;
-		locationType: 'on-site' | 'remote' | 'hybrid';
+		locationType: 'on-site' | 'remote' | 'hybrid' | null;
 		minSalary: number;
 		maxSalary: number;
 		currency: string;
@@ -26,6 +26,7 @@
 
 	let { job, skeleton = false }: { job?: Job; skeleton?: boolean } = $props();
 	let showAuthModal = $state(false);
+	let showLogoFallback = $state(false);
 
 	const badgeColors = {
 		new: 'bg-green-600 text-white',
@@ -38,10 +39,10 @@
 	}
 
 	function handleApply() {
-		if (isAuthenticated()) {
+		if (isAuthenticated() && job?.id) {
 			// User is logged in - proceed to job application
 			navigateWithAuth('/app/jobs/' + job.id);
-		} else {
+		} else if (job?.id) {
 			// User not logged in - show auth modal
 			showAuthModal = true;
 			// Store job ID for after login
@@ -129,17 +130,26 @@
 	{/if}
 
 	<div class="flex items-start gap-4 mb-4">
-		{#if job?.companyLogo}
-			<div
-				class="w-12 h-12 rounded-lg flex items-center justify-center text-xl font-semibold flex-shrink-0 {job.logoStyle ||
-					'bg-gray-100'}"
-			>
-				{getCompanyInitial(job.company)}
+		{#if job?.companyLogo && job.companyLogo !== 'https://via.placeholder.com/150'}
+			<div class="w-12 h-12 rounded-lg flex-shrink-0">
+				<img 
+					src={job.companyLogo} 
+					alt={job.company} 
+					class="w-full h-full rounded-lg object-cover"
+					onerror={() => {
+						// Show fallback on error
+						showLogoFallback = true;
+					}}
+					style="display: {showLogoFallback ? 'none' : 'block'}"
+				/>
+				{#if showLogoFallback}
+					<div class="w-full h-full rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-600 font-semibold">
+						{job ? getCompanyInitial(job.company) : ''}
+					</div>
+				{/if}
 			</div>
 		{:else}
-			<div
-				class="w-12 h-12 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-600 font-semibold flex-shrink-0"
-			>
+			<div class="w-12 h-12 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-600 font-semibold flex-shrink-0">
 				{job ? getCompanyInitial(job.company) : ''}
 			</div>
 		{/if}

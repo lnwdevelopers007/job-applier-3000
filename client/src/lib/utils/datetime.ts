@@ -150,3 +150,12 @@ export function getDaysBetween(date1: string | Date, date2: string | Date): numb
 	const diffTime = Math.abs(d2.getTime() - d1.getTime());
 	return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }
+
+/**
+ * Formats a date string to include deadline time (16:59:00 UTC)
+ */
+export function withDeadlineTime(dateStr: string): string {
+	const d = new Date(dateStr);
+	d.setUTCHours(16, 59, 0, 0);
+	return d.toISOString();
+}

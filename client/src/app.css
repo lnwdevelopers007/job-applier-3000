@@ -17,3 +17,11 @@
 .nav-link:hover {
   @apply text-green-800 bg-green-300 border-green-800;
 }
+
+button:hover {
+  @apply cursor-pointer;
+}
+
+button:disabled {
+  @apply cursor-not-allowed;
+}

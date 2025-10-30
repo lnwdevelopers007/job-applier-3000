@@ -1,7 +1,9 @@
-<script>
-	import { Search, ArrowUpDown, MapPin } from 'lucide-svelte';
+<script lang="ts">
+	import { Search, ChevronLeft, ChevronRight } from 'lucide-svelte';
 	import ApplyModal from '$lib/components/job/ApplyModal.svelte';
 	import JobDetailCard from '$lib/components/job/JobDetailCard.svelte';
+	import JobCard from '$lib/components/job/JobCard.svelte';
+	import FilterPill from '$lib/components/forms/FilterPill.svelte';
 	import { onMount } from 'svelte';
 	import { jobSearchStore } from '$lib/stores/jobSearch';
 	import { get } from 'svelte/store';
@@ -13,13 +15,14 @@
 		DEFAULT_COMPANY_NAME
 	} from '$lib/utils/fetcher';
 	import { formatDateShort } from '$lib/utils/datetime';
+	import { bookmarkService } from '$lib/services/bookmarkService';
 
 	let jobs = $state([]);
 	let filteredJobs = $state([]);
 	let selectedJob = $state(null);
 	let searchQuery = $state('');
 	let currentPage = $state(1);
-	const pageSize = 4;
+	const pageSize = 6;
 
 	let userInfo = $state(null);
 	let companyInfo = $state(null);
@@ -28,8 +31,7 @@
 
 	let showApplyModal = $state(false);
 	let jobToApply = $state(null);
-	let isBookmarked = $state(false);
-	let bookmarkedJobs = $state(new Set());
+	let selectedJobBookmarked = $state(false);
 
 	const totalPages = $derived(Math.ceil(filteredJobs.length / pageSize));
 	const paginatedJobs = $derived(filteredJobs.slice((currentPage - 1) * pageSize, currentPage * pageSize));
@@ -38,25 +40,48 @@
 		if (selectedJob?.companyID) {
 			fetchCompanyInfo(selectedJob.companyID);
 		}
-		checkBookmarkStatus();
+	});
+
+	// Subscribe to bookmark changes for selected job
+	$effect(() => {
+		const unsubscribe = bookmarkService.subscribe((bookmarks) => {
+			if (selectedJob?.id) {
+				selectedJobBookmarked = bookmarks.has(selectedJob.id);
+			}
+		});
+		return unsubscribe;
 	});
 
 	let activeFilters = $state({
-		type: null,
-		posted: null,
-		arrangement: null
+		workType: '',
+		postTime: '',
+		arrangement: ''
 	});
-	let sortBy = $state(null);
+	let sortBy = $state('');
 
-	const typeCycle = ['Full-time', 'Part-time', 'Contract', 'Casual'];
-	const arrangementCycle = ['On-site', 'Remote', 'Hybrid'];
-	const sortOptions = [null, 'dateAsc', 'dateDesc', 'title'];
-	const sortLabels = {
-		null: 'Sort',
-		dateAsc: 'Oldest',
-		dateDesc: 'Newest',
-		title: 'Title A-Z'
-	};
+	const workTypeOptions = [
+		{ value: 'Full-time', label: 'Full-time' },
+		{ value: 'Part-time', label: 'Part-time' },
+		{ value: 'Contract', label: 'Contract' },
+		{ value: 'Casual', label: 'Casual' }
+	];
+
+	const postTimeOptions = [
+		{ value: '1d', label: 'Past 24 hours' },
+		{ value: '6w', label: 'Past 6 weeks' }
+	];
+
+	const arrangementOptions = [
+		{ value: 'On-site', label: 'On-site' },
+		{ value: 'Remote', label: 'Remote' },
+		{ value: 'Hybrid', label: 'Hybrid' }
+	];
+
+	const sortOptions = [
+		{ value: 'dateDesc', label: 'Newest first' },
+		{ value: 'dateAsc', label: 'Oldest first' },
+		{ value: 'title', label: 'Title A-Z' }
+	];
 
 	async function fetchAppliedJobs() {
 		if (!isLoggedIn || !userInfo?.userID) return;
@@ -98,13 +123,23 @@
 		}
 	}
 
-	async function fetchJobs(query = '', filters = {}, sort = null) {
+	async function fetchJobs(query = '', filters = {}, sort = '') {
 		try {
 			const params = new URLSearchParams();
 			if (query) params.set('title', query);
-			if (filters.type) params.set('workType', filters.type);
-			if (filters.posted) params.set('postOpenDate', filters.posted);
-			if (filters.arrangement) params.set('workArrangement', filters.arrangement);
+			
+			if (filters.workType) {
+				params.set('workType', filters.workType);
+			}
+			
+			if (filters.postTime) {
+				params.set('postOpenDate', filters.postTime);
+			}
+			
+			if (filters.arrangement) {
+				params.set('workArrangement', filters.arrangement);
+			}
+			
 			if (sort) params.set('sort', sort);
 			const res = await fetch(`/jobs/query?${params.toString()}`);
 
@@ -128,7 +163,8 @@
 					company: companyName,
 					companyID: job.companyID,
 					location: job.location || 'N/A',
-					type: job.workType || 'Full-time',
+					workType: job.workType || 'Full-time',
+					workArrangement: job.workArrangement || 'On-site',
 					tags: job.requiredSkills
 						? job.requiredSkills.split(',').map((skill) => skill.trim())
 						: [],
@@ -137,7 +173,10 @@
 						? formatDateShort(job.applicationDeadline)
 						: 'Unknown',
 					description: job.jobDescription || 'No description provided.',
-					logo: companyLogo
+					logo: companyLogo,
+					salary: job.minSalary && job.maxSalary 
+						? `${job.currency || 'THB'} ${job.minSalary.toLocaleString()}-${job.maxSalary.toLocaleString()}`
+						: undefined
 				};
 			});
 
@@ -158,67 +197,19 @@
 		showApplyModal = true;
 	}
 
-	function checkBookmarkStatus() {
-		if (isAuthenticated() && userInfo?.userID && selectedJob?.id) {
-			isBookmarked = bookmarkedJobs.has(selectedJob.id);
-		}
-	}
-
-	function toggleBookmark() {
-		if (!selectedJob?.id) return;
-
-		if (isBookmarked) {
-			bookmarkedJobs.delete(selectedJob.id);
-			isBookmarked = false;
-		} else {
-			bookmarkedJobs.add(selectedJob.id);
-			isBookmarked = true;
-		}
-		
-		// TODO: Add backend API call when ready
-		// await fetch('/bookmarks', { method: isBookmarked ? 'POST' : 'DELETE', ... });
-	}
-
-
-	function toggleCycle(field) {
-		if (field === 'type') {
-			let idx = typeCycle.indexOf(activeFilters.type);
-			activeFilters.type =
-				idx === -1 ? typeCycle[0] : idx + 1 < typeCycle.length ? typeCycle[idx + 1] : null;
-		} else if (field === 'arrangement') {
-			let idx = arrangementCycle.indexOf(activeFilters.arrangement);
-			activeFilters.arrangement =
-				idx === -1
-					? arrangementCycle[0]
-					: idx + 1 < arrangementCycle.length
-						? arrangementCycle[idx + 1]
-						: null;
-		}
-		activeFilters = { ...activeFilters };
-		fetchJobs(searchQuery, activeFilters);
-	}
-
-	function toggleFilter(type, value) {
-		activeFilters[type] = activeFilters[type] === value ? null : value;
-		activeFilters = { ...activeFilters };
+	function refreshJobs() {
 		fetchJobs(searchQuery, activeFilters, sortBy);
 	}
 
-	function toggleSort() {
-		let idx = sortOptions.indexOf(sortBy);
-		sortBy = idx === -1 || idx + 1 === sortOptions.length ? sortOptions[0] : sortOptions[idx + 1];
-		fetchJobs(searchQuery, activeFilters, sortBy);
-	}
-
-	function onSearchInput() {
-		fetchJobs(searchQuery, activeFilters);
-	}
-
-	onMount(() => {
+	onMount(async () => {
 		isLoggedIn = isAuthenticated();
 		if (isLoggedIn) {
 			userInfo = getUserInfo();
 			fetchAppliedJobs();
+			// Initialize bookmark service with user ID
+			if (userInfo?.userID) {
+				await bookmarkService.initializeBookmarks(userInfo.userID);
+			}
 		}
 
 		const unsubscribe = jobSearchStore.subscribe((state) => {
@@ -242,129 +233,129 @@
 	});
 </script>
 
-<div class="flex h-screen">
-	<main class="w-full min-w-0 flex-1 space-y-6 p-0.5">
+<div class="flex">
+	<main class="w-full min-w-0 flex-1 space-y-6">
 		<!-- Search and Filters -->
-		<div class="flex items-center gap-3">
-			<div class="flex flex-1 items-center rounded-lg bg-white px-3 py-1 shadow">
-				<Search class="h-5 w-5 text-gray-500" />
-				<input
-					type="text"
-					placeholder="Search jobs..."
-					class="ml-2 flex-1 border-none outline-none"
-					bind:value={searchQuery}
-					oninput={onSearchInput}
-				/>
-			</div>
+		<div class="-mt-5 pb-8 pt-8" style="margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%); padding-left: calc(50vw - 50%); padding-right: calc(50vw - 50%); background: radial-gradient(circle,rgba(245, 255, 252, 1) 0%, rgba(248, 255, 249, 1) 25%, rgba(243, 255, 245, 1) 50%, rgba(237, 254, 244, 1) 75%, rgba(232, 254, 240, 1) 100%);">
+			<div class="max-w-7xl mx-auto space-y-4">
+				<!-- Search Bar -->
+				<div class="relative max-w-3xl mx-auto">
+					<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+						<Search class="h-5 w-5 text-gray-400" />
+					</div>
+					<input
+						type="text"
+						placeholder="Search for jobs..."
+						class="w-full pl-12 pr-4 py-3 text-gray-900 placeholder-gray-500 bg-white border border-gray-200 rounded-full shadow-sm focus:ring-1 focus:ring-gray-300 focus:border-transparent transition-all duration-200 outline-none"
+						bind:value={searchQuery}
+						oninput={refreshJobs}
+					/>
+				</div>
 
-			<div class="flex gap-2">
-				<button
-					class={`rounded-full px-3 py-1 text-sm ${activeFilters.type && typeCycle.includes(activeFilters.type) ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
-					onclick={() => toggleCycle('type')}
-				>
-					{activeFilters.type || 'Work Type'}
-				</button>
+				<!-- Filter Pills -->
+				<div class="flex flex-wrap items-center justify-center gap-3">
+					<div class="flex items-center gap-2">
+						<span class="text-sm font-medium text-gray-600">Filters:</span>
+						
+						<FilterPill
+							label="Work Type"
+							options={workTypeOptions}
+							bind:selectedValue={activeFilters.workType}
+							onSelectionChange={refreshJobs}
+						/>
 
-				<button
-					class={`rounded-full px-3 py-1 text-sm ${activeFilters.posted === '1d' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
-					onclick={() => toggleFilter('posted', '1d')}
-				>
-					1 day ago
-				</button>
+						<FilterPill
+							label="Post Time"
+							options={postTimeOptions}
+							bind:selectedValue={activeFilters.postTime}
+							onSelectionChange={refreshJobs}
+						/>
 
-				<button
-					class={`rounded-full px-3 py-1 text-sm ${activeFilters.posted === '6w' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
-					onclick={() => toggleFilter('posted', '6w')}
-				>
-					6 weeks
-				</button>
+						<FilterPill
+							label="Work Arrangement"
+							options={arrangementOptions}
+							bind:selectedValue={activeFilters.arrangement}
+							onSelectionChange={refreshJobs}
+						/>
 
-				<button
-					class={`rounded-full px-3 py-1 text-sm ${activeFilters.arrangement && arrangementCycle.includes(activeFilters.arrangement) ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
-					onclick={() => toggleCycle('arrangement')}
-				>
-					{activeFilters.arrangement || 'Arrangement'}
-				</button>
+						<div class="h-4 w-px bg-gray-300"></div>
 
-				<button
-					class={`flex items-center rounded-full px-3 py-1 text-sm ${sortBy ? 'bg-green-600 text-white' : 'bg-gray-200 text-black'}`}
-					onclick={toggleSort}
-				>
-					<ArrowUpDown class="mr-1 h-4 w-4" />
-					{sortBy ? sortLabels[sortBy] : 'Sort'}
-				</button>
+						<FilterPill
+							label="Sort"
+							options={sortOptions}
+							bind:selectedValue={sortBy}
+							onSelectionChange={refreshJobs}
+							type="sort"
+						/>
+					</div>
+				</div>
 			</div>
 		</div>
 
-		<div class="grid w-full grid-cols-3 gap-6 h-[calc(100vh-200px)]">
+		<div class="grid w-full grid-cols-3 gap-6">
 			<!-- Jobs List -->
-			<section class="col-span-1 flex flex-col space-y-4 h-full">
-				<div class="w-full flex-1 space-y-3 overflow-y-auto p-2">
-					{#if paginatedJobs.length === 0}
-						<div class="mt-4 text-center text-gray-500">No jobs match your search or filters.</div>
-					{:else}
-						{#each paginatedJobs as job (job.id)}
-							<button
-								onclick={() => (selectedJob = job)}
-								class={`flex w-full cursor-pointer flex-col rounded-lg bg-white shadow ring-offset-2 hover:ring-2 hover:ring-green-500 ${selectedJob?.id === job.id ? 'ring-2 ring-green-600' : ''}`}
-							>
-								<div class="flex items-start gap-3 p-2">
-									<img
-										src={job.logo}
-										alt={job.company}
-										class="mt-2 h-12 w-12 flex-shrink-0 rounded-full object-cover"
+			<section class="col-span-1 flex flex-col h-[calc(100vh-280px)]">
+				<div class="flex-1 overflow-y-auto p-2 min-h-0">
+					<div class="space-y-3">
+						{#if paginatedJobs.length === 0}
+							<div class="flex items-center justify-center h-full text-gray-500">
+								No jobs match your search or filters.
+							</div>
+						{:else}
+							{#each paginatedJobs as job (job.id)}
+								<div class={`transition-all duration-100 rounded-lg ${
+								selectedJob?.id === job.id 
+									? 'ring-2 ring-green-600 ring-offset-2 shadow-md border-green-200' 
+									: ''
+							}`}>
+									<JobCard 
+										{job}
+										onclick={() => (selectedJob = job)}
 									/>
-									<div class="flex flex-1 flex-col text-left">
-										<div class="font-semibold">{job.title}</div>
-										<div class="text-sm text-gray-600">{job.company}</div>
-										<div class="mt-1 flex items-center gap-2 text-sm text-black">
-											<MapPin class="mt-0.5 h-4 w-4" />
-											{job.location}
-										</div>
+								</div>
+							{/each}
+
+							<!-- Pagination inside scrollable area -->
+							{#if totalPages > 1}
+								<div class="flex items-center justify-center gap-3 py-3">
+									<button
+										aria-label="Previous page"
+										class="flex items-center gap-2 px-2 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+										onclick={() => (currentPage = Math.max(1, currentPage - 1))}
+										disabled={currentPage === 1}
+									>
+										<ChevronLeft class="w-4 h-4" />
+									</button>
+
+									<div class="flex items-center gap-2">
+										<span class="text-sm text-gray-600">Page</span>
+										<span class="text-sm text-gray-600 font-medium">
+											{currentPage}
+										</span>
+										<span class="text-sm text-gray-600">of</span>
+										<span class="text-sm text-gray-600 font-medium">
+											{totalPages}
+										</span>
 									</div>
+
+									<button
+										aria-label="Next page"
+										class="flex items-center gap-2 px-2 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+										onclick={() => (currentPage = Math.min(totalPages, currentPage + 1))}
+										disabled={currentPage === totalPages}
+									>
+										<ChevronRight class="w-4 h-4" />
+									</button>
 								</div>
-
-								<div class="mt-2 flex flex-wrap gap-2 p-2">
-									{#each job.tags as tag, i (i)}
-										<span class="rounded-full bg-gray-100 px-2 py-1 text-sm">{tag}</span>
-									{/each}
-								</div>
-
-								<div class="mx-3 mt-1 pb-2 text-left text-xs text-gray-500">{job.posted}</div>
-							</button>
-						{/each}
-					{/if}
-				</div>
-
-				<!-- Pagination controls -->
-				{#if totalPages > 1}
-					<div class="my-4 flex justify-center gap-2">
-						<button
-							class="rounded bg-gray-200 px-3 py-1 disabled:opacity-50"
-							onclick={() => (currentPage = Math.max(1, currentPage - 1))}
-							disabled={currentPage === 1}
-						>
-							Prev
-						</button>
-
-						<span class="px-3 py-1 text-sm">
-							Page {currentPage} of {totalPages}
-						</span>
-
-						<button
-							class="rounded bg-gray-200 px-3 py-1 disabled:opacity-50"
-							onclick={() => (currentPage = Math.min(totalPages, currentPage + 1))}
-							disabled={currentPage === totalPages}
-						>
-							Next
-						</button>
+							{/if}
+						{/if}
 					</div>
-				{/if}
+				</div>
 			</section>
 
 			<!-- Job Detail -->
 			<section
-				class="col-span-2 flex flex-col rounded-lg bg-white border border-gray-200 h-full overflow-hidden"
+				class="col-span-2 flex flex-col h-[calc(100vh-280px)] overflow-hidden"
 			>
 				{#if selectedJob}
 					<div class="h-full overflow-y-auto">
@@ -372,8 +363,15 @@
 							job={selectedJob}
 							{companyInfo}
 							onApply={applyJob}
-							onBookmark={toggleBookmark}
-							{isBookmarked}
+							onBookmark={async () => {
+								if (selectedJob?.id) {
+									const user = getUserInfo();
+									if (user?.userID) {
+										await bookmarkService.toggleBookmark(selectedJob.id, user.userID);
+									}
+								}
+							}}
+							isBookmarked={selectedJobBookmarked}
 							isApplied={appliedJobs.has(selectedJob.id)}
 						/>
 					</div>

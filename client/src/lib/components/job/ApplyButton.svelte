@@ -70,7 +70,7 @@
 {:else}
 	<button
 		onclick={onClick}
-		class="{baseClasses} bg-green-600 text-white hover:bg-green-700 active:scale-[0.98] hover:cursor-pointer"
+		class="{baseClasses} bg-green-600 text-white hover:bg-green-700 active:scale-[0.98]"
 	>
 		{size === 'lg' ? 'Apply now' : 'Apply'}
 	</button>

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { MapPin, Banknote, Share2, ExternalLink, Bookmark } from 'lucide-svelte';
-import ApplyButton from './ApplyButton.svelte';
+	import ApplyButton from './ApplyButton.svelte';
 	import SafeHTML from '$lib/utils/SafeHTML.svelte';
 	import Badge from './Badge.svelte';
 	import SkillTag from './SkillTag.svelte';
@@ -157,9 +157,17 @@ import ApplyButton from './ApplyButton.svelte';
 	<!-- Job Description -->
 	<div class="mb-6">
 		<h2 class="text-lg font-semibold text-gray-900 mb-3">Job Description</h2>
-		<div class="text-sm text-gray-700 leading-6">
+		<div class="text-sm text-gray-700 leading-6 line-clamp-15">
 			<SafeHTML html={displayDescription} />
 		</div>
+		{#if displayDescription.length > 1250}
+			<a 
+				href="/app/jobs/{job.id}"
+				class="text-sm text-green-600 hover:text-green-700 transition-colors font-medium mt-2 inline-block"
+			>
+				Show more
+			</a>
+		{/if}
 	</div>
 
 	<!-- Skills/Tags Section -->

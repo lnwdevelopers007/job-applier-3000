@@ -93,7 +93,7 @@
 </script>
 
 <div class="divide-y divide-gray-200">
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-center">
 			<label class="text-sm font-medium text-gray-700">Username</label>
 			<div class="col-span-1">
@@ -105,7 +105,7 @@
 		</div>
 	</div>
 	
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-center">
 			<label class="text-sm font-medium text-gray-700">Email address</label>
 			<div class="col-span-1">
@@ -119,7 +119,7 @@
 		</div>
 	</div>
 	
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-start">
 			<div>
 				<label class="text-sm font-medium text-gray-700">Profile Picture</label>
@@ -136,7 +136,7 @@
 		</div>
 	</div>
 	
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-start">
 			<div>
 				<label class="text-sm font-medium text-gray-700">Connected accounts</label>
@@ -175,7 +175,7 @@
 		</div>
 	</div>
 	
-	<div class="px-8 py-5">
+	<div class="py-5">
 		<div class="grid grid-cols-3 gap-8 items-start">
 			<div>
 				<label class="text-sm font-medium text-gray-700">Password</label>
