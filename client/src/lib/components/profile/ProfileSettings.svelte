@@ -344,7 +344,10 @@
 		<div class="flex items-center gap-3">
 			{#if activeTab === 'documents'}
 				<button
-					onclick={() => document.getElementById('file-upload')?.click()}
+					onclick={() => {
+						const event = new CustomEvent('openUploadModal');
+						window.dispatchEvent(event);
+					}}
 					class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors flex items-center gap-2"
 				>
 					<Plus class="w-4 h-4" />
