@@ -92,12 +92,6 @@
             </svg>
             <p class="text-sm text-gray-900 font-medium mb-2">Failed to load preview</p>
             <p class="text-sm text-gray-600 mb-4">{error}</p>
-            <button
-              onclick={handleDownload}
-              class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors"
-            >
-              Download File Instead
-            </button>
           </div>
         </div>
       {:else if previewUrl}
@@ -105,6 +99,7 @@
           src={previewUrl}
           type="application/pdf"
           class="w-full h-full"
+          style="width: 100%; height: calc(100vh - 100px);"
           title={filename}
         />
       {/if}
