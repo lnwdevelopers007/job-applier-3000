@@ -312,12 +312,12 @@
 		<div class="flex justify-between items-center mb-6">
 			<h1 class="text-2xl font-semibold text-gray-900">{title}</h1>
 			{#if userType === 'seeker'}
-				<button
-					onclick={handlePreview}
-					class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors flex items-center gap-2 hover:cursor-pointer"
-				>
-					Preview Profile
-				</button>
+			<button
+				onclick={handlePreview}
+				class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors flex items-center gap-2 hover:cursor-pointer"
+			>
+				Preview Profile
+			</button>
 			{/if}
 		</div>
 		
