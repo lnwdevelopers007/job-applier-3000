@@ -40,7 +40,7 @@
   
   async function handleDownload(file: FileMetadata) {
     try {
-      const blob = await fileService.downloadFile(file.id);
+      const blob = await fileService.downloadApplicantFile(applicationId, file.id);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -144,5 +144,6 @@
     bind:isOpen={isPreviewModalOpen}
     fileId={selectedFile.id}
     filename={selectedFile.filename}
+    applicationId={applicationId}
   />
 {/if}

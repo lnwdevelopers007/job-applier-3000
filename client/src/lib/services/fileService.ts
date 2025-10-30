@@ -123,6 +123,30 @@ class FileService {
   }
 
   /**
+   * Download an applicant's file (company use)
+   */
+  async downloadApplicantFile(applicationId: string, fileId: string): Promise<Blob> {
+    const response = await fetch(`${BACKEND_URL}/files/application/${applicationId}/download/${fileId}`, {
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Download failed' }));
+      throw new Error(error.error || 'Failed to download file');
+    }
+
+    return await response.blob();
+  }
+
+  /**
+   * Get applicant file preview URL (company use)
+   */
+  async getApplicantFilePreviewUrl(applicationId: string, fileId: string): Promise<string> {
+    const blob = await this.downloadApplicantFile(applicationId, fileId);
+    return URL.createObjectURL(blob);
+  }
+
+  /**
    * Format file size for display
    */
   formatFileSize(bytes: number): string {

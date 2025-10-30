@@ -73,6 +73,7 @@ func NewRouter() *gin.Engine {
 		fileRoutes.GET("/user/:userId", file.ListByUser)
 		fileRoutes.DELETE("/:id", file.Delete)
 		fileRoutes.GET("/application/:applicationId", file.GetApplicantFiles)
+		fileRoutes.GET("/application/:applicationId/download/:fileId", file.DownloadApplicantFile)
 	}
 
 	router.GET("/health", func(c *gin.Context) {

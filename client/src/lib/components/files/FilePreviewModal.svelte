@@ -6,21 +6,32 @@
   let {
     isOpen = $bindable(false),
     fileId = '',
-    filename = 'Document'
+    filename = 'Document',
+    applicationId = undefined
+  }: {
+    isOpen?: boolean;
+    fileId: string;
+    filename: string;
+    applicationId?: string;
   } = $props();
-  
+
   let previewUrl = $state<string | null>(null);
   let isLoading = $state(false);
   let error = $state<string | null>(null);
-  
+
   async function loadPreview() {
     if (!fileId) return;
-    
+
     isLoading = true;
     error = null;
-    
+
     try {
-      previewUrl = await fileService.getFilePreviewUrl(fileId);
+      // Use applicant file preview if applicationId is provided (company viewing applicant files)
+      if (applicationId) {
+        previewUrl = await fileService.getApplicantFilePreviewUrl(applicationId, fileId);
+      } else {
+        previewUrl = await fileService.getFilePreviewUrl(fileId);
+      }
     } catch (err) {
       error = err instanceof Error ? err.message : 'Failed to load preview';
       console.error('Preview error:', err);
