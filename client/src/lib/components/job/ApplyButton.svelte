@@ -1,4 +1,6 @@
 <script lang="ts">
+	import type { UserRole } from '$lib/stores/auth.svelte';
+	
 	interface Props {
 		isApplied?: boolean;
 		closeDateRaw?: string | null;
@@ -9,6 +11,7 @@
 		class?: string;
 		size?: 'sm' | 'md' | 'lg';
 		fullWidth?: boolean;
+		userRole?: UserRole | null;
 	}
 	
 	let {
@@ -20,7 +23,8 @@
 		onClick,
 		class: className = '',
 		size = 'md',
-		fullWidth = false
+		fullWidth = false,
+		userRole = null
 	}: Props = $props();
 	
 	const isClosed = $derived(() => {
@@ -44,8 +48,11 @@
 	const baseClasses = $derived(
 		`${sizeClasses[size]} font-medium rounded-md transition-all duration-150 ${fullWidth ? 'w-full' : ''} ${className}`
 	);
+	
+	const isJobSeeker = $derived(userRole === 'jobSeeker');
 </script>
 
+{#if isJobSeeker}
 {#if isApplied}
 	<button
 		disabled
@@ -74,4 +81,5 @@
 	>
 		{size === 'lg' ? 'Apply now' : 'Apply'}
 	</button>
+{/if}
 {/if}
