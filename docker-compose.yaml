@@ -1,0 +1,58 @@
+version: '3.9'
+
+services:
+    mongo:
+        image: mongo:8.0
+        container_name: jobapplier-mongo
+        restart: always
+        env_file: .env
+        logging:
+            driver: "none"
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+            MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+            MONGO_INITDB_DATABASE: jobapplier
+        ports:
+            - '27018:27017'
+        volumes:
+            - mongo_data:/data/db
+        healthcheck:
+            test:
+                [
+                    'CMD',
+                    'mongosh',
+                    '-u',
+                    '${MONGO_INITDB_ROOT_USERNAME}',
+                    '-p',
+                    '${MONGO_INITDB_ROOT_PASSWORD}',
+                    '--authenticationDatabase',
+                    'admin',
+                    '--eval',
+                    "db.adminCommand('ping')",
+                ]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+
+    backend:
+        build: ./server
+        container_name: jobapplier-backend
+        restart: always
+        env_file: .env
+        ports:
+            - '${BACKEND_PORT}:${ORIGINAL_BACKEND_PORT:-8080}'
+        depends_on:
+            mongo:
+                condition: service_healthy
+
+    frontend:
+        build: ./client
+        container_name: jobapplier-frontend
+        restart: always
+        ports:
+            - '5173:5173'
+        depends_on:
+            - backend
+
+volumes:
+    mongo_data:

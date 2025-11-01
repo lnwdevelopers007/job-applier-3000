@@ -29,7 +29,7 @@ export interface JobSeekerInfo {
 	gender?: string;
 	portfolio?: string;
 	github?: string;
-	skills?: string | string[];  // Can be either format from backend
+	skills?: string | string[]; // Can be either format from backend
 }
 
 export interface CompanyInfo {
@@ -76,26 +76,26 @@ class UserService {
 		if (!isAuthenticated()) {
 			throw new Error('No user data found');
 		}
-		
+
 		const userInfo = getUserInfo();
 		if (!userInfo?.userID) {
 			throw new Error('User ID not found');
 		}
-		
+
 		const userId = userInfo.userID;
-		
-		const response = await apiFetch(`${API_BASE}/users/${userId}`);
+
+		const response = await fetch(`/users/${userId}`);
 		if (!response.ok) {
 			throw new Error('Failed to fetch user profile');
 		}
-		
+
 		const user = await response.json();
-		
+
 		// Map _id from backend to id for frontend
 		if (user._id) {
 			user.id = user._id;
 		}
-		
+
 		// Parse userInfo if it's an array of key-value pairs (company format)
 		if (Array.isArray(user.userInfo)) {
 			const userInfoObj: Record<string, any> = {};
@@ -104,32 +104,32 @@ class UserService {
 			});
 			user.userInfo = userInfoObj;
 		}
-		
+
 		return user;
 	}
-	
+
 	// Update user profile
 	async updateUser(userId: string, data: UpdateUserPayload): Promise<User> {
-		const response = await apiFetch(`${API_BASE}/users/${userId}`, {
+		const response = await fetch(`/users/${userId}`, {
 			method: 'PUT',
 			headers: {
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify(data)
 		});
-		
+
 		if (!response.ok) {
 			const error = await response.text();
 			throw new Error(`Failed to update profile: ${error}`);
 		}
-		
+
 		const updatedUser = await response.json();
-		
+
 		// Map _id from backend to id for frontend
 		if (updatedUser._id) {
 			updatedUser.id = updatedUser._id;
 		}
-		
+
 		// Parse userInfo if it's an array of key-value pairs (company format)
 		if (Array.isArray(updatedUser.userInfo)) {
 			const userInfoObj: Record<string, any> = {};
@@ -138,7 +138,7 @@ class UserService {
 			});
 			updatedUser.userInfo = userInfoObj;
 		}
-		
+
 		// Update auth store with new user data
 		if (authStore.user) {
 			authStore.updateUser({
@@ -150,23 +150,23 @@ class UserService {
 				verified: authStore.user.verified
 			});
 		}
-		
+
 		return updatedUser;
 	}
-	
+
 	// Upload document (Not implemented yet)
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	async uploadDocument(_file: File): Promise<Record<string, unknown>> {
 		// TODO: Implement document upload functionality
 		return {};
 	}
-	
+
 	// Delete document (Not implemented yet)
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	async deleteDocument(_documentId: string): Promise<void> {
 		// TODO: Implement document deletion functionality
 	}
-	
+
 	// Update password
 	async updatePassword(currentPassword: string, newPassword: string): Promise<void> {
 		const response = await apiFetch(`${API_BASE}/users/password`, {
@@ -179,22 +179,26 @@ class UserService {
 				newPassword
 			})
 		});
-		
+
 		if (!response.ok) {
 			const error = await response.text();
 			throw new Error(`Failed to update password: ${error}`);
 		}
 	}
-	
+
 	// Helper to transform frontend data to backend format
 	// Only send changed fields while always preserving userID and provider
-	transformToBackendFormat(userData: Record<string, unknown>, userType: string, changedFields?: string[]): UpdateUserPayload {
+	transformToBackendFormat(
+		userData: Record<string, unknown>,
+		userType: string,
+		changedFields?: string[]
+	): UpdateUserPayload {
 		const payload: UpdateUserPayload = {};
-		
+
 		// Always preserve userID and provider fields (needed for OAuth disconnect)
 		payload.provider = (userData.provider as string) || '';
 		payload.userID = (userData.userID as string) || '';
-		
+
 		// If no changedFields specified, send all fields (backwards compatibility)
 		if (!changedFields) {
 			payload.name = (userData.name as string) || '';
@@ -202,7 +206,7 @@ class UserService {
 			payload.avatarURL = (userData.avatar as string) || '';
 			payload.role = (userData.role as string) || (userType === 'seeker' ? 'jobSeeker' : 'company');
 			payload.verified = (userData.verified as boolean) || false;
-			
+
 			// Build userInfo object based on user type
 			if (userType === 'seeker' || userType === 'jobSeeker') {
 				payload.userInfo = {
@@ -215,7 +219,9 @@ class UserService {
 					dateOfBirth: (userData.dateOfBirth as string) || '',
 					portfolio: (userData.portfolio as string) || '',
 					github: (userData.github as string) || '',
-					skills: Array.isArray(userData.skills) ? userData.skills.join(', ') : (userData.skills as string) || ''
+					skills: Array.isArray(userData.skills)
+						? userData.skills.join(', ')
+						: (userData.skills as string) || ''
 				};
 			} else if (userType === 'company') {
 				payload.userInfo = {
@@ -247,19 +253,27 @@ class UserService {
 			if (changedFields.includes('verified') && userData.verified !== undefined) {
 				payload.verified = userData.verified as boolean;
 			}
-			
+
 			// Handle userInfo fields - Always send all fields since BSON can't use omitempty
 			if (userType === 'seeker' || userType === 'jobSeeker') {
 				const userInfoFieldNames = [
-					'fullName', 'location', 'phone', 'linkedin', 'desiredRole', 
-					'aboutMe', 'dateOfBirth', 'portfolio', 'github', 'skills'
+					'fullName',
+					'location',
+					'phone',
+					'linkedin',
+					'desiredRole',
+					'aboutMe',
+					'dateOfBirth',
+					'portfolio',
+					'github',
+					'skills'
 				];
-				
+
 				// Check if any userInfo field has changed
-				const hasUserInfoChanges = userInfoFieldNames.some(field => 
+				const hasUserInfoChanges = userInfoFieldNames.some((field) =>
 					changedFields.includes(field)
 				);
-				
+
 				// If any userInfo field changed, send ALL userInfo fields
 				if (hasUserInfoChanges) {
 					payload.userInfo = {
@@ -272,20 +286,29 @@ class UserService {
 						dateOfBirth: (userData.dateOfBirth as string) || '',
 						portfolio: (userData.portfolio as string) || '',
 						github: (userData.github as string) || '',
-						skills: Array.isArray(userData.skills) ? userData.skills.join(', ') : (userData.skills as string) || ''
+						skills: Array.isArray(userData.skills)
+							? userData.skills.join(', ')
+							: (userData.skills as string) || ''
 					};
 				}
 			} else if (userType === 'company') {
 				const userInfoFieldNames = [
-					'companyName', 'aboutCompany', 'industry', 'companySize', 
-					'companyWebsite', 'companyLogo', 'foundedYear', 'headquarters', 'companyLinkedin'
+					'companyName',
+					'aboutCompany',
+					'industry',
+					'companySize',
+					'companyWebsite',
+					'companyLogo',
+					'foundedYear',
+					'headquarters',
+					'companyLinkedin'
 				];
-				
+
 				// Check if any userInfo field has changed
-				const hasUserInfoChanges = userInfoFieldNames.some(field => 
+				const hasUserInfoChanges = userInfoFieldNames.some((field) =>
 					changedFields.includes(field)
 				);
-				
+
 				// If any userInfo field changed, send ALL userInfo fields
 				if (hasUserInfoChanges) {
 					payload.userInfo = {
@@ -302,10 +325,10 @@ class UserService {
 				}
 			}
 		}
-		
+
 		return payload;
 	}
-	
+
 	// Helper to transform backend data to frontend format
 	transformToFrontendFormat(user: User): Record<string, unknown> {
 		const frontendData: Record<string, unknown> = {
@@ -319,7 +342,7 @@ class UserService {
 			newPassword: '',
 			confirmPassword: ''
 		};
-		
+
 		if (user.role === 'jobseeker' || user.role === 'jobSeeker') {
 			// Initialize all seeker fields with defaults
 			frontendData.fullName = '';
@@ -333,7 +356,7 @@ class UserService {
 			frontendData.portfolio = '';
 			frontendData.github = '';
 			frontendData.skills = [];
-			
+
 			// Override with actual values if they exist
 			if (user.userInfo) {
 				const info = user.userInfo as JobSeekerInfo;
@@ -350,7 +373,10 @@ class UserService {
 				// Parse skills - handle both string and array formats
 				if (info.skills) {
 					if (typeof info.skills === 'string') {
-						frontendData.skills = info.skills.split(',').map(s => s.trim()).filter(s => s.length > 0);
+						frontendData.skills = info.skills
+							.split(',')
+							.map((s) => s.trim())
+							.filter((s) => s.length > 0);
 					} else if (Array.isArray(info.skills)) {
 						frontendData.skills = info.skills;
 					}
@@ -368,7 +394,7 @@ class UserService {
 			frontendData.headquarters = '';
 			frontendData.companyLinkedin = '';
 			frontendData.benefits = [];
-			
+
 			// Override with actual values if they exist
 			if (user.userInfo) {
 				const info = user.userInfo as CompanyInfo;
@@ -384,10 +410,10 @@ class UserService {
 				frontendData.benefits = info.benefits || [];
 			}
 		}
-		
+
 		// Initialize documents array
 		frontendData.documents = [];
-		
+
 		return frontendData;
 	}
 }
