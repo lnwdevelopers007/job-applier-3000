@@ -5,7 +5,7 @@
 	import ConfirmDropdownAction from '$lib/components/modals/ConfirmDropdownAction.svelte';
 
 	const USER_ACTIONS = [
-		{ label: 'View', disabled: false },
+		// { label: 'View', disabled: false },
 		{ label: 'Edit Permissions', disabled: false },
 		{ label: 'Ban', disabled: false },
 		{ label: 'Delete', disabled: false }
@@ -59,12 +59,30 @@
 		isBanning = false;
 	}
 
+	function onConfirmPermissions(selectedVals: Record<string, any>) {
+		if (!selectedUser) return;
+
+		// 1. update selectedUser fields locally
+		Object.entries(selectedVals).forEach(([key, val]) => {
+			if (key === 'Roles') selectedUser.role = val;
+			if (key === 'Verified') selectedUser.verified = val;
+		});
+
+		// 2. update the entire users array (immutably)
+		users = users.map((u) => (u.id === selectedUser.id ? { ...u, ...selectedUser } : u));
+
+		//TODO: Send updated data to server
+
+		// 4. close modal
+		showPermissionEditModal = false;
+	}
+
 	function handleAction(action: any, user: any) {
 		selectedUser = user;
 		switch (action.label) {
-			case 'View':
-				console.log('Skibidi');
-				break;
+			// case 'View':
+			// 	console.log('Skibidi');
+			// 	break;
 			case 'Edit Permissions':
 				showPermissionEditModal = true;
 				console.log(showPermissionEditModal);
@@ -125,8 +143,11 @@
 	actionName={`Editing ${selectedUser === null ? '' : selectedUser.name} Permission`}
 	bind:showConfirmButton={showPermissionEditConfirmButton}
 	bind:dropdowns
-	action={(selectedVals) => {
-		console.log(selectedVals);
-		showPermissionEditModal = false;
-	}}
+	action={onConfirmPermissions}
+	linkData={selectedUser
+		? {
+				title: 'View Credentials of this User',
+				link: 'https://www.google.com'
+			}
+		: null}
 />
