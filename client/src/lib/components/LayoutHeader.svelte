@@ -27,6 +27,7 @@
     const roleMap: Record<string, string> = {
       'jobseeker': 'Job Seeker',
       'company': 'Recruiter',
+      'faculty': 'Faculty',
       'admin': 'Administrator',
     };
     
@@ -117,7 +118,14 @@
           <button
             onclick={() => {
               isDropdownOpen = false;
-              goto(authStore.user?.role === 'company' ? '/company/settings' : '/app/settings');
+              const role = authStore.user?.role;
+              if (role === 'company') {
+                goto('/company/settings');
+              } else if (role === 'faculty') {
+                goto('/faculty/settings');
+              } else {
+                goto('/app/settings');
+              }
             }}
             class="w-full flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 hover:cursor-pointer transition-colors"
           >

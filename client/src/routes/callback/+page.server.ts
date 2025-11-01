@@ -67,6 +67,8 @@ export const load: PageServerLoad = async ({ url, cookies }) => {
 
 	if (role === 'company') {
 		redirectPath = '/company/dashboard';
+	} else if (role === 'faculty') {
+		redirectPath = '/app/jobs';
 	} else if (role === 'jobseeker') {
 		redirectPath = '/app/jobs';
 	}

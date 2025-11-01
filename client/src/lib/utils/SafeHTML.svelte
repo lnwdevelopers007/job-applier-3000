@@ -27,4 +27,29 @@
     color: #374151;
   }
 
+  /* List styles */
+  .job-description :global(ul) {
+    list-style-type: disc;
+    margin-left: 1.5rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .job-description :global(ol) {
+    list-style-type: decimal;
+    margin-left: 1.5rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .job-description :global(li) {
+    margin-bottom: 0.25rem;
+    padding-left: 0.25rem;
+  }
+
+  .job-description :global(li p) {
+    margin: 0;
+    display: inline;
+  }
+
 </style>

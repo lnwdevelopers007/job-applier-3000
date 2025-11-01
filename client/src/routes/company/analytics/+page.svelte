@@ -323,10 +323,10 @@
 </script>
 
 <div class="flex flex-col w-full">
-  <h1 class="text-2xl font-bold text-gray-900 my-2">
+  <h1 class="text-2xl font-semibold text-gray-900 mb-1">
     Company Analytics
   </h1>
-  <p class="mb-2 text-base text-gray-600">
+  <p class="mb-6 text-base text-gray-600">
     Welcome back, company HR Team. Here's analytics for your company job and recruitment.
   </p>
   <!-- View Switch Buttons -->

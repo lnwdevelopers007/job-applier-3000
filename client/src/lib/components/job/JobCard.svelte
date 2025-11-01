@@ -1,6 +1,7 @@
 <script lang="ts">
   import { MapPin, Bookmark } from 'lucide-svelte';
   import Badge from './Badge.svelte';
+  import WorkInfoBadge from './WorkInfoBadge.svelte';
   import JobCardSkeleton from './JobCardSkeleton.svelte';
 	import { formatRelativeTime } from '$lib/utils/datetime';
   import { bookmarkService } from '$lib/services/bookmarkService';
@@ -112,8 +113,8 @@
     </div>
   </div>
   <div class="flex flex-wrap gap-1.5 mb-2">
-    <Badge variant="purple" text={job.workArrangement} />
-    <Badge variant="info" text={job.workType} />
+    <WorkInfoBadge type="workArrangement" value={job.workArrangement} />
+    <WorkInfoBadge type="workType" value={job.workType} />
     
     <!-- Required Skills -->
     {#if job.tags && job.tags.length > 0}
