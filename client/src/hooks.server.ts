@@ -71,15 +71,13 @@ export const handle: Handle = async ({ event, resolve }) => {
 						});
 						
 						if (newDecoded) {
-							const normalizedRole = normalizeRole(newDecoded.role);
-							
 							// Set user in locals
 							event.locals.user = {
 								email: newDecoded.email || '',
 								name: newDecoded.name || '',
 								avatarURL: newDecoded.avatarURL,
 								userID: newDecoded.userID || '',
-								role: normalizedRole,
+								role: (newDecoded.role as any) || 'jobSeeker',
 								verified: newDecoded.verified || false,
 								isAuthenticated: true
 							};
@@ -104,14 +102,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 				}
 			} else if (!isExpired) {
 				// Token is valid, set user in locals
-				const normalizedRole = normalizeRole(decoded.role);
-				
 				event.locals.user = {
 					email: decoded.email || '',
 					name: decoded.name || '',
 					avatarURL: decoded.avatarURL,
 					userID: decoded.userID || '',
-					role: normalizedRole,
+					role: (decoded.role as any) || 'jobSeeker',
 					verified: decoded.verified || false,
 					isAuthenticated: true
 				};
@@ -152,14 +148,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 					});
 					
 					if (newDecoded) {
-						const normalizedRole = normalizeRole(newDecoded.role);
-						
 						event.locals.user = {
 							email: newDecoded.email || '',
 							name: newDecoded.name || '',
 							avatarURL: newDecoded.avatarURL,
 							userID: newDecoded.userID || '',
-							role: normalizedRole,
+							role: (newDecoded.role as any) || 'jobSeeker',
 							verified: newDecoded.verified || false,
 							isAuthenticated: true
 						};
@@ -190,20 +184,25 @@ export const handle: Handle = async ({ event, resolve }) => {
 			throw redirect(303, redirectPath);
 		}
 		
-		// Check role-specific access - only redirect if accessing wrong role's area
+		// Check role-specific access
 		if (path.startsWith('/app/jobs')) {
 			// No restrictions - all authenticated users can access job routes
 		} else if (path.startsWith('/app/') && userRole !== 'jobSeeker') {
 			// Other /app/ routes are restricted to jobSeekers only
 			throw redirect(303, getDefaultPathForRole(userRole));
-		}
-		
-		if (path.startsWith('/company/') && userRole !== 'company') {
-			throw redirect(303, getDefaultPathForRole(userRole));
-		}
-		
-		if (path.startsWith('/admin/') && userRole !== 'admin') {
-			throw redirect(303, getDefaultPathForRole(userRole));
+		} else {
+			// Check protected routes for specific roles
+			const protectedRoutes = [
+				{ path: '/company/', role: 'company' },
+				{ path: '/faculty/', role: 'faculty' },
+				{ path: '/admin/', role: 'admin' }
+			] as const;
+			
+			for (const route of protectedRoutes) {
+				if (path.startsWith(route.path) && userRole !== route.role) {
+					throw redirect(303, getDefaultPathForRole(userRole));
+				}
+			}
 		}
 	}
 
@@ -212,28 +211,13 @@ export const handle: Handle = async ({ event, resolve }) => {
 	return response;
 };
 
-// Helper function to normalize role names
-function normalizeRole(role?: string): 'jobSeeker' | 'company' | 'admin' {
-	if (!role) return 'jobSeeker';
-	
-	const normalized = role.toLowerCase();
-	if (normalized === 'jobseeker' || normalized === 'job_seeker') {
-		return 'jobSeeker';
-	}
-	if (normalized === 'company') {
-		return 'company';
-	}
-	if (normalized === 'admin') {
-		return 'admin';
-	}
-	return 'jobSeeker';
-}
-
 // Helper function to get default path for role
 function getDefaultPathForRole(role: string): string {
 	switch (role) {
 		case 'company':
 			return '/company/dashboard';
+		case 'faculty':
+			return '/app/jobs';
 		case 'admin':
 			return '/admin/dashboard';
 		case 'jobSeeker':

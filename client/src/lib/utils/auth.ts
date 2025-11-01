@@ -45,7 +45,7 @@ export function navigateWithAuth(path: string, pendingAction?: { key: string; va
 		const user = authStore.user;
 		if (user && !user.verified && path !== '/unverified' && path !== '/') {
 			// Check if trying to access protected routes
-			if (path.startsWith('/app/') || path.startsWith('/company/') || path.startsWith('/admin/')) {
+			if (path.startsWith('/app/') || path.startsWith('/company/') || path.startsWith('/faculty/') || path.startsWith('/admin/')) {
 				goto('/unverified');
 				return;
 			}
