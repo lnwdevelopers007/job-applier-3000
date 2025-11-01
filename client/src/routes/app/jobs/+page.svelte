@@ -8,6 +8,7 @@
 	import { jobSearchStore } from '$lib/stores/jobSearch';
 	import { get } from 'svelte/store';
 	import { isAuthenticated, getUserInfo } from '$lib/utils/auth';
+	import { authStore } from '$lib/stores/auth.svelte';
 	import {
 		fetchCompany,
 		fetchCompanyNameLogo,
@@ -373,6 +374,7 @@
 							}}
 							isBookmarked={selectedJobBookmarked}
 							isApplied={appliedJobs.has(selectedJob.id)}
+							userRole={authStore.role}
 						/>
 					</div>
 				{:else}

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Bookmark, Share2 } from 'lucide-svelte';
 	import ApplyButton from './ApplyButton.svelte';
+	import type { UserRole } from '$lib/stores/auth.svelte';
 	
 	interface Job {
 		id: string;
@@ -18,7 +19,8 @@
 		onBookmark,
 		onShare,
 		isBookmarked = false,
-		isApplied = false
+		isApplied = false,
+		userRole = null
 	}: {
 		show: boolean;
 		job: Job;
@@ -27,6 +29,7 @@
 		onShare?: () => void;
 		isBookmarked?: boolean;
 		isApplied?: boolean;
+		userRole?: UserRole | null;
 	} = $props();
 </script>
 
@@ -48,6 +51,7 @@
 						postedDate={job.postedDate}
 						onClick={onApply}
 						size="md"
+						{userRole}
 					/>
 					{#if onBookmark}
 						<button 

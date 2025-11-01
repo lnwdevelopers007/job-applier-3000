@@ -6,6 +6,7 @@
 	import SkillTag from './SkillTag.svelte';
 	import CompanyCard from './CompanyCard.svelte';
 	import { formatRelativeTime } from '$lib/utils/datetime';
+	import type { UserRole } from '$lib/stores/auth.svelte';
 	
 	interface Job {
 		id: string;
@@ -37,7 +38,8 @@
 		onApply,
 		onBookmark = null,
 		isBookmarked = false,
-		isApplied = false
+		isApplied = false,
+		userRole = null
 	}: {
 		job: Job;
 		companyInfo?: CompanyInfo | null;
@@ -45,6 +47,7 @@
 		onBookmark?: () => void;
 		isBookmarked?: boolean;
 		isApplied?: boolean;
+		userRole?: UserRole | null;
 	} = $props();
 	
 	
@@ -142,6 +145,7 @@
 				closeDate={job.closeDate}
 				posted={job.posted}
 				onClick={() => onApply(job)}
+				{userRole}
 			/>
 			{#if onBookmark}
 				<button 

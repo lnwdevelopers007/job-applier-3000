@@ -14,6 +14,7 @@
   import { isAuthenticated, getUserInfo } from '$lib/utils/auth';
 	import { formatDateDMY } from '$lib/utils/datetime';
   import { bookmarkService } from '$lib/services/bookmarkService';
+  import { authStore } from '$lib/stores/auth.svelte';
 
   let { data }: { data: { jobId: string } } = $props();
 
@@ -520,6 +521,7 @@
                 onClick={handleApplyClick}
                 size="lg"
                 fullWidth={true}
+                userRole={authStore.role}
               />
             </div>
             <!-- Similar Jobs -->
@@ -573,6 +575,7 @@
   onShare={handleShare}
   {isBookmarked}
   isApplied={job && appliedJobs.has(job.id)}
+  userRole={authStore.role}
 />
 
 <!-- Apply Modal -->

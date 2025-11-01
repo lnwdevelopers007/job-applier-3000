@@ -3,6 +3,7 @@
 	import AuthModal from '$lib/components/ui/AuthModal.svelte';
 	import WorkInfoBadge from '$lib/components/job/WorkInfoBadge.svelte';
 	import { isAuthenticated, navigateWithAuth } from '$lib/utils/auth';
+	import { authStore } from '$lib/stores/auth.svelte';
 
 	type Job = {
 		id: string;
@@ -203,12 +204,14 @@
 			<Clock class="w-3 h-3" />
 			{job?.postedAt}
 		</span>
-		<button
-			onclick={handleApply}
-			class="px-5 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 cursor-pointer transition-colors"
-		>
-			Apply
-		</button>
+		{#if authStore.role === 'jobSeeker'}
+			<button
+				onclick={handleApply}
+				class="px-5 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 cursor-pointer transition-colors"
+			>
+				Apply
+			</button>
+		{/if}
 	</div>
 </div>
 {/if}
