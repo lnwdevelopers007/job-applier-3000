@@ -142,11 +142,11 @@
   }
 </script>
 
-<div class="p-2 bg-slate-50">
-  <h1 class="text-2xl font-bold text-gray-900">
+<div>
+  <h1 class="text-2xl font-semibold text-gray-900 mb-1">
     Company Dashboard
   </h1>
-  <p class="my-2 text-base text-gray-600">
+  <p class="mb-6 text-base text-gray-600">
     Welcome back, company HR Team. Here's what’s happening with your recruitment.
   </p>
 

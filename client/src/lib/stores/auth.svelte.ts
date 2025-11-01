@@ -1,7 +1,7 @@
 import { goto } from '$app/navigation';
 import { browser } from '$app/environment';
 
-export type UserRole = 'jobSeeker' | 'company' | 'admin';
+export type UserRole = 'jobSeeker' | 'company' | 'faculty' | 'admin';
 
 export type UserInfo = {
 	name: string;
