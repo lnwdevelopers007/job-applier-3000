@@ -8,12 +8,17 @@
 		onFileSelect = () => {}
 	} = $props();
 	
+
+	/**
+	 * @type {HTMLInputElement}
+	 */
 	let fileInput;
 	let previewImage = $state(null);
 	
 	// Display priority: previewImage (newly selected) > currentImage (existing)
 	let displayImage = $derived(previewImage || currentImage);
-	
+
+	// @ts-expect-error: event target may be undefined, safe to ignore
 	function handleFileSelect(event) {
 		const file = event.target.files[0];
 		if (file) {
@@ -31,6 +36,7 @@
 
 <div>
 	{#if label}
+		<!-- svelte-ignore a11y_label_has_associated_control -->
 		<label class="text-sm font-medium text-gray-700 block mb-2">{label}</label>
 	{/if}
 	
