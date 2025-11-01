@@ -1,10 +1,10 @@
 <script lang="ts">
 	export let things: any[] = [];
-	export let selectedThingIndex: number | null = null;
 	export let table_header: string[] = [];
 	export let row_attributes: string[] = [];
 	export let handleAction: (action: any, thing: any) => void;
 
+	let selectedThingIndex: number | null = null;
 	function selectRow(index: number) {
 		selectedThingIndex = selectedThingIndex === index ? null : index;
 	}

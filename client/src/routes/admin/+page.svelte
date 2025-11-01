@@ -16,11 +16,10 @@
 	});
 
 	const VALID_ROLES = ['jobSeeker', 'company', 'faculty'];
+	const VALID_VERIFICATION_OPTIONS = [true, false];
 
-	let selectedUserIndex = $state<number | null>(null);
 	let users = $state<any[]>([]);
-
-	let NameOfSelectedUser = $state('');
+	let selectedUser = $state<any>(null);
 
 	let showDeleteModal = $state(false);
 	let deleteReason = $state('');
@@ -30,31 +29,54 @@
 	let banReason = $state('');
 	let isBanning = $state(false);
 
-	let showRoleEditModal = $state(false);
+	let showPermissionEditModal = $state(false);
+	let showPermissionEditConfirmButton = $state(false);
 
-	async function deleteUserConfirmed() {
+	let dropdowns = $derived([
+		{
+			name: 'Roles',
+			values: VALID_ROLES,
+			defaultVal: selectedUser === null ? '' : selectedUser.role
+		},
+		{
+			name: 'Verified',
+			values: VALID_VERIFICATION_OPTIONS,
+			defaultVal: selectedUser === null ? '' : selectedUser.verified
+		}
+	]);
+
+	async function onDeleteUser() {
+		isDeleting = true;
 		// TODO: add a real delete operation here
 		showDeleteModal = false;
+		isDeleting = false;
+	}
+
+	async function onBanUser() {
+		isBanning = true;
+		// TODO: add a real ban operation here
+		showBanModal = false;
+		isBanning = false;
 	}
 
 	function handleAction(action: any, user: any) {
+		selectedUser = user;
 		switch (action.label) {
 			case 'View':
-				showRoleEditModal = true;
+				console.log('Skibidi');
 				break;
 			case 'Edit Permissions':
-				console.log('Edit Permissions');
+				showPermissionEditModal = true;
+				console.log(showPermissionEditModal);
 				break;
 			case 'Ban':
-				NameOfSelectedUser = user.name;
 				showBanModal = true;
 				break;
 			case 'Delete':
-				NameOfSelectedUser = user.name;
 				showDeleteModal = true;
 				break;
 			default:
-				console.log('Nani ga suki?');
+				null;
 		}
 	}
 
@@ -73,7 +95,6 @@
 
 <TableWithAction
 	things={users}
-	selectedThingIndex={selectedUserIndex}
 	table_header={TABLE_HEADER}
 	row_attributes={ROW_ATTRIBUTES}
 	{handleAction}
@@ -83,18 +104,29 @@
 	bind:isVisible={showDeleteModal}
 	thing={'User'}
 	actionName={'Delete'}
-	thingName={NameOfSelectedUser}
-	isActionInProgress={isDeleting}
+	thingName={selectedUser === null ? '' : selectedUser.name}
+	bind:isActionInProgress={isDeleting}
 	reasonForAction={deleteReason}
-	action={deleteUserConfirmed}
+	action={onDeleteUser}
 />
 
 <ConfirmActionWithReason
 	bind:isVisible={showBanModal}
 	thing={'User'}
 	actionName={'Ban'}
-	thingName={NameOfSelectedUser}
-	isActionInProgress={isBanning}
+	thingName={selectedUser === null ? '' : selectedUser.name}
+	bind:isActionInProgress={isBanning}
 	reasonForAction={banReason}
-	action={deleteUserConfirmed}
+	action={onBanUser}
+/>
+
+<ConfirmDropdownAction
+	bind:isVisible={showPermissionEditModal}
+	actionName={`Editing ${selectedUser === null ? '' : selectedUser.name} Permission`}
+	bind:showConfirmButton={showPermissionEditConfirmButton}
+	bind:dropdowns
+	action={(selectedVals) => {
+		console.log(selectedVals);
+		showPermissionEditModal = false;
+	}}
 />
