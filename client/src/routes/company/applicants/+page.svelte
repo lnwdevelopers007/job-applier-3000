@@ -1,17 +1,7 @@
  <script lang="ts">
   import { onMount } from 'svelte';
   import ApplicantFilesSection from '$lib/components/files/ApplicantFilesSection.svelte';
-  import {
-    Search,
-    GraduationCap,
-    Briefcase,
-    Clock,
-    StickyNote,
-    Check,
-    X,
-    User,
-    CodeXml
-  } from 'lucide-svelte';
+  import { Search } from 'lucide-svelte';
   import { getUserInfo, isAuthenticated } from '$lib/utils/auth';
   import { authStore } from '$lib/stores/auth.svelte';
   import { goto } from '$app/navigation';
