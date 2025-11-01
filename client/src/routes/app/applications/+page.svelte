@@ -251,12 +251,12 @@
 				</button>
 			{/each}
 		</div>
-		<button
+		<!-- <button
 			class="flex items-center gap-2 rounded-lg bg-white border border-gray-200 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors hover:cursor-pointer"
 		>
 			<Download class="h-4 w-4" />
 			Export
-		</button>
+		</button> -->
 	</div>
 
 	<div class="bg-white border border-gray-200 rounded-xl overflow-hidden mb-8">
