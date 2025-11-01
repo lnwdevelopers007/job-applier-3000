@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { fetchUsers } from '$lib/utils/fetcher';
 	import TableWithAction from '$lib/components/table/TableWithAction.svelte';
+	import ConfirmActionWithReason from '$lib/components/modals/ConfirmActionWithReason.svelte';
+	import ConfirmDropdownAction from '$lib/components/modals/ConfirmDropdownAction.svelte';
 
 	const USER_ACTIONS = [
 		{ label: 'View', disabled: false },
-		{ label: 'Edit', disabled: false },
+		{ label: 'Edit Permissions', disabled: false },
 		{ label: 'Ban', disabled: false },
 		{ label: 'Delete', disabled: false }
 	];
@@ -13,15 +15,47 @@
 		return attribute.toLowerCase();
 	});
 
-	let selectedThing = $state<number | null>(null);
-	let things = $state<any[]>([]);
+	const VALID_ROLES = ['jobSeeker', 'company', 'faculty'];
 
-	function selectRow(index: number) {
-		selectedThing = selectedThing === index ? null : index;
+	let selectedUserIndex = $state<number | null>(null);
+	let users = $state<any[]>([]);
+
+	let NameOfSelectedUser = $state('');
+
+	let showDeleteModal = $state(false);
+	let deleteReason = $state('');
+	let isDeleting = $state(false);
+
+	let showBanModal = $state(false);
+	let banReason = $state('');
+	let isBanning = $state(false);
+
+	let showRoleEditModal = $state(false);
+
+	async function deleteUserConfirmed() {
+		// TODO: add a real delete operation here
+		showDeleteModal = false;
 	}
 
-	function handleAction(arg: any, anotherArg: any) {
-		return null;
+	function handleAction(action: any, user: any) {
+		switch (action.label) {
+			case 'View':
+				showRoleEditModal = true;
+				break;
+			case 'Edit Permissions':
+				console.log('Edit Permissions');
+				break;
+			case 'Ban':
+				NameOfSelectedUser = user.name;
+				showBanModal = true;
+				break;
+			case 'Delete':
+				NameOfSelectedUser = user.name;
+				showDeleteModal = true;
+				break;
+			default:
+				console.log('Nani ga suki?');
+		}
 	}
 
 	async function loadUserData() {
@@ -29,7 +63,7 @@
 		for (let user of usersFromDB) {
 			user.actions = USER_ACTIONS;
 		}
-		things = usersFromDB;
+		users = usersFromDB;
 	}
 
 	$effect(() => {
@@ -38,10 +72,29 @@
 </script>
 
 <TableWithAction
-	{things}
+	things={users}
+	selectedThingIndex={selectedUserIndex}
 	table_header={TABLE_HEADER}
 	row_attributes={ROW_ATTRIBUTES}
-	{selectRow}
-	{selectedThing}
 	{handleAction}
+/>
+
+<ConfirmActionWithReason
+	bind:isVisible={showDeleteModal}
+	thing={'User'}
+	actionName={'Delete'}
+	thingName={NameOfSelectedUser}
+	isActionInProgress={isDeleting}
+	reasonForAction={deleteReason}
+	action={deleteUserConfirmed}
+/>
+
+<ConfirmActionWithReason
+	bind:isVisible={showBanModal}
+	thing={'User'}
+	actionName={'Ban'}
+	thingName={NameOfSelectedUser}
+	isActionInProgress={isBanning}
+	reasonForAction={banReason}
+	action={deleteUserConfirmed}
 />

@@ -1,10 +1,13 @@
 <script lang="ts">
 	export let things: any[] = [];
+	export let selectedThingIndex: number | null = null;
 	export let table_header: string[] = [];
 	export let row_attributes: string[] = [];
-	export let selectedThing: number | null = null;
-	export let selectRow: (index: number) => void;
 	export let handleAction: (action: any, thing: any) => void;
+
+	function selectRow(index: number) {
+		selectedThingIndex = selectedThingIndex === index ? null : index;
+	}
 </script>
 
 <!-- Jobs Table -->
@@ -21,7 +24,7 @@
 		<tbody>
 			{#each things as thing, i}
 				<tr
-					class="cursor-pointer border-t {selectedThing === i ? 'bg-green-200' : ''}"
+					class="cursor-pointer border-t {selectedThingIndex === i ? 'bg-green-200' : ''}"
 					onclick={() => selectRow(i)}
 				>
 					{#each row_attributes as attr, i}
