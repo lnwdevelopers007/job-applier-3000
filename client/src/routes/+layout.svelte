@@ -25,6 +25,8 @@
 			{ href: '/company/applicants', label: 'Applicants' },
 			{ href: '/company/analytics', label: 'Analytics' },
 			{ href: '/company/create', label: 'Post Job' },
+		] : authStore.user?.role === 'faculty' ? [
+			{ href: '/app/jobs', label: 'Jobs' },
 		] : [
 			{ href: '/', label: 'Home' },
 			{ href: '/app/jobs', label: 'Jobs' },
