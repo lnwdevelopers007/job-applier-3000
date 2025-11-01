@@ -1,4 +1,4 @@
-import { userService, type User, type JobSeekerInfo, type CompanyInfo } from './userService';
+import { userService, type User, type JobSeekerInfo, type CompanyInfo, type FacultyInfo } from './userService';
 
 export interface BaseUserData {
 	id?: string;
@@ -38,7 +38,9 @@ export interface CompanyUserData extends BaseUserData {
 	companyLinkedin?: string;
 }
 
-export type UserData = SeekerUserData | CompanyUserData;
+export interface FacultyUserData extends BaseUserData {}
+
+export type UserData = SeekerUserData | CompanyUserData | FacultyUserData;
 
 export interface Tab {
 	id: string;
@@ -83,6 +85,8 @@ const COMPANY_FIELD_MAPPING = {
 	companyLinkedin: (info: CompanyInfo) => info.linkedIn || ''
 } as const;
 
+const FACULTY_FIELD_MAPPING = {} as const;
+
 export const SEEKER_TABS: Tab[] = [
 	{
 		id: 'user',
@@ -122,6 +126,15 @@ export const COMPANY_TABS: Tab[] = [
 		label: 'Documents',
 		title: 'Company Documents',
 		description: 'Upload and manage company documents and certifications.'
+	}
+];
+
+export const FACULTY_TABS: Tab[] = [
+	{
+		id: 'user',
+		label: 'User',
+		title: 'User info',
+		description: 'Update your photo and user details here.'
 	}
 ];
 
@@ -171,9 +184,22 @@ export const INITIAL_COMPANY_DATA: CompanyUserData = {
 	documents: []
 };
 
+export const INITIAL_FACULTY_DATA: FacultyUserData = {
+	id: '',
+	name: '',
+	email: '',
+	avatar: '',
+	provider: '',
+	userID: '',
+	role: 'faculty',
+	verified: false,
+	googleConnected: false,
+	documents: []
+};
+
 export class SettingsService {
 	// Map backend user data to frontend format
-	static mapUserToUserData<T extends UserData>(user: User, userType: 'seeker' | 'company'): T {
+	static mapUserToUserData<T extends UserData>(user: User, userType: 'seeker' | 'company' | 'faculty'): T {
 		const baseData: BaseUserData = {
 			id: user.id || (user as Record<string, unknown>)._id as string,
 			name: user.name || '',
@@ -181,7 +207,7 @@ export class SettingsService {
 			avatar: user.avatarURL || '',
 			provider: user.provider || '',
 			userID: user.userID || '',
-			role: user.role || userType === 'seeker' ? 'jobSeeker' : 'company',
+			role: user.role || (userType === 'seeker' ? 'jobSeeker' : userType === 'company' ? 'company' : 'faculty'),
 			verified: user.verified || false,
 			googleConnected: user.provider === 'google',
 			documents: []
@@ -199,7 +225,7 @@ export class SettingsService {
 				)
 			};
 			return seekerData as T;
-		} else {
+		} else if (userType === 'company') {
 			const userInfo = user.userInfo as CompanyInfo | undefined;
 			const companyData: CompanyUserData = {
 				...baseData,
@@ -211,11 +237,16 @@ export class SettingsService {
 				)
 			};
 			return companyData as T;
+		} else {
+			const facultyData: FacultyUserData = {
+				...baseData
+			};
+			return facultyData as T;
 		}
 	}
 
 	// Load user data from backend
-	static async loadUserData<T extends UserData>(userType: 'seeker' | 'company'): Promise<T> {
+	static async loadUserData<T extends UserData>(userType: 'seeker' | 'company' | 'faculty'): Promise<T> {
 		try {
 			const user = await userService.getCurrentUser();
 			return this.mapUserToUserData<T>(user, userType);
@@ -228,7 +259,7 @@ export class SettingsService {
 	// Save user profile data
 	static async saveUserData(
 		userData: UserData,
-		userType: 'seeker' | 'company',
+		userType: 'seeker' | 'company' | 'faculty',
 		changedFields?: string[]
 	): Promise<User> {
 		const userId = userData.id;
@@ -265,7 +296,7 @@ export class SettingsService {
 	static updateLocalData<T extends UserData>(
 		userData: T,
 		updatedUser: User,
-		userType: 'seeker' | 'company'
+		userType: 'seeker' | 'company' | 'faculty'
 	): void {
 		// Update common fields
 		if (updatedUser.name) userData.name = updatedUser.name;

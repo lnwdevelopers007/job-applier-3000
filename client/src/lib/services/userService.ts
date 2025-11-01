@@ -47,6 +47,7 @@ export interface CompanyInfo {
 	benefits?: string[];
 }
 
+
 export interface FileDocument {
 	id?: string;
 	parentID: string;
@@ -200,7 +201,7 @@ class UserService {
 			payload.name = (userData.name as string) || '';
 			payload.email = (userData.email as string) || '';
 			payload.avatarURL = (userData.avatar as string) || '';
-			payload.role = (userData.role as string) || (userType === 'seeker' ? 'jobSeeker' : 'company');
+			payload.role = (userData.role as string) || (userType === 'seeker' ? 'jobSeeker' : userType === 'company' ? 'company' : 'faculty');
 			payload.verified = (userData.verified as boolean) || false;
 			
 			// Build userInfo object based on user type
@@ -229,7 +230,6 @@ class UserService {
 					headquarters: (userData.headquarters as string) || '',
 					linkedIn: (userData.companyLinkedin as string) || ''
 				};
-			}
 		} else {
 			// Only include fields that have changed
 			if (changedFields.includes('name') && userData.name !== undefined) {
@@ -300,7 +300,6 @@ class UserService {
 						linkedIn: (userData.companyLinkedin as string) || ''
 					};
 				}
-			}
 		}
 		
 		return payload;

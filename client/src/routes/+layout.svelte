@@ -16,16 +16,21 @@
 	// Check if current page should hide header
 	const shouldHideHeader = $derived($page.url.pathname.startsWith('/login') || $page.url.pathname.startsWith('/signup'));
 	
+	// Check if current page should use custom layout (no container)
+	const useCustomLayout = $derived($page.url.pathname === '/' || shouldHideHeader);
+	
 	// Get navigation items based on user role
 	const navItems = $derived(
 		!authStore.isAuthenticated ? [] :
 		authStore.user?.role === 'company' ? [
+			{ href: '/', label: 'Home' },
 			{ href: '/app/jobs', label: 'Jobs' },
 			{ href: '/company/dashboard', label: 'Dashboard' },
 			{ href: '/company/applicants', label: 'Applicants' },
 			{ href: '/company/analytics', label: 'Analytics' },
 			{ href: '/company/create', label: 'Post Job' },
 		] : authStore.user?.role === 'faculty' ? [
+			{ href: '/', label: 'Home' },
 			{ href: '/app/jobs', label: 'Jobs' },
 		] : [
 			{ href: '/', label: 'Home' },
@@ -46,9 +51,18 @@
 	{#if !shouldHideHeader}
 	<LayoutHeader navItems={navItems} />
 	{/if}
-	<div>
+	
+	{#if useCustomLayout}
+		<!-- Home, Login/Signup pages without container -->
 		{@render children()}
-	</div>
+	{:else}
+		<!-- App/Company/Faculty pages with common container -->
+		<div class="max-w-7xl mx-auto min-h-screen px-6 flex flex-col">
+			<main class="flex-1 py-6 pt-20">
+				{@render children()}
+			</main>
+		</div>
+	{/if}
 </div>
 
 <!-- Global Toast Notifications -->

@@ -63,7 +63,7 @@
 		userData = $bindable({} as UserData),
 		onSave,
 		title = 'Settings',
-		userType = 'seeker' as 'seeker' | 'company',
+		userType = 'seeker' as 'seeker' | 'company' | 'faculty',
 		onTabChange
 	}: {
 		tabs: Tab[];
@@ -71,7 +71,7 @@
 		userData: UserData;
 		onSave: SaveHandler;
 		title: string;
-		userType: 'seeker' | 'company';
+		userType: 'seeker' | 'company' | 'faculty';
 		onTabChange?: (tabId: string) => void;
 	} = $props();
 	
