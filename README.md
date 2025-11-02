@@ -14,6 +14,7 @@ KU Dept. of Computer Engineering Students and Alumni.
 1. For Backend and Frontend, copy your .env to .env.production and read .env.example as standard.
 1. Run `docker-compose up --build`
 1. Run `docker-compose down` to stop the services.
+NOTE: .env is for local development running without docker-compose. .env.production is for docker-compose production running. Those configurations are independent and different.
 
 ### Back-end
 
