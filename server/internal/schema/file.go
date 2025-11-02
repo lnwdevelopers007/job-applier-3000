@@ -9,7 +9,7 @@ type FileCategory string
 
 const (
 	CategoryResume        FileCategory = "resume"
-	CategoryCoverLetter   FileCategory = "cover_letter"
+	CategoryTranscript   FileCategory = "transcript"
 	CategoryCertification FileCategory = "certification"
 	CategoryVerification  FileCategory = "verification"
 )

@@ -375,7 +375,7 @@ func (fc FileController) Delete(c *gin.Context) {
 
 // GetApplicantFiles godoc
 // @Summary      Get applicant files for a job application
-// @Description  Allows a company to view files (resume, cover_letter, certification) of an applicant for a specific job application. Only the company who owns the job can access.
+// @Description  Allows a company to view files (resume, transcript, certification) of an applicant for a specific job application. Only the company who owns the job can access.
 // @Tags         Files
 // @Accept       json
 // @Produce      json
@@ -443,13 +443,13 @@ func (fc FileController) GetApplicantFiles(c *gin.Context) {
 		return
 	}
 
-	// 4. Get applicant's files (only relevant categories: resume, cover_letter, certification)
+	// 4. Get applicant's files (only relevant categories: resume, transcript, certification)
 	cursor, err := db.Collection("files").Find(
 		c.Request.Context(),
 		bson.M{
 			"userID": application.ApplicantID,
 			"category": bson.M{
-				"$in": []string{"resume", "cover_letter", "certification"},
+				"$in": []string{"resume", "transcript", "certification"},
 			},
 		},
 	)
@@ -489,4 +489,105 @@ func (fc FileController) GetApplicantFiles(c *gin.Context) {
 		"jobID":         application.JobID,
 		"files":         files,
 	})
+}
+
+// DownloadApplicantFile godoc
+// @Summary      Download an applicant's file
+// @Description  Allows a company to download a specific file from an applicant for a job application. Only the company who owns the job can access.
+// @Tags         Files
+// @Accept       json
+// @Produce      octet-stream
+// @Param        applicationId   path      string  true  "Job Application ID"
+// @Param        fileId          path      string  true  "File ID"
+// @Success      200  {file}      binary
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      403  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Router       /files/application/{applicationId}/download/{fileId} [get]
+func (fc FileController) DownloadApplicantFile(c *gin.Context) {
+	applicationID := c.Param("applicationId")
+	appObjectID, err := primitive.ObjectIDFromHex(applicationID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid application ID"})
+		return
+	}
+
+	fileID := c.Param("fileId")
+	fileObjectID, err := primitive.ObjectIDFromHex(fileID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid file ID"})
+		return
+	}
+
+	// Get authenticated user
+	requestingUserID, requestingUserRole, err := getUserFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
+		return
+	}
+
+	// Only companies can access this endpoint
+	if requestingUserRole != "company" {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "only companies can access applicant files",
+		})
+		return
+	}
+
+	db := database.GetDatabase()
+
+	// 1. Find the job application
+	var application schema.JobApplication
+	err = db.Collection("job_applications").FindOne(
+		c.Request.Context(),
+		bson.M{"_id": appObjectID},
+	).Decode(&application)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "application not found"})
+		return
+	}
+
+	// 2. Find the job to verify company ownership
+	var job schema.Job
+	err = db.Collection("jobs").FindOne(
+		c.Request.Context(),
+		bson.M{"_id": application.JobID},
+	).Decode(&job)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "job not found"})
+		return
+	}
+
+	// 3. Verify the requesting user (company) owns the job
+	if job.CompanyID != requestingUserID {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "you can only access files for applications to your own jobs",
+		})
+		return
+	}
+
+	// 4. Get the file and verify it belongs to the applicant
+	var fileDoc schema.File
+	err = db.Collection("files").FindOne(
+		c.Request.Context(),
+		bson.M{"_id": fileObjectID},
+	).Decode(&fileDoc)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "file not found"})
+		return
+	}
+
+	// 5. Verify the file belongs to the applicant
+	if fileDoc.UserID != application.ApplicantID {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "file does not belong to this applicant",
+		})
+		return
+	}
+
+	// 6. Serve the file
+	c.Header("Content-Type", fileDoc.ContentType)
+	c.Header("Content-Disposition", "attachment; filename="+fileDoc.Filename)
+	c.Data(http.StatusOK, fileDoc.ContentType, fileDoc.Content)
 }
