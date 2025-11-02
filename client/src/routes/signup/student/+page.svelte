@@ -11,7 +11,6 @@
   import PasswordInput from '$lib/components/auth/PasswordInput.svelte';
   import FormButton from '$lib/components/auth/FormButton.svelte';
   import GoogleOAuthButton from '$lib/components/auth/GoogleOAuthButton.svelte';
-  import OrDivider from '$lib/components/auth/OrDivider.svelte';
 
   onMount(() => {
     if (isAuthenticated()) {
@@ -30,12 +29,7 @@
   let showPassword = false;
   let showConfirmPassword = false;
   
-  function handleEmailStep() {
-    if (email) {
-      currentStep = 2;
-    }
-  }
-  
+
   function goBackToEmailStep() {
     currentStep = 1;
   }

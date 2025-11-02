@@ -45,13 +45,13 @@
 	<div class="fixed inset-0 z-50 flex items-center justify-center">
 		<div class="w-96 rounded-lg bg-white p-6 shadow-lg">
 			<h2 class="mb-4 text-lg font-semibold text-gray-800">{actionName}</h2>
-			{#each dropdowns as dropdown}
+			{#each dropdowns as dropdown, i (i)}
 				<div>
 					<label class="mb-2 block text-sm text-gray-600"
 						>{dropdown.name}
 
 						<select bind:value={selectedVals[dropdown.name]}>
-							{#each dropdown.values as val}
+							{#each dropdown.values as val, i (i)}
 								<option value={val}>{val}</option>
 							{/each}
 						</select>

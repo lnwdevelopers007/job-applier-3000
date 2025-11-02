@@ -170,7 +170,7 @@
 				showDeleteModal = true;
 				break;
 			default:
-				null;
+				console.log('hello there');
 		}
 	}
 

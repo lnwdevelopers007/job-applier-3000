@@ -4,16 +4,8 @@
   import { isAuthenticated } from '$lib/utils/auth';
   import AuthLayout from '$lib/components/auth/AuthLayout.svelte';
   import AuthHeader from '$lib/components/auth/AuthHeader.svelte';
-  import FormInput from '$lib/components/auth/FormInput.svelte';
-  import PasswordInput from '$lib/components/auth/PasswordInput.svelte';
-  import FormButton from '$lib/components/auth/FormButton.svelte';
   import GoogleOAuthButton from '$lib/components/auth/GoogleOAuthButton.svelte';
-  import OrDivider from '$lib/components/auth/OrDivider.svelte';
-  
-  let email = '';
-  let password = '';
-  let rememberMe = false;
-  let showPassword = false;
+
 
   onMount(() => {
     if (isAuthenticated()) {
@@ -21,9 +13,6 @@
     }
   });
 
-  function handleLogin() {
-    console.log('Login:', { email, password, rememberMe });
-  }
 
 </script>
 

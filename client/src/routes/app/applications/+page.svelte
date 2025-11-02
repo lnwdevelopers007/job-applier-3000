@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Download, MapPin, EllipsisVertical } from 'lucide-svelte';
+	import { MapPin, EllipsisVertical } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
 	import { fetchJob, fetchCompanyNameLogo } from '$lib/utils/fetcher';
 	import Dropdown from '$lib/components/ui/Dropdown.svelte';
@@ -58,7 +58,7 @@
 			const appPromises = appData.map(async (app: any, index: number) => {
 				// Handle different API response structures
 				const jobApplication = app.jobApplication || app;
-				
+
 				// Fetch job details
 				const job = await fetchJob(jobApplication.jobID);
 
@@ -142,7 +142,7 @@
 	}
 
 	function initiateCancel(appId: string) {
-		const app = applications.find(a => a.id === appId);
+		const app = applications.find((a) => a.id === appId);
 		if (!app) {
 			toast.error('Application not found');
 			return;
@@ -160,7 +160,7 @@
 		}
 
 		isCancelling = true;
-		
+
 		try {
 			const res = await fetch(`/apply/${applicationToCancel.jobApplication.id}`, {
 				method: 'DELETE',
@@ -172,10 +172,10 @@
 			}
 
 			toast.success('Application cancelled successfully');
-			
+
 			// Remove from the local list
-			applications = applications.filter(a => a.id !== applicationToCancel.id);
-			
+			applications = applications.filter((a) => a.id !== applicationToCancel.id);
+
 			showCancelModal = false;
 			applicationToCancel = null;
 		} catch (err) {
@@ -184,67 +184,72 @@
 		} finally {
 			isCancelling = false;
 		}
-	}	
+	}
 
 	onMount(async () => {
 		applications = await fetchApplications('All');
 	});
-
 </script>
 
 <div class="">
 	<div class="mb-8">
 		<h1 class="text-2xl font-semibold text-gray-900">My Applications</h1>
-		<p class="mt-2 text-gray-600">
-			Track and manage all your job applications in one place
-		</p>
+		<p class="mt-2 text-gray-600">Track and manage all your job applications in one place</p>
 	</div>
-	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+	<div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
 		<!-- Total Applications -->
-		<div class="rounded-xl bg-white p-4 border border-gray-200">
-			<h2 class="text-sm text-gray-500 mb-2">Total Applications</h2>
+		<div class="rounded-xl border border-gray-200 bg-white p-4">
+			<h2 class="mb-2 text-sm text-gray-500">Total Applications</h2>
 			<p class="text-2xl font-medium text-gray-900">{stats.totalApplications}</p>
-			<p class={`text-sm mt-1 ${stats.trend.totalApplications >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-				{stats.trend.totalApplications >= 0 ? '↑' : '↓'} {Math.abs(stats.trend.totalApplications)} from last month
+			<p
+				class={`mt-1 text-sm ${stats.trend.totalApplications >= 0 ? 'text-green-600' : 'text-red-600'}`}
+			>
+				{stats.trend.totalApplications >= 0 ? '↑' : '↓'}
+				{Math.abs(stats.trend.totalApplications)} from last month
 			</p>
 		</div>
 
 		<!-- In Review -->
-		<div class="rounded-xl bg-white p-4 border border-gray-200">
-			<h2 class="text-sm text-gray-500 mb-2">In Review</h2>
+		<div class="rounded-xl border border-gray-200 bg-white p-4">
+			<h2 class="mb-2 text-sm text-gray-500">In Review</h2>
 			<p class="text-2xl font-medium text-gray-900">{stats.inReview}</p>
-			<p class={`text-sm mt-1 ${stats.trend.inReview >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-				{stats.trend.inReview >= 0 ? '↑' : '↓'} {Math.abs(stats.trend.inReview)} new this week
+			<p class={`mt-1 text-sm ${stats.trend.inReview >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+				{stats.trend.inReview >= 0 ? '↑' : '↓'}
+				{Math.abs(stats.trend.inReview)} new this week
 			</p>
 		</div>
 
 		<!-- Offer Received -->
-		<div class="rounded-xl bg-white p-4 border border-gray-200">
-			<h2 class="text-sm text-gray-500 mb-2">Offer Received</h2>
+		<div class="rounded-xl border border-gray-200 bg-white p-4">
+			<h2 class="mb-2 text-sm text-gray-500">Offer Received</h2>
 			<p class="text-2xl font-medium text-gray-900">{stats.offerReceived}</p>
-			<p class={`text-sm mt-1 ${stats.trend.offerReceived >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-				{stats.trend.offerReceived >= 0 ? '↑' : '↓'} {Math.abs(stats.trend.offerReceived)} new this week
+			<p
+				class={`mt-1 text-sm ${stats.trend.offerReceived >= 0 ? 'text-green-600' : 'text-red-600'}`}
+			>
+				{stats.trend.offerReceived >= 0 ? '↑' : '↓'}
+				{Math.abs(stats.trend.offerReceived)} new this week
 			</p>
 		</div>
 
 		<!-- Response Rate -->
-		<div class="rounded-xl bg-white p-4 border border-gray-200">
-			<h2 class="text-sm text-gray-500 mb-2">Response Rate</h2>
+		<div class="rounded-xl border border-gray-200 bg-white p-4">
+			<h2 class="mb-2 text-sm text-gray-500">Response Rate</h2>
 			<p class="text-2xl font-medium text-gray-900">{stats.responseRate}%</p>
-			<p class={`text-sm mt-1 ${stats.trend.responseRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-				{stats.trend.responseRate >= 0 ? '↑' : '↓'} {Math.abs(stats.trend.responseRate)}% from last month
+			<p
+				class={`mt-1 text-sm ${stats.trend.responseRate >= 0 ? 'text-green-600' : 'text-red-600'}`}
+			>
+				{stats.trend.responseRate >= 0 ? '↑' : '↓'}
+				{Math.abs(stats.trend.responseRate)}% from last month
 			</p>
 		</div>
 	</div>
-	<div class="flex justify-between items-center mb-6">
+	<div class="mb-6 flex items-center justify-between">
 		<div class="flex gap-2">
 			{#each ['All', 'Pending', 'In Review', 'Accepted', 'Rejected'] as status, i (i)}
 				<button
 					class={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors hover:cursor-pointer ${
-							filterStatus === status
-								? 'bg-green-600 text-white'
-								: 'text-gray-700 hover:bg-gray-200'
-						}`}
+						filterStatus === status ? 'bg-green-600 text-white' : 'text-gray-700 hover:bg-gray-200'
+					}`}
 					onclick={() => handleFilter(status)}
 				>
 					{status}
@@ -259,15 +264,18 @@
 		</button> -->
 	</div>
 
-	<div class="bg-white border border-gray-200 rounded-xl overflow-hidden mb-8">
-		<div class="bg-slate-50 border-b border-gray-200 px-6 py-4">
+	<div class="mb-8 overflow-hidden rounded-xl border border-gray-200 bg-white">
+		<div class="border-b border-gray-200 bg-slate-50 px-6 py-4">
 			<div class="flex items-center justify-between">
 				<h2 class="text-md font-medium text-gray-900">Recent Applications</h2>
 				<div class="flex items-center gap-3 text-sm text-gray-600">
-					<span>Showing {showAllApplications ? applications.length : Math.min(6, applications.length)} of {applications.length}</span>
+					<span
+						>Showing {showAllApplications ? applications.length : Math.min(6, applications.length)} of
+						{applications.length}</span
+					>
 
-					<button 
-						class="text-gray-600 hover:text-gray-700 font-medium hover:cursor-pointer"
+					<button
+						class="font-medium text-gray-600 hover:cursor-pointer hover:text-gray-700"
 						disabled
 						title="Coming soon"
 					>
@@ -282,7 +290,7 @@
 				No applications found for "{filterStatus}"
 			</div>
 		{:else}
-			{#each (showAllApplications ? applications : applications.slice(0, 6)) as app, i (app.id)}
+			{#each showAllApplications ? applications : applications.slice(0, 6) as app, i (app.id)}
 				<div
 					class={`flex items-center justify-between px-6 py-4 ${i === (showAllApplications ? applications : applications.slice(0, 6)).length - 1 ? '' : 'border-b border-gray-100'}`}
 				>
@@ -295,7 +303,7 @@
 						/>
 						<div class="flex flex-col">
 							<span class="font-medium text-gray-900">{app.jobTitle}</span>
-							<div class="flex items-center gap-2 text-sm text-gray-500 mt-1">
+							<div class="mt-1 flex items-center gap-2 text-sm text-gray-500">
 								<span>{app.companyName}</span>
 								<span class="text-gray-300">•</span>
 								<div class="flex items-center gap-1">
@@ -309,38 +317,40 @@
 					<!-- Right part block -->
 					<div class="flex items-center gap-6">
 						<div class="text-right">
-							<span class="text-xs text-gray-500 uppercase tracking-wide">Applied</span>
-							<div class="text-sm text-gray-600 font-medium">{formatRelativeTime(new Date(Date.now() - app.daysAgo * 24 * 60 * 60 * 1000))}</div>
+							<span class="text-xs uppercase tracking-wide text-gray-500">Applied</span>
+							<div class="text-sm font-medium text-gray-600">
+								{formatRelativeTime(new Date(Date.now() - app.daysAgo * 24 * 60 * 60 * 1000))}
+							</div>
 						</div>
 
 						<div
-							class={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium border ${
+							class={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-medium ${
 								app.status === 'IN REVIEW'
-									? 'bg-amber-50 text-amber-700 border-amber-200'
+									? 'border-amber-200 bg-amber-50 text-amber-700'
 									: app.status === 'ACCEPTED'
-										? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+										? 'border-emerald-200 bg-emerald-50 text-emerald-700'
 										: app.status === 'PENDING'
-											? 'bg-blue-50 text-blue-700 border-blue-200'
+											? 'border-blue-200 bg-blue-50 text-blue-700'
 											: app.status === 'REJECTED'
-												? 'bg-red-50 text-red-700 border-red-200'
-												: 'bg-gray-50 text-gray-700 border-gray-200'
+												? 'border-red-200 bg-red-50 text-red-700'
+												: 'border-gray-200 bg-gray-50 text-gray-700'
 							}`}
 						>
 							{app.status}
 						</div>
 
 						<div class="relative">
-							<button 
+							<button
 								bind:this={dropdownTriggers[app.id]}
 								onclick={() => toggleDropdown(app.id)}
-								class="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors hover:cursor-pointer"
+								class="rounded-lg border border-gray-200 p-2 transition-colors hover:cursor-pointer hover:bg-gray-50"
 							>
 								<EllipsisVertical class="h-4 w-4 text-gray-600" />
 							</button>
-							
+
 							<Dropdown
 								isOpen={openDropdown === app.id}
-								onClose={() => openDropdown = null}
+								onClose={() => (openDropdown = null)}
 								triggerElement={dropdownTriggers[app.id]}
 								items={[
 									{
@@ -359,60 +369,63 @@
 				</div>
 			{/each}
 		{/if}
-		</div>
+	</div>
 
-		<div class="mt-8">
-			<h2 class="mb-4 text-lg font-medium text-gray-900">Recent Activity</h2>
-			<div class="relative">
-				<div
-					class="absolute left-4 w-px bg-gray-300 border-l border-gray-300"
-					style="top: calc(2rem); bottom: calc(2rem);"
-				></div>
+	<div class="mt-8">
+		<h2 class="mb-4 text-lg font-medium text-gray-900">Recent Activity</h2>
+		<div class="relative">
+			<div
+				class="absolute left-4 w-px border-l border-gray-300 bg-gray-300"
+				style="top: calc(2rem); bottom: calc(2rem);"
+			></div>
 
-				{#if activities.length === 0}
-					<div class="ml-10 p-4 text-gray-500">
-						No recent activity for "{filterStatus}"
-					</div>
-				{:else}
-					{#each activities as activity, i (i)}
-						<div class="relative mb-8 last:mb-0">
-							<span
-								class="absolute left-4 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-green-600 bg-white"
-							></span>
+			{#if activities.length === 0}
+				<div class="ml-10 p-4 text-gray-500">
+					No recent activity for "{filterStatus}"
+				</div>
+			{:else}
+				{#each activities as activity, i (i)}
+					<div class="relative mb-8 last:mb-0">
+						<span
+							class="absolute left-4 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-green-600 bg-white"
+						></span>
 
-							<div class="ml-10 rounded-xl bg-white p-4 border border-gray-200">
-								<p class="text-xs uppercase tracking-wide text-gray-500 mb-1">{activity.time}</p>
-								<p class="text-sm font-medium text-gray-800">{activity.title}</p>
-								<p class="text-sm text-gray-500">{activity.description}</p>
-							</div>
+						<div class="ml-10 rounded-xl border border-gray-200 bg-white p-4">
+							<p class="mb-1 text-xs uppercase tracking-wide text-gray-500">{activity.time}</p>
+							<p class="text-sm font-medium text-gray-800">{activity.title}</p>
+							<p class="text-sm text-gray-500">{activity.description}</p>
 						</div>
-					{/each}
-				{/if}
-			</div>
+					</div>
+				{/each}
+			{/if}
 		</div>
 	</div>
+</div>
 
 <!-- Cancel Application Modal -->
 <Modal bind:isOpen={showCancelModal} size="sm" closeOnBackdrop={!isCancelling}>
 	<div class="p-6">
-		<h3 class="text-lg font-medium text-gray-900 mb-4">Cancel Application</h3>
+		<h3 class="mb-4 text-lg font-medium text-gray-900">Cancel Application</h3>
 		{#if applicationToCancel}
-			<p class="text-sm text-gray-600 mb-6">
-				Are you sure you want to cancel your application for <span class="font-medium">{applicationToCancel.jobTitle}</span> at <span class="font-medium">{applicationToCancel.companyName}</span>?
+			<p class="mb-6 text-sm text-gray-600">
+				Are you sure you want to cancel your application for <span class="font-medium"
+					>{applicationToCancel.jobTitle}</span
+				>
+				at <span class="font-medium">{applicationToCancel.companyName}</span>?
 			</p>
 		{/if}
 		<div class="flex items-center justify-end gap-3">
 			<button
-				onclick={() => showCancelModal = false}
+				onclick={() => (showCancelModal = false)}
 				disabled={isCancelling}
-				class="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50 disabled:opacity-50 transition-colors hover:cursor-pointer"
+				class="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:cursor-pointer hover:bg-gray-50 disabled:opacity-50"
 			>
 				Keep
 			</button>
 			<button
 				onclick={confirmCancelApplication}
 				disabled={isCancelling}
-				class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 disabled:opacity-50 transition-colors hover:cursor-pointer"
+				class="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:cursor-pointer hover:bg-red-700 disabled:opacity-50"
 			>
 				{isCancelling ? 'Cancelling...' : 'Cancel'}
 			</button>
