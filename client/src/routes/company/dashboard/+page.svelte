@@ -208,8 +208,8 @@
 
 <ConfirmActionWithReason
   bind:isVisible={showDeleteModal}
-  actionName={'Delete'}
-  actOnKind={'Job'}
+  actionName="Delete"
+  actOnKind="Job"
   actOnIndividual={jobToDelete?.title}
   bind:isActionInProgress={deleting}
   reasonForAction={deleteReason}

@@ -4,6 +4,7 @@
 	import ConfirmActionWithReason from '$lib/components/modals/ConfirmActionWithReason.svelte';
 	import ConfirmDropdownAction from '$lib/components/modals/ConfirmDropdownAction.svelte';
 	import FilterPill from '$lib/components/forms/FilterPill.svelte';
+	import { Search } from 'lucide-svelte';
 
 	const USER_ACTIONS = [
 		// { label: 'View', disabled: false },
@@ -15,6 +16,13 @@
 
 	const VALID_ROLES = ['jobSeeker', 'company', 'faculty', 'admin'];
 	const VALID_VERIFICATION_OPTIONS = [true, false];
+
+	const SORT_OPTIONS = [
+		{ value: 'name', label: 'Name' },
+		{ value: 'email', label: 'Email' },
+		{ value: 'role', label: 'Role' },
+		{ value: 'verified', label: 'Verification Status' }
+	];
 
 	let users = $state<any[]>([]);
 	let originalUsers = $state<any[]>([]);
@@ -33,6 +41,9 @@
 
 	let currentFilteredRole = $state('');
 	let currentFilteredVerificationStatus = $state('');
+
+	let searchQuery = $state('');
+	let sortBy = $state('');
 
 	let dropdowns = $derived([
 		{
@@ -121,6 +132,27 @@
 				: originalUsers.filter((user: any) => user.verified === strToBool(status));
 	}
 
+	function onUserSearch() {
+		users =
+			searchQuery === ''
+				? originalUsers
+				: originalUsers.filter((user: any) =>
+						user.name.toLowerCase().includes(searchQuery.toLowerCase())
+					);
+	}
+
+	function onUserSort() {
+		// Reset or apply sort
+		users =
+			sortBy === ''
+				? originalUsers
+				: [...users].sort((a: any, b: any) => {
+						if (a[sortBy] < b[sortBy]) return -1;
+						if (a[sortBy] > b[sortBy]) return 1;
+						return 0;
+					});
+	}
+
 	function handleAction(action: any, user: any) {
 		selectedUser = user;
 		switch (action.label) {
@@ -161,18 +193,18 @@
 >
 	<div class="mx-auto max-w-7xl space-y-4">
 		<!-- Search Bar -->
-		<!-- <div class="relative mx-auto max-w-3xl">
+		<div class="relative mx-auto max-w-3xl">
 			<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
 				<Search class="h-5 w-5 text-gray-400" />
 			</div>
 			<input
 				type="text"
-				placeholder="Search for jobs..."
+				placeholder="Search Username"
 				class="w-full rounded-full border border-gray-200 bg-white py-3 pl-12 pr-4 text-gray-900 placeholder-gray-500 shadow-sm outline-none transition-all duration-200 focus:border-transparent focus:ring-1 focus:ring-gray-300"
 				bind:value={searchQuery}
-				oninput={refreshJobs}
+				oninput={onUserSearch}
 			/>
-		</div> -->
+		</div>
 
 		<!-- Filter Pills -->
 		<div class="flex flex-wrap items-center justify-center gap-3">
@@ -200,13 +232,13 @@
 
 				<!-- <div class="h-4 w-px bg-gray-300"></div> -->
 
-				<!-- <FilterPill
+				<FilterPill
 					label="Sort"
-					options={sortOptions}
+					options={SORT_OPTIONS}
 					bind:selectedValue={sortBy}
-					onSelectionChange={refreshJobs}
+					onSelectionChange={onUserSort}
 					type="sort"
-				/> -->
+				/>
 			</div>
 		</div>
 	</div>
@@ -223,8 +255,8 @@
 
 <ConfirmActionWithReason
 	bind:isVisible={showDeleteModal}
-	actionName={'Delete'}
-	actOnKind={'User'}
+	actionName="Delete"
+	actOnKind="User"
 	actOnIndividual={selectedUser === null ? '' : selectedUser.name}
 	bind:isActionInProgress={isDeleting}
 	reasonForAction={deleteReason}
@@ -233,8 +265,8 @@
 
 <ConfirmActionWithReason
 	bind:isVisible={showBanModal}
-	actionName={'Ban'}
-	actOnKind={'User'}
+	actionName="Ban"
+	actOnKind="User"
 	actOnIndividual={selectedUser === null ? '' : selectedUser.name}
 	bind:isActionInProgress={isBanning}
 	reasonForAction={banReason}
