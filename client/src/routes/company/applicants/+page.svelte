@@ -5,7 +5,7 @@
   import { authStore } from '$lib/stores/auth.svelte';
   import { goto } from '$app/navigation';
   import SeekerProfileCard from '$lib/components/profile/SeekerProfileCard.svelte';
-  import Badge from '$lib/components/job/Badge.svelte';
+  import Badge from '$lib/components/ui/Badge.svelte';
   
   type BadgeVariant = 'primary' | 'secondary' | 'warning' | 'danger' | 'success' | 'info' | 'purple';
 
