@@ -46,6 +46,18 @@
 	async function onDeleteUser() {
 		isDeleting = true;
 		// TODO: add a real delete operation here
+
+		users = users.filter((u) => u.id !== selectedUser.id);
+
+		const res = await fetch(`/users/${selectedUser.id}`, {
+			method: 'DELETE',
+			credentials: 'include'
+		});
+
+		if (!res.ok) {
+			console.log('Error: Deletion failed');
+		}
+
 		showDeleteModal = false;
 		isDeleting = false;
 	}
@@ -57,7 +69,7 @@
 		isBanning = false;
 	}
 
-	function onConfirmPermissions(selectedVals: Record<string, any>) {
+	async function onConfirmPermissions(selectedVals: Record<string, any>) {
 		if (!selectedUser) return;
 
 		// 1. update selectedUser fields locally
@@ -70,6 +82,20 @@
 		users = users.map((u) => (u.id === selectedUser.id ? { ...u, ...selectedUser } : u));
 
 		//TODO: Send updated data to server
+		const res = await fetch(`/users/${selectedUser.id}`, {
+			method: 'PUT',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				role: selectedUser.role,
+				verified: selectedUser.verified
+			})
+		});
+
+		if (!res.ok) {
+			console.log("Error: can't update");
+		}
 
 		// 4. close modal
 		showPermissionEditModal = false;
