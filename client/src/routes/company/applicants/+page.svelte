@@ -1,5 +1,6 @@
-<script lang="ts">
+ <script lang="ts">
   import { onMount } from 'svelte';
+  import ApplicantFilesSection from '$lib/components/files/ApplicantFilesSection.svelte';
   import { Search } from 'lucide-svelte';
   import { getUserInfo, isAuthenticated } from '$lib/utils/auth';
   import { authStore } from '$lib/stores/auth.svelte';
@@ -126,6 +127,7 @@
     try {
       // Get all jobs owned by this company
       const jobsRes = await fetch(`/jobs/query?companyID=${company.userID}`, {
+        credentials: 'include'
       });
       if (!jobsRes.ok) throw new Error('Failed to fetch company jobs');
 
@@ -140,6 +142,7 @@
         if (!jobID) continue;
 
         const applyRes = await fetch(`/apply?jobID=${jobID}`, {
+          credentials: 'include'
         });
         if (!applyRes.ok) continue;
 
@@ -166,6 +169,7 @@
         const applicantID = app.jobApplication.applicantID;
 
         const userRes = await fetch(`/users/query?id=${applicantID}`, {
+          credentials: 'include'
         });
         const userData = await userRes.json();
         console.log('Fetched user data for applicant ID', applicantID, ':', userData);
@@ -227,6 +231,7 @@
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           id: candidate.id,
           applicantID: candidate.applicantID,
@@ -474,6 +479,8 @@
           candidateStatus={selectedCandidate.status}
           candidateId={selectedCandidate.id}
         />
+        <!-- Applicant Files Section - NEW -->
+        <ApplicantFilesSection applicationId={selectedCandidate.id} />
       {:else}
         <div class="flex items-center justify-center h-full text-gray-500">
           <p>Select a candidate to view their profile</p>
@@ -482,5 +489,3 @@
     </div>
   </div>
 </div>
-
-

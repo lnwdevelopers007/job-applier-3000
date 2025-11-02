@@ -37,7 +37,7 @@ func ValidateUploadedFile(header *multipart.FileHeader) error {
 func ValidateFileCategory(category FileCategory, userRole string) error {
 	jobSeekerCategories := map[FileCategory]bool{
 		CategoryResume:        true,
-		CategoryCoverLetter:   true,
+		CategoryTranscript:   true,
 		CategoryCertification: true,
 	}
 
@@ -49,11 +49,11 @@ func ValidateFileCategory(category FileCategory, userRole string) error {
 	switch userRole {
 	case RoleJobSeeker:
 		if !jobSeekerCategories[category] {
-			return fmt.Errorf("job seekers can only upload resume, cover_letter, or certification files")
+			return fmt.Errorf("job seekers can only upload resume, transcript, or certification files")
 		}
 	case RoleCompany:
 		if !companyCategories[category] {
-			return fmt.Errorf("companies can only upload verification or certification files")
+			return fmt.Errorf("companies can upload verification files only")
 		}
 	default:
 		return fmt.Errorf("invalid user role")

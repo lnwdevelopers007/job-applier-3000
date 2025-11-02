@@ -35,13 +35,13 @@ definitions:
   schema.FileCategory:
     enum:
     - resume
-    - cover_letter
+    - transcript
     - certification
     - verification
     type: string
     x-enum-varnames:
     - CategoryResume
-    - CategoryCoverLetter
+    - CategoryTranscript
     - CategoryCertification
     - CategoryVerification
   schema.Job:
@@ -495,7 +495,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Allows a company to view files (resume, cover_letter, certification)
+      description: Allows a company to view files (resume, transcript, certification)
         of an applicant for a specific job application. Only the company who owns
         the job can access.
       parameters:
@@ -548,6 +548,57 @@ paths:
               type: string
             type: object
       summary: Get applicant files for a job application
+      tags:
+      - Files
+  /files/application/{applicationId}/download/{fileId}:
+    get:
+      consumes:
+      - application/json
+      description: Allows a company to download a specific file from an applicant
+        for a job application. Only the company who owns the job can access.
+      parameters:
+      - description: Job Application ID
+        in: path
+        name: applicationId
+        required: true
+        type: string
+      - description: File ID
+        in: path
+        name: fileId
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Download an applicant's file
       tags:
       - Files
   /files/upload:
