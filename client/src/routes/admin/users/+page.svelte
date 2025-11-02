@@ -112,6 +112,15 @@
 		users = role === '' ? originalUsers : originalUsers.filter((user: any) => user.role === role);
 	}
 
+	function onFilteringVerificationStatus(status: string) {
+		let strToBool = (str: string) => (str === 'true' ? true : false);
+
+		users =
+			status === ''
+				? originalUsers
+				: originalUsers.filter((user: any) => user.verified === strToBool(status));
+	}
+
 	function handleAction(action: any, user: any) {
 		selectedUser = user;
 		switch (action.label) {
@@ -184,7 +193,7 @@
 						label: opt.toString()
 					}))}
 					bind:selectedValue={currentFilteredVerificationStatus}
-					onSelectionChange={(value: string) => {}}
+					onSelectionChange={onFilteringVerificationStatus}
 				/>
 
 				<!-- sort -->
