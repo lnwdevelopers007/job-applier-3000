@@ -1,51 +1,14 @@
-import { userService, type User, type JobSeekerInfo, type CompanyInfo } from './userService';
-
-export interface BaseUserData {
-	id?: string;
-	name?: string;
-	email?: string;
-	avatar?: string;
-	provider?: string;
-	userID?: string;
-	role?: string;
-	verified?: boolean;
-	googleConnected?: boolean;
-	documents?: unknown[];
-}
-
-export interface SeekerUserData extends BaseUserData {
-	fullName?: string;
-	location?: string;
-	phone?: string;
-	linkedin?: string;
-	desiredRole?: string;
-	aboutMe?: string;
-	dateOfBirth?: string;
-	portfolio?: string;
-	github?: string;
-	skills?: string[];
-}
-
-export interface CompanyUserData extends BaseUserData {
-	companyName?: string;
-	aboutCompany?: string;
-	industry?: string;
-	companySize?: string;
-	companyWebsite?: string;
-	companyLogo?: string;
-	foundedYear?: string;
-	headquarters?: string;
-	companyLinkedin?: string;
-}
-
-export type UserData = SeekerUserData | CompanyUserData;
-
-export interface Tab {
-	id: string;
-	label: string;
-	title: string;
-	description: string;
-}
+import { UserService } from './userService';
+import type { 
+  User, 
+  JobSeekerInfo, 
+  CompanyInfo, 
+  BaseUserData,
+  SeekerUserData,
+  CompanyUserData,
+  UserData,
+  Tab
+} from '$lib/types';
 
 // Field mappings for each user type
 const SEEKER_FIELD_MAPPING = {
@@ -175,7 +138,7 @@ export class SettingsService {
 	// Map backend user data to frontend format
 	static mapUserToUserData<T extends UserData>(user: User, userType: 'seeker' | 'company'): T {
 		const baseData: BaseUserData = {
-			id: user.id || (user as Record<string, unknown>)._id as string,
+			id: user.id || (user as any)._id as string,
 			name: user.name || '',
 			email: user.email || '',
 			avatar: user.avatarURL || '',
@@ -217,7 +180,7 @@ export class SettingsService {
 	// Load user data from backend
 	static async loadUserData<T extends UserData>(userType: 'seeker' | 'company'): Promise<T> {
 		try {
-			const user = await userService.getCurrentUser();
+			const user = await UserService.getCurrentUser();
 			return this.mapUserToUserData<T>(user, userType);
 		} catch (error) {
 			console.error('Failed to load user data:', error);
@@ -236,7 +199,7 @@ export class SettingsService {
 			throw new Error('User ID not found');
 		}
 
-		const payload = userService.transformToBackendFormat(userData as Record<string, unknown>, userType, changedFields);
+		const payload = UserService.transformToBackendFormat(userData as Record<string, unknown>, userType, changedFields);
 		
 		// Handle file uploads for company logo
 		if (userType === 'company' && (userData as CompanyUserData & { companyLogoFile?: File }).companyLogoFile) {
@@ -247,7 +210,7 @@ export class SettingsService {
 						if (payload.userInfo && e.target?.result) {
 							(payload.userInfo as Record<string, unknown>).logo = e.target.result as string;
 						}
-						const result = await userService.updateUser(userId, payload);
+						const result = await UserService.updateUser(userId, payload);
 						resolve(result);
 					} catch (error) {
 						reject(error);
@@ -258,7 +221,7 @@ export class SettingsService {
 			});
 		}
 
-		return userService.updateUser(userId, payload);
+		return UserService.updateUser(userId, payload);
 	}
 
 	// Update local userData with backend response

@@ -1,48 +1,123 @@
 import { goto } from '$app/navigation';
-import { withDeadlineTime } from '$lib/utils/datetime';
+import { withDeadlineTime, formatDateCompact } from '$lib/utils/datetime';
+import { fetchCompanyNameLogo, DEFAULT_COMPANY_NAME, DEFAULT_COMPANY_LOGO } from '$lib/utils/fetcher';
+import { JobApplicationService } from './jobApplicationService';
+import { apiClient } from '$lib/api/client';
 import toast from 'svelte-french-toast';
+import type { 
+  Job, 
+  JobDisplay,
+  JobFilters, 
+  DeleteJobRequest, 
+  JobFormData, 
+  ValidationState 
+} from '$lib/types';
 
-interface JobFormData {
-  // Basic Info
-  jobTitle?: string;
-  companyID?: string;
-  location?: string;
-  workType?: string;
-  workArrangement?: string;
-  currency?: string;
-  minSalary?: number | string;
-  maxSalary?: number | string;
-  
-  // Description
-  jobDescription?: string;
-  jobSummary?: string;
-  
-  // Requirements
-  requiredSkills?: string[];
-  yearsOfExperience?: string;
-  educationLevel?: string;
-  
-  // Post Settings
-  postingOpenDate?: string;
-  postingCloseDate?: string;
-  screeningQuestions?: string;
-  emailNotifications?: boolean;
-  
-  // Application Requirements
-  applicationRequirements?: {
-    resume?: boolean;
-    coverLetter?: boolean;
-    portfolio?: boolean;
-    linkedin?: boolean;
-  };
-}
-
-interface ValidationState {
-  errors: Record<string, string>;
-  showErrors: boolean;
-}
 
 export class JobService {
+  // === API METHODS (matching backend endpoints) ===
+
+  /**
+   * Query jobs with filters - GET /jobs/query
+   */
+  static async queryJobs(filters?: JobFilters): Promise<Job[]> {
+    try {
+      const response = await apiClient.get<Job[]>('/jobs/query', filters);
+      return response.data;
+    } catch (error) {
+      console.error('Error querying jobs:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all jobs - GET /jobs/
+   */
+  static async getAllJobs(): Promise<Job[]> {
+    try {
+      const response = await apiClient.get<Job[]>('/jobs/');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching all jobs:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get a specific job by ID - GET /jobs/:id
+   */
+  static async getJobById(id: string): Promise<Job> {
+    try {
+      const response = await apiClient.get<Job>(`/jobs/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching job:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new job - POST /jobs/
+   */
+  static async createJobAPI(jobData: Partial<Job>): Promise<Job> {
+    try {
+      const response = await apiClient.post<Job>('/jobs/', jobData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating job:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update a job - PUT /jobs/:id
+   */
+  static async updateJobAPI(id: string, jobData: Partial<Job>): Promise<Job> {
+    try {
+      const response = await apiClient.put<Job>(`/jobs/${id}`, jobData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating job:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a job with reason - DELETE /jobs/:id
+   */
+  static async deleteJobWithReason(id: string, reason: string): Promise<void> {
+    try {
+      const deleteData: DeleteJobRequest = { reason };
+      await apiClient.delete(`/jobs/${id}`, deleteData);
+    } catch (error) {
+      console.error('Error deleting job:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get jobs by company ID using query filters
+   */
+  static async getJobsByCompany(companyId: string): Promise<Job[]> {
+    try {
+      return this.queryJobs({ companyID: companyId });
+    } catch (error) {
+      console.error('Error fetching company jobs:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get latest jobs (last 3)
+   */
+  static async getLatestJobs(): Promise<Job[]> {
+    try {
+      return this.queryJobs({ latest: true });
+    } catch (error) {
+      console.error('Error fetching latest jobs:', error);
+      throw error;
+    }
+  }
   static createEmptyFormData(userID?: string): JobFormData {
     return {
       // Basic Info
@@ -339,6 +414,73 @@ export class JobService {
       // Show error toast
       toast.error(result.error || 'Failed to save job. Please try again.');
       return false;
+    }
+  }
+
+  // === ENHANCED DISPLAY METHODS ===
+
+  /**
+   * Get applicant count for a specific job
+   */
+  static async getApplicantCount(jobId: string): Promise<number> {
+    try {
+      const applications = await JobApplicationService.queryApplications({ jobID: jobId });
+      return applications.length;
+    } catch (err) {
+      console.warn(`Failed to fetch applicant count for job ${jobId}:`, err);
+      return 0;
+    }
+  }
+
+  /**
+   * Transform a job from API to display format
+   */
+  static async transformJobForDisplay(job: Job): Promise<JobDisplay> {
+    // Fetch company details
+    let companyName = DEFAULT_COMPANY_NAME;
+    let companyLogo = DEFAULT_COMPANY_LOGO;
+    try {
+      const [name, logo] = await fetchCompanyNameLogo(job.companyID || '');
+      companyName = name;
+      companyLogo = logo || DEFAULT_COMPANY_LOGO;
+    } catch (err) {
+      console.warn(`Failed to fetch company for job ${job.id}:`, err);
+    }
+
+    // Get real applicant count
+    const applicantCount = await this.getApplicantCount(job.id || '');
+
+    // Determine job status
+    const now = new Date();
+    const closeDate = job.applicationDeadline ? new Date(job.applicationDeadline) : null;
+    const isExpired = closeDate && closeDate < now;
+    
+    let status: JobDisplay['status'] = 'Active';
+    if (isExpired) status = 'Closed';
+    if (job.visibility === 'draft') status = 'Draft';
+
+    return {
+      ...job,
+      company: companyName,
+      companyLogo,
+      status,
+      location: job.location || 'Remote',
+      posted: job.postOpenDate ? formatDateCompact(job.postOpenDate) : 'Unknown',
+      expires: job.applicationDeadline ? formatDateCompact(job.applicationDeadline) : 'No deadline',
+      applicants: applicantCount
+    };
+  }
+
+  /**
+   * Load jobs with enhanced display data
+   */
+  static async loadJobsForDisplay(filters?: JobFilters): Promise<JobDisplay[]> {
+    try {
+      const jobs = await this.queryJobs(filters);
+      return Promise.all(jobs.map(job => this.transformJobForDisplay(job)));
+    } catch (err) {
+      console.error('Error loading jobs for display:', err);
+      throw err;
     }
   }
 }
