@@ -1,8 +1,8 @@
 <script lang="ts">
 	export let isVisible: boolean = false;
-	export let thing: string = '';
-	export let thingName: string = '';
 	export let actionName: string = '';
+	export let actOnKind: string = '';
+	export let actOnIndividual: string = '';
 	export let isActionInProgress: boolean = false;
 	export let reasonForAction: string = '';
 	export let action: () => void;
@@ -13,7 +13,7 @@
 		<div class="w-96 rounded-lg bg-white p-6 shadow-lg">
 			<h2 class="mb-4 text-lg font-semibold text-gray-800">
 				{actionName}
-				{thing}: {thingName}
+				{actOnKind}: {actOnIndividual}
 			</h2>
 			<p class="mb-2 block text-sm text-gray-600">Reason:</p>
 

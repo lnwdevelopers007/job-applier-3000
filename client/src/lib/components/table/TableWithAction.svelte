@@ -1,7 +1,7 @@
 <script lang="ts">
 	export let things: any[] = [];
-	export let table_header: string[] = [];
-	export let row_attributes: string[] = [];
+	export let tableHeader: string[] = [];
+	export let rowAttributes: string[] = [];
 	export let handleAction: (action: any, thing: any) => void;
 
 	let selectedThingIndex: number | null = null;
@@ -15,7 +15,7 @@
 	<table class="min-w-full text-left text-sm text-gray-600">
 		<thead class="bg-gray-100 text-sm font-semibold text-gray-700">
 			<tr>
-				{#each table_header as header}
+				{#each tableHeader as header}
 					<th class="px-4 py-3">{header}</th>
 				{/each}
 				<th class="px-4 py-3">Actions</th>
@@ -27,7 +27,7 @@
 					class="cursor-pointer border-t {selectedThingIndex === i ? 'bg-green-200' : ''}"
 					onclick={() => selectRow(i)}
 				>
-					{#each row_attributes as attr, i}
+					{#each rowAttributes as attr, i}
 						{#if i == 0}
 							<td class="px-4 py-3 font-medium text-gray-900">{thing[attr]}</td>
 						{:else}

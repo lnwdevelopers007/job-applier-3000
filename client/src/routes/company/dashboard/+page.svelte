@@ -1,5 +1,7 @@
 <script>
   import { goto } from '$app/navigation';
+	import ConfirmActionWithReason from '$lib/components/modals/ConfirmActionWithReason.svelte';
+	import TableWithAction from '$lib/components/table/TableWithAction.svelte';
   import { authStore } from '$lib/stores/auth.svelte';
   import { apiFetch } from '$lib/utils/api';
   import { getCompanyAnalytics } from '$lib/utils/companyStats';
@@ -195,101 +197,22 @@
     </button>
   </div>
 
-  <!-- Jobs Table -->
-  <div class="mt-6 overflow-x-auto bg-white shadow rounded-lg">
-    <table class="min-w-full text-sm text-left text-gray-600">
-      <thead class="bg-gray-100 text-gray-700 text-sm font-semibold">
-        <tr>
-          <th class="px-4 py-3">Job Title</th>
-          <th class="px-4 py-3">Status</th>
-          <th class="px-4 py-3">Applicants</th>
-          <th class="px-4 py-3">Views</th>
-          <th class="px-4 py-3">Posted</th>
-          <th class="px-4 py-3">Expires</th>
-          <th class="px-4 py-3">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {#each jobs as job, i (i)}
-          <tr 
-            class="border-t cursor-pointer {selectedJob === i ? 'bg-green-200' : ''}" 
-            onclick={() => selectRow(i)}
-          >
-            <td class="px-4 py-3 font-medium text-gray-900">{job.title}</td>
-            <td class="px-4 py-3">{job.status}</td>
-            <td class="px-4 py-3">{job.applicants}</td>
-            <td class="px-4 py-3">{job.views}</td>
-            <td class="px-4 py-3">{job.posted}</td>
-            <td class="px-4 py-3">{job.expires}</td>
-            <td class="px-4 py-3 space-x-2">
-              {#each job.actions as action, j (j)}
-                <button
-                  class="px-3 py-1 text-sm rounded bg-gray-100 text-gray-900 border-gray-500 border-1 disabled:opacity-50 disabled:cursor-not-allowed enabled:hover:bg-gray-300"
-                  disabled={action.disabled}
-                  onclick={(e) => {
-                    e.stopPropagation();
-                    handleAction(action, job);
-                  }}
-                >
-                  {action.label}
-                </button>
-              {/each}
-            </td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
-  </div>
+  <TableWithAction
+    things={jobs}
+    tableHeader={['Job Title', 'Status', 'Applicants', 'Views', 'Posted', 'Expires']}
+		rowAttributes={['title', 'status', 'applicants', 'views', 'posted', 'expires']}
+		{handleAction}
+  />
+
 </div>
 
-<!-- Delete Reason Modal -->
-{#if showDeleteModal}
-  <div class="fixed inset-0 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-lg w-96 p-6">
-      <h2 class="text-lg font-semibold text-gray-800 mb-4">
-        Delete Job: {jobToDelete?.title}
-      </h2>
-      <label class="block text-sm text-gray-600 mb-2">Reason for deletion:</label>
+<ConfirmActionWithReason
+  bind:isVisible={showDeleteModal}
+  actionName={'Delete'}
+  actOnKind={'Job'}
+  actOnIndividual={jobToDelete?.title}
+  bind:isActionInProgress={deleting}
+  reasonForAction={deleteReason}
+  action={confirmDelete}
+/>
 
-      <textarea
-        bind:value={deleteReason}
-        input={(e) => {
-          if (e.target.value.length > 500) {
-            deleteReason = e.target.value.slice(0, 500);
-          } else {
-            deleteReason = e.target.value;
-          }
-        }}
-        rows="4"
-        maxlength="500"
-        placeholder="Enter reason..."
-        class="w-full border border-gray-300 rounded-md p-2 text-gray-800 focus:ring-2 focus:ring-red-400 focus:outline-none"
-      ></textarea>
-
-      <div class="flex justify-between items-center mt-1 text-sm">
-        <span class="{deleteReason.length >= 480 ? 'text-red-500' : 'text-gray-500'}">
-          {deleteReason.length}/500 characters
-        </span>
-        {#if deleteReason.length >= 500}
-          <span class="text-red-600 font-medium">Limit reached</span>
-        {/if}
-      </div>
-
-      <div class="mt-4 flex justify-end space-x-3">
-        <button
-          class="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
-          onclick={() => (showDeleteModal = false)}
-        >
-          Cancel
-        </button>
-        <button
-          class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
-          disabled={!deleteReason.trim() || deleting}
-          onclick={confirmDelete}
-        >
-          Confirm Delete
-        </button>
-      </div>
-    </div>
-  </div>
-{/if}
