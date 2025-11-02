@@ -5,7 +5,7 @@ export const DEFAULT_COMPANY_LOGO =
 
 export const DEFAULT_COMPANY_NAME = 'Unknown Company';
 
-async function fetchData(endpoint: string, params: string = "") {
+export async function fetchData(endpoint: string, params: string = "") {
   const res = await apiFetch(`/${endpoint}/${params}`)
   if (!res.ok) throw new Error(`Failed to fetch ${endpoint} details (Status: ${res.status})`);
   const data = await res.json();

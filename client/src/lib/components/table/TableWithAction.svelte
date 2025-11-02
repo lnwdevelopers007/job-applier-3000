@@ -29,9 +29,13 @@
 				>
 					{#each rowAttributes as attr, i}
 						{#if i == 0}
-							<td class="px-4 py-3 font-medium text-gray-900">{thing[attr]}</td>
+							<td class="px-4 py-3 font-medium text-gray-900"
+								>{typeof thing[attr] === 'boolean' ? String(thing[attr]) : thing[attr]}</td
+							>
 						{:else}
-							<td class="px-4 py-3">{thing[attr]}</td>
+							<td class="px-4 py-3"
+								>{typeof thing[attr] === 'boolean' ? String(thing[attr]) : thing[attr]}</td
+							>
 						{/if}
 					{/each}
 

@@ -17,6 +17,7 @@
 	const VALID_VERIFICATION_OPTIONS = [true, false];
 
 	let users = $state<any[]>([]);
+	let originalUsers = $state<any[]>([]);
 	let selectedUser = $state<any>(null);
 
 	let showDeleteModal = $state(false);
@@ -29,6 +30,9 @@
 
 	let showPermissionEditModal = $state(false);
 	let showPermissionEditConfirmButton = $state(false);
+
+	let currentFilteredRole = $state('');
+	let currentFilteredVerificationStatus = $state('');
 
 	let dropdowns = $derived([
 		{
@@ -45,8 +49,8 @@
 
 	async function onDeleteUser() {
 		isDeleting = true;
-		// TODO: add a real delete operation here
 
+		originalUsers = originalUsers.filter((u) => u.id !== selectedUser.id);
 		users = users.filter((u) => u.id !== selectedUser.id);
 
 		const res = await fetch(`/users/${selectedUser.id}`, {
@@ -79,6 +83,9 @@
 		});
 
 		// 2. update the entire users array (immutably)
+		originalUsers = originalUsers.map((u) =>
+			u.id === selectedUser.id ? { ...u, ...selectedUser } : u
+		);
 		users = users.map((u) => (u.id === selectedUser.id ? { ...u, ...selectedUser } : u));
 
 		//TODO: Send updated data to server
@@ -99,6 +106,10 @@
 
 		// 4. close modal
 		showPermissionEditModal = false;
+	}
+
+	function onFilteringRole(role: string) {
+		users = role === '' ? originalUsers : originalUsers.filter((user: any) => user.role === role);
 	}
 
 	function handleAction(action: any, user: any) {
@@ -127,7 +138,7 @@
 		for (let user of usersFromDB) {
 			user.actions = USER_ACTIONS;
 		}
-		users = usersFromDB;
+		users = originalUsers = usersFromDB;
 	}
 
 	$effect(() => {
@@ -162,8 +173,8 @@
 				<FilterPill
 					label="Role"
 					options={VALID_ROLES.map((role) => ({ value: role, label: role }))}
-					bind:selectedValue={VALID_ROLES[0]}
-					onSelectionChange={(value: string) => {}}
+					bind:selectedValue={currentFilteredRole}
+					onSelectionChange={onFilteringRole}
 				/>
 
 				<FilterPill
@@ -172,7 +183,7 @@
 						value: opt.toString(),
 						label: opt.toString()
 					}))}
-					bind:selectedValue={VALID_ROLES[0]}
+					bind:selectedValue={currentFilteredVerificationStatus}
 					onSelectionChange={(value: string) => {}}
 				/>
 
