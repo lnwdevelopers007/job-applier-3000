@@ -151,3 +151,50 @@ func (controller BaseController[Schema]) RetrieveOne(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, res)
 }
+
+func (controller BaseController[Schema]) PatchOne(c *gin.Context) {
+	id := c.Param("id")
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		return
+	}
+
+	var body map[string]interface{}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON body"})
+		return
+	}
+
+	if len(body) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Empty update payload"})
+		return
+	}
+
+	update := bson.M{"$set": body}
+
+	db := database.GetDatabase()
+	collection := db.Collection(controller.collectionName)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	res, err := collection.UpdateOne(ctx, bson.M{"_id": objID}, update)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to update " + controller.displayName,
+		})
+		return
+	}
+
+	if res.MatchedCount == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": controller.displayName + " not found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": controller.displayName + " patched successfully",
+	})
+}
