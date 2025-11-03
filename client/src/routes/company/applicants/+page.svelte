@@ -305,14 +305,14 @@
 
   <div class="mb-6">
     <div class="flex gap-3">
-      <div class="flex-1 relative">
+      <div class="flex relative">
         <div class="absolute left-3 top-1/2 -translate-y-1/2">
           <Search class="w-5 h-5 text-gray-400" />
         </div>
         <input
           type="text"
           placeholder="Search candidates..."
-          class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-full text-sm placeholder:text-gray-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 transition-all"
+          class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 min-w-lg rounded-lg text-sm placeholder:text-gray-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 transition-all"
           bind:value={searchQuery}
         />
       </div>

@@ -50,7 +50,7 @@
   });
 </script>
 
-<Modal bind:isOpen={isOpen} size="md" closeOnBackdrop={false} onClose={handleClose}>
+<Modal bind:isOpen={isOpen} size="lg" closeOnBackdrop={false} onClose={handleClose}>
   <div class="p-6">
     <!-- Header -->
     <div class="flex items-start space-x-4 mb-6">
@@ -79,7 +79,7 @@
         rows="4"
         maxlength="500"
         placeholder={reasonPlaceholder}
-        class="w-full border border-gray-300 rounded-lg text-sm px-3 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none transition-all"
+        class="w-full border border-gray-300 rounded-lg text-sm px-3 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-transparent resize-none transition-all"
         disabled={isDeleting}
       ></textarea>
       <div class="mt-2 flex justify-between items-center">
@@ -93,14 +93,14 @@
     <!-- Actions -->
     <div class="flex justify-end space-x-3">
       <button
-        class="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+        class="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50 font-medium transition-colors"
         onclick={handleClose}
         disabled={isDeleting}
       >
         Cancel
       </button>
       <button
-        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 flex items-center"
+        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
         disabled={!deleteReason.trim() || isDeleting}
         onclick={handleConfirm}
       >
