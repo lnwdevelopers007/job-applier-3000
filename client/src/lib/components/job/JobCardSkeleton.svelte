@@ -18,8 +18,11 @@
       </div>
     </div>
   </div>
-  <div class="flex flex-wrap gap-1.5">
+  <div class="flex flex-wrap gap-1.5 mb-2">
     <Skeleton width="w-16" height="h-6" class="rounded-md" />
     <Skeleton width="w-20" height="h-6" class="rounded-md" />
+  </div>
+  <div class="flex flex-wrap gap-1.5">
+    <Skeleton width="w-24" height="h-4" class="rounded-md" />
   </div>
 </div>

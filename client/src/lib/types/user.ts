@@ -46,6 +46,25 @@ export interface CompanyInfo {
   benefits?: string[];
 }
 
+// Simple user info type for auth functions
+export interface UserInfo {
+  userID: string;
+  [key: string]: any;
+}
+
+// Company info for job detail display
+export interface JobCompanyInfo {
+  name: string;
+  logo: string;
+  location: string;
+  website: string;
+  aboutUs: string;
+  industry: string;
+  size: string;
+  foundedYear: string;
+  linkedIn: string;
+}
+
 export interface UserFilters {
   id?: string;
   role?: string;

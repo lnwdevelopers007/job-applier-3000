@@ -12,6 +12,7 @@ export type {
 export type {
   Job,
   JobDisplay,
+  JobUI,
   JobFilters,
   DeleteJobRequest,
   JobFormData,
@@ -21,9 +22,11 @@ export type {
 // User types
 export type {
   User,
+  UserInfo,
   UserFilters,
   JobSeekerInfo,
   CompanyInfo,
+  JobCompanyInfo,
   UpdateUserPayload,
   BaseUserData,
   SeekerUserData,

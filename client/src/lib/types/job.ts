@@ -38,6 +38,23 @@ export interface JobDisplay extends Job {
   expires?: string;
 }
 
+// Frontend job interface for UI components (JobCard, JobDetailCard, etc.)
+export interface JobUI {
+  id: string;
+  title: string;
+  company: string;
+  logo: string;
+  location: string;
+  workType: string;
+  workArrangement: string;
+  salary?: string;
+  posted: string;
+  closeDate: string;
+  description?: string;
+  tags?: string[];
+  companyID: string;
+}
+
 // Query filters (matches backend query params)
 export interface JobFilters {
   id?: string;

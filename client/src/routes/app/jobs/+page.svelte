@@ -16,21 +16,23 @@
 	} from '$lib/utils/fetcher';
 	import { formatDateShort } from '$lib/utils/datetime';
 	import { bookmarkService } from '$lib/services/bookmarkService';
+	import type { JobUI, UserInfo, JobCompanyInfo } from '$lib/types';
 
-	let jobs = $state([]);
-	let filteredJobs = $state([]);
-	let selectedJob = $state(null);
+	let jobs = $state<JobUI[]>([]);
+	let filteredJobs = $state<JobUI[]>([]);
+	let selectedJob = $state<JobUI | null>(null);
 	let searchQuery = $state('');
 	let currentPage = $state(1);
+	let isLoading = $state(false);
 	const pageSize = 6;
 
-	let userInfo = $state(null);
-	let companyInfo = $state(null);
+	let userInfo = $state<UserInfo | null>(null);
+	let companyInfo = $state<JobCompanyInfo | null>(null);
 	let isLoggedIn = $state(false);
-	let appliedJobs = $state(new Set());
+	let appliedJobs = $state(new Set<string>());
 
 	let showApplyModal = $state(false);
-	let jobToApply = $state(null);
+	let jobToApply = $state<JobUI | null>(null);
 	let selectedJobBookmarked = $state(false);
 
 	const totalPages = $derived(Math.ceil(filteredJobs.length / pageSize));
@@ -52,7 +54,11 @@
 		return unsubscribe;
 	});
 
-	let activeFilters = $state({
+	let activeFilters = $state<{
+		workType: string;
+		postTime: string;
+		arrangement: string;
+	}>({
 		workType: '',
 		postTime: '',
 		arrangement: ''
@@ -93,18 +99,18 @@
 			if (!res.ok) throw new Error('Failed to fetch applied jobs');
 
 			const data = await res.json();
-			appliedJobs = new Set(data.map((app) => app.jobApplication.jobID));
+			appliedJobs = new Set(data.map((app: any) => app.jobApplication.jobID));
 		} catch (err) {
 			console.error('Error fetching applied jobs:', err);
 			appliedJobs = new Set();
 		}
 	}
 
-	async function fetchCompanyInfo(companyID) {
+	async function fetchCompanyInfo(companyID: string) {
 		try {
 			const raw = await fetchCompany(companyID);
 			const infoArray = raw.userInfo || [];
-			const info = Object.fromEntries(infoArray.map((item) => [item.Key, item.Value]));
+			const info = Object.fromEntries(infoArray.map((item: any) => [item.Key, item.Value]));
 
 			companyInfo = {
 				name: info.name || raw.name || DEFAULT_COMPANY_NAME,
@@ -123,8 +129,9 @@
 		}
 	}
 
-	async function fetchJobs(query = '', filters = {}, sort = '') {
+	async function fetchJobs(query = '', filters: typeof activeFilters = activeFilters, sort = '') {
 		try {
+			isLoading = true;
 			const params = new URLSearchParams();
 			if (query) params.set('title', query);
 			
@@ -153,7 +160,7 @@
 			if (!res.ok) throw new Error(`Failed to load jobs: ${res.status}`);
 			const data = await res.json();
 
-			const jobPromises = data.map(async (job) => {
+			const jobPromises = data.map(async (job: any) => {
 				// fetch company name and logo.
 				let [companyName, companyLogo] = await fetchCompanyNameLogo(job.companyID || '');
 
@@ -166,7 +173,7 @@
 					workType: job.workType || 'Full-time',
 					workArrangement: job.workArrangement || 'On-site',
 					tags: job.requiredSkills
-						? job.requiredSkills.split(',').map((skill) => skill.trim())
+						? job.requiredSkills.split(',').map((skill: string) => skill.trim())
 						: [],
 					posted: job.postOpenDate ? formatDateShort(job.postOpenDate) : 'Unknown',
 					closeDate: job.applicationDeadline
@@ -189,10 +196,12 @@
 			jobs = [];
 			filteredJobs = [];
 			selectedJob = null;
+		} finally {
+			isLoading = false;
 		}
 	}
 
-	function applyJob(job) {
+	function applyJob(job: JobUI) {
 		jobToApply = job;
 		showApplyModal = true;
 	}
@@ -201,14 +210,14 @@
 		fetchJobs(searchQuery, activeFilters, sortBy);
 	}
 
-	onMount(async () => {
+	onMount(() => {
 		isLoggedIn = isAuthenticated();
 		if (isLoggedIn) {
 			userInfo = getUserInfo();
 			fetchAppliedJobs();
 			// Initialize bookmark service with user ID
 			if (userInfo?.userID) {
-				await bookmarkService.initializeBookmarks(userInfo.userID);
+				bookmarkService.initializeBookmarks(userInfo.userID);
 			}
 		}
 
@@ -225,7 +234,6 @@
 		if (!currentState.shouldFetch) {
 			fetchJobs();
 		}
-
 
 		return () => {
 			unsubscribe();
@@ -297,7 +305,14 @@
 			<section class="col-span-1 flex flex-col h-[calc(100vh-280px)]">
 				<div class="flex-1 overflow-y-auto p-2 min-h-0">
 					<div class="space-y-3">
-						{#if paginatedJobs.length === 0}
+						{#if isLoading}
+							<!-- Show skeleton JobCards during loading -->
+							{#each Array(8) as _, i (i)}
+								<div class="transition-all duration-100 rounded-lg">
+									<JobCard loading={true} />
+								</div>
+							{/each}
+						{:else if paginatedJobs.length === 0}
 							<div class="flex items-center justify-center h-full text-gray-500">
 								No jobs match your search or filters.
 							</div>
@@ -316,7 +331,7 @@
 							{/each}
 
 							<!-- Pagination inside scrollable area -->
-							{#if totalPages > 1}
+							{#if !isLoading && totalPages > 1}
 								<div class="flex items-center justify-center gap-3 py-3">
 									<button
 										aria-label="Previous page"
@@ -357,12 +372,14 @@
 			<section
 				class="col-span-2 flex flex-col h-[calc(100vh-280px)] overflow-hidden"
 			>
-				{#if selectedJob}
+				{#if isLoading}
+					<div class="flex flex-1 items-center justify-center text-gray-500">Loading job details...</div>
+				{:else if selectedJob}
 					<div class="h-full overflow-y-auto">
 						<JobDetailCard 
 							job={selectedJob}
 							{companyInfo}
-							onApply={applyJob}
+							onApply={() => selectedJob && applyJob(selectedJob)}
 							onBookmark={async () => {
 								if (selectedJob?.id) {
 									const user = getUserInfo();
