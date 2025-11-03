@@ -111,32 +111,6 @@ func userFilter(c *gin.Context) (bson.M, bool) {
 // @Failure      500   {object}  map[string]string
 // @Router       /users/{id} [put]
 func (jc UserController) Update(c *gin.Context) {
-	id := c.Param("id")
-	objID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	existingUser, err := findOne[schema.User](ctx, jc.baseController.collectionName, objID)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		return
-	}
-
-	var updateUser schema.User
-	if err := c.ShouldBindJSON(&updateUser); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
-		return
-	}
-
-	// Overwrite protected fields with existing values
-	updateUser.Role = existingUser.Role
-	updateUser.Verified = existingUser.Verified
-
-	c.Set("safeUpdateBody", updateUser)
 	jc.baseController.Update(c)
 }
 
