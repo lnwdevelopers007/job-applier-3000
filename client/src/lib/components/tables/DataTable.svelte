@@ -47,7 +47,7 @@
 
 	// Reset to first page when data changes
 	$effect(() => {
-		data;
+		void data; // Explicitly mark as intentional side effect
 		currentPage = 0;
 	});
 
@@ -61,23 +61,6 @@
 		return '';
 	}
 
-	function renderSkeletonCell(columnId: string) {
-		if (columnId === 'job' || columnId === 'title') {
-			return `
-				<div class="flex items-center">
-					<div class="flex-shrink-0 h-12 w-12">
-						<div class="h-12 w-12 bg-gray-200 rounded-lg animate-pulse"></div>
-					</div>
-					<div class="ml-4 space-y-1">
-						<div class="h-3 bg-gray-200 rounded-full w-24 animate-pulse"></div>
-						<div class="h-3 bg-gray-200 rounded-full w-32 animate-pulse"></div>
-					</div>
-				</div>
-			`;
-		} else {
-			return '<div class="h-4 bg-gray-200 rounded-full w-full animate-pulse"></div>';
-		}
-	}
 </script>
 
 <div class={`bg-white ${className}`}>
@@ -91,7 +74,7 @@
 			<table class="w-full divide-y divide-gray-200" style="table-layout: fixed;">
 				<thead class="bg-slate-50">
 					<tr>
-						{#each columns as column}
+						{#each columns as column (column.id)}
 							<th
 								class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider"
 								style={column.width ? `width: ${column.width};` : ''}
@@ -103,19 +86,32 @@
 				</thead>
 				<tbody class="bg-white divide-y divide-gray-200">
 					{#if loading}
-						{#each Array(pageSize) as _}
+						{#each Array.from({ length: pageSize }, (_, index) => index) as index (index)}
 							<tr>
-								{#each columns as column}
+								{#each columns as column (column.id)}
 									<td class={column.cellClass || defaultCellClass}>
-										{@html renderSkeletonCell(column.id)}
+										<!-- Safe skeleton rendering without @html -->
+										{#if column.id === 'job' || column.id === 'title'}
+											<div class="flex items-center">
+												<div class="flex-shrink-0 h-12 w-12">
+													<div class="h-12 w-12 bg-gray-200 rounded-lg animate-pulse"></div>
+												</div>
+												<div class="ml-4 space-y-1">
+													<div class="h-3 bg-gray-200 rounded-full w-24 animate-pulse"></div>
+													<div class="h-3 bg-gray-200 rounded-full w-32 animate-pulse"></div>
+												</div>
+											</div>
+										{:else}
+											<div class="h-4 bg-gray-200 rounded-full w-full animate-pulse"></div>
+										{/if}
 									</td>
 								{/each}
 							</tr>
 						{/each}
 					{:else}
-						{#each paginatedData() as item}
+						{#each paginatedData() as item, itemIndex (item.id || itemIndex)}
 							<tr class={rowClass}>
-								{#each columns as column}
+								{#each columns as column (column.id)}
 									{@const value = getCellValue(column, item)}
 									<td class={column.cellClass || defaultCellClass}>
 										{#if value && typeof value === 'object' && 'component' in value}
@@ -157,7 +153,7 @@
 						</button>
 
 						<div class="flex items-center space-x-1">
-							{#each Array(totalPages) as _, i}
+							{#each Array.from({ length: totalPages }, (_, i) => i) as i (i)}
 								{#if i < 2 || i >= totalPages - 2 || (i >= currentPage - 1 && i <= currentPage + 1)}
 									<button
 										onclick={() => (currentPage = i)}

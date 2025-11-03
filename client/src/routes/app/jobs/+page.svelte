@@ -311,7 +311,7 @@
 					<div class="space-y-3">
 						{#if isLoading}
 							<!-- Show skeleton JobCards during loading -->
-							{#each Array(8) as _, i (i)}
+							{#each Array.from({ length: 8 }, (_, i) => i) as i (i)}
 								<div class="transition-all duration-100 rounded-lg">
 									<JobCard loading={true} />
 								</div>

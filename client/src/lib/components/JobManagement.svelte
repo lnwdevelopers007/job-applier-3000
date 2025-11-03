@@ -146,7 +146,7 @@
 					bind:value={statusFilter}
 					onchange={handleStatusFilter}
 				>
-					{#each statusOptions as option}
+					{#each statusOptions as option (option.value)}
 						<option value={option.value}>{option.label}</option>
 					{/each}
 				</select>
