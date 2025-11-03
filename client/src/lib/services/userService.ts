@@ -1,4 +1,4 @@
-import { apiClient } from '$lib/api/client';
+import { userApi } from '$lib/api';
 import { getUserInfo, isAuthenticated } from '$lib/utils/auth';
 import { authStore } from '$lib/stores/auth.svelte';
 import { processBackendUser, transformToBackendFormat, transformToFrontendFormat } from '$lib/utils/userTransforms';
@@ -9,15 +9,12 @@ import type {
 } from '$lib/types';
 
 export class UserService {
-	// === API METHODS (matching backend endpoints) ===
-
 	/**
 	 * Query users with filters - GET /users/query
 	 */
 	static async queryUsers(filters?: UserFilters): Promise<User[]> {
 		try {
-			const response = await apiClient.get<User[]>('/users/query', filters);
-			return response.data;
+			return await userApi.query(filters);
 		} catch (error) {
 			console.error('Error querying users:', error);
 			throw error;
@@ -29,8 +26,7 @@ export class UserService {
 	 */
 	static async getAllUsers(): Promise<User[]> {
 		try {
-			const response = await apiClient.get<User[]>('/users/');
-			return response.data;
+			return await userApi.getAll();
 		} catch (error) {
 			console.error('Error fetching all users:', error);
 			throw error;
@@ -42,8 +38,8 @@ export class UserService {
 	 */
 	static async getUserById(id: string): Promise<User> {
 		try {
-			const response = await apiClient.get<User>(`/users/${id}`);
-			return processBackendUser(response.data);
+			const user = await userApi.getById(id);
+			return processBackendUser(user);
 		} catch (error) {
 			console.error('Error fetching user:', error);
 			throw error;
@@ -55,8 +51,7 @@ export class UserService {
 	 */
 	static async createUser(userData: Partial<User>): Promise<User> {
 		try {
-			const response = await apiClient.post<User>('/users/', userData);
-			return response.data;
+			return await userApi.create(userData);
 		} catch (error) {
 			console.error('Error creating user:', error);
 			throw error;
@@ -68,8 +63,8 @@ export class UserService {
 	 */
 	static async updateUser(id: string, userData: UpdateUserPayload): Promise<User> {
 		try {
-			const response = await apiClient.put<User>(`/users/${id}`, userData);
-			return processBackendUser(response.data);
+			const user = await userApi.update(id, userData);
+			return processBackendUser(user);
 		} catch (error) {
 			console.error('Error updating user:', error);
 			throw error;
@@ -81,7 +76,7 @@ export class UserService {
 	 */
 	static async deleteUser(id: string): Promise<void> {
 		try {
-			await apiClient.delete(`/users/${id}`);
+			await userApi.delete(id);
 		} catch (error) {
 			console.error('Error deleting user:', error);
 			throw error;

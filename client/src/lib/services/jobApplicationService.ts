@@ -1,9 +1,9 @@
 /**
- * Job Application Service - handles all job application-related API operations
+ * Job Application Service - handles all job application-related business logic
  */
 
-import { apiClient } from '$lib/api/client';
-import type { JobApplication, JobApplicationFilters } from '$lib/types/jobApplication';
+import { jobApplicationApi } from '$lib/api';
+import type { JobApplication, JobApplicationFilters } from '$lib/types';
 
 export class JobApplicationService {
   /**
@@ -11,8 +11,7 @@ export class JobApplicationService {
    */
   static async queryApplications(filters?: JobApplicationFilters): Promise<JobApplication[]> {
     try {
-      const response = await apiClient.get<JobApplication[]>('/apply/query', filters);
-      return response.data;
+      return await jobApplicationApi.query(filters);
     } catch (error) {
       console.error('Error querying job applications:', error);
       throw error;
@@ -24,8 +23,7 @@ export class JobApplicationService {
    */
   static async getAllApplications(): Promise<JobApplication[]> {
     try {
-      const response = await apiClient.get<JobApplication[]>('/apply/');
-      return response.data;
+      return await jobApplicationApi.getAll();
     } catch (error) {
       console.error('Error fetching all applications:', error);
       throw error;
@@ -37,8 +35,7 @@ export class JobApplicationService {
    */
   static async getApplicationById(id: string): Promise<JobApplication> {
     try {
-      const response = await apiClient.get<JobApplication>(`/apply/${id}`);
-      return response.data;
+      return await jobApplicationApi.getById(id);
     } catch (error) {
       console.error('Error fetching application:', error);
       throw error;
@@ -50,8 +47,7 @@ export class JobApplicationService {
    */
   static async createApplication(applicationData: Partial<JobApplication>): Promise<JobApplication> {
     try {
-      const response = await apiClient.post<JobApplication>('/apply/', applicationData);
-      return response.data;
+      return await jobApplicationApi.create(applicationData);
     } catch (error) {
       console.error('Error creating application:', error);
       throw error;
@@ -63,8 +59,7 @@ export class JobApplicationService {
    */
   static async updateApplication(id: string, applicationData: Partial<JobApplication>): Promise<JobApplication> {
     try {
-      const response = await apiClient.put<JobApplication>(`/apply/${id}`, applicationData);
-      return response.data;
+      return await jobApplicationApi.update(id, applicationData);
     } catch (error) {
       console.error('Error updating application:', error);
       throw error;
@@ -76,7 +71,7 @@ export class JobApplicationService {
    */
   static async deleteApplication(id: string): Promise<void> {
     try {
-      await apiClient.delete(`/apply/${id}`);
+      await jobApplicationApi.delete(id);
     } catch (error) {
       console.error('Error deleting application:', error);
       throw error;
@@ -88,7 +83,7 @@ export class JobApplicationService {
    */
   static async getApplicationsByApplicant(applicantId: string): Promise<JobApplication[]> {
     try {
-      return this.queryApplications({ applicantID: applicantId });
+      return await jobApplicationApi.getByApplicantId(applicantId);
     } catch (error) {
       console.error('Error fetching applications by applicant:', error);
       throw error;
@@ -100,7 +95,7 @@ export class JobApplicationService {
    */
   static async getApplicationsByJob(jobId: string): Promise<JobApplication[]> {
     try {
-      return this.queryApplications({ jobID: jobId });
+      return await jobApplicationApi.getByJobId(jobId);
     } catch (error) {
       console.error('Error fetching applications by job:', error);
       throw error;
@@ -112,7 +107,7 @@ export class JobApplicationService {
    */
   static async getApplicationsByCompany(companyId: string): Promise<JobApplication[]> {
     try {
-      return this.queryApplications({ companyID: companyId });
+      return await jobApplicationApi.getByCompanyId(companyId);
     } catch (error) {
       console.error('Error fetching applications by company:', error);
       throw error;
@@ -124,9 +119,65 @@ export class JobApplicationService {
    */
   static async getApplicationsByStatus(status: string): Promise<JobApplication[]> {
     try {
-      return this.queryApplications({ status });
+      return await jobApplicationApi.getByStatus(status);
     } catch (error) {
       console.error('Error fetching applications by status:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Get application statistics for a company
+   */
+  static async getApplicationStats(companyId: string): Promise<{
+    total: number;
+    pending: number;
+    approved: number;
+    rejected: number;
+  }> {
+    try {
+      const applications = await this.getApplicationsByCompany(companyId);
+      
+      return {
+        total: applications.length,
+        pending: applications.filter(app => app.status === 'pending').length,
+        approved: applications.filter(app => app.status === 'approved').length,
+        rejected: applications.filter(app => app.status === 'rejected').length
+      };
+    } catch (error) {
+      console.error('Error calculating application stats:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Check if user has already applied to a job
+   */
+  static async hasUserAppliedToJob(applicantId: string, jobId: string): Promise<boolean> {
+    try {
+      const applications = await this.queryApplications({ 
+        applicantID: applicantId, 
+        jobID: jobId 
+      });
+      return applications.length > 0;
+    } catch (error) {
+      console.error('Error checking application status:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get recent applications for dashboard
+   */
+  static async getRecentApplications(companyId: string, limit: number = 5): Promise<JobApplication[]> {
+    try {
+      const applications = await this.getApplicationsByCompany(companyId);
+      // Sort by application date (most recent first) and limit
+      return applications
+        .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+        .slice(0, limit);
+    } catch (error) {
+      console.error('Error fetching recent applications:', error);
       throw error;
     }
   }

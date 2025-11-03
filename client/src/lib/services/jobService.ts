@@ -2,28 +2,24 @@ import { goto } from '$app/navigation';
 import { withDeadlineTime, formatDateCompact } from '$lib/utils/datetime';
 import { fetchCompanyNameLogo, DEFAULT_COMPANY_NAME, DEFAULT_COMPANY_LOGO } from '$lib/utils/fetcher';
 import { JobApplicationService } from './jobApplicationService';
-import { apiClient } from '$lib/api/client';
+import { jobApi } from '$lib/api';
 import toast from 'svelte-french-toast';
 import type { 
   Job, 
   JobDisplay,
   JobFilters, 
-  DeleteJobRequest, 
   JobFormData, 
   ValidationState 
 } from '$lib/types';
 
 
 export class JobService {
-  // === API METHODS (matching backend endpoints) ===
-
   /**
    * Query jobs with filters - GET /jobs/query
    */
   static async queryJobs(filters?: JobFilters): Promise<Job[]> {
     try {
-      const response = await apiClient.get<Job[]>('/jobs/query', filters);
-      return response.data;
+      return await jobApi.query(filters);
     } catch (error) {
       console.error('Error querying jobs:', error);
       throw error;
@@ -35,8 +31,7 @@ export class JobService {
    */
   static async getAllJobs(): Promise<Job[]> {
     try {
-      const response = await apiClient.get<Job[]>('/jobs/');
-      return response.data;
+      return await jobApi.getAll();
     } catch (error) {
       console.error('Error fetching all jobs:', error);
       throw error;
@@ -48,8 +43,7 @@ export class JobService {
    */
   static async getJobById(id: string): Promise<Job> {
     try {
-      const response = await apiClient.get<Job>(`/jobs/${id}`);
-      return response.data;
+      return await jobApi.getById(id);
     } catch (error) {
       console.error('Error fetching job:', error);
       throw error;
@@ -59,10 +53,9 @@ export class JobService {
   /**
    * Create a new job - POST /jobs/
    */
-  static async createJobAPI(jobData: Partial<Job>): Promise<Job> {
+  static async createJobAPI(jobData: JobFormData): Promise<Job> {
     try {
-      const response = await apiClient.post<Job>('/jobs/', jobData);
-      return response.data;
+      return await jobApi.create(jobData);
     } catch (error) {
       console.error('Error creating job:', error);
       throw error;
@@ -72,10 +65,9 @@ export class JobService {
   /**
    * Update a job - PUT /jobs/:id
    */
-  static async updateJobAPI(id: string, jobData: Partial<Job>): Promise<Job> {
+  static async updateJobAPI(id: string, jobData: Partial<JobFormData>): Promise<Job> {
     try {
-      const response = await apiClient.put<Job>(`/jobs/${id}`, jobData);
-      return response.data;
+      return await jobApi.update(id, jobData);
     } catch (error) {
       console.error('Error updating job:', error);
       throw error;
@@ -87,8 +79,7 @@ export class JobService {
    */
   static async deleteJobWithReason(id: string, reason: string): Promise<void> {
     try {
-      const deleteData: DeleteJobRequest = { reason };
-      await apiClient.delete(`/jobs/${id}`, deleteData);
+      await jobApi.deleteWithReason(id, reason);
     } catch (error) {
       console.error('Error deleting job:', error);
       throw error;
@@ -100,7 +91,7 @@ export class JobService {
    */
   static async getJobsByCompany(companyId: string): Promise<Job[]> {
     try {
-      return this.queryJobs({ companyID: companyId });
+      return await jobApi.getByCompanyId(companyId);
     } catch (error) {
       console.error('Error fetching company jobs:', error);
       throw error;
@@ -287,21 +278,8 @@ export class JobService {
       const payload = this.buildPayload(formData);
       console.log("Creating job with payload:", payload);
 
-      const res = await fetch('/jobs/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        credentials: 'include'
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        console.error('Server error body:', text);
-        throw new Error(`Failed: ${res.status} ${text}`);
-      }
-
-      const data = await res.json();
-      console.log('Job created:', data);
+      await jobApi.create(payload as unknown as JobFormData);
+      console.log('Job created successfully');
       return { success: true };
     } catch (err) {
       console.error('Error creating job:', err);
@@ -314,19 +292,8 @@ export class JobService {
       const payload = this.buildPayload(formData);
       console.log("Updating job with payload:", payload);
 
-      const res = await fetch(`/jobs/${jobId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        credentials: 'include'
-      });
-
-      if (!res.ok) {
-        throw new Error(`Failed to update job: ${res.status}`);
-      }
-
-      const updatedJob = await res.json();
-      console.log('Job updated successfully:', updatedJob);
+      await jobApi.update(jobId, payload as unknown as Partial<JobFormData>);
+      console.log('Job updated successfully');
       return { success: true };
     } catch (err) {
       console.error('Error updating job:', err);
@@ -336,13 +303,8 @@ export class JobService {
 
   static async loadJob(jobId: string): Promise<{ success: boolean; data?: JobFormData; error?: string }> {
     try {
-      const res = await fetch(`/jobs/query?id=${jobId}`, {
-        credentials: 'include'
-      });
-      if (!res.ok) throw new Error(`Failed to load job: ${res.status}`);
-      
-      const data = await res.json();
-      const job = Array.isArray(data) ? data[0] : data;
+      const jobs = await jobApi.query({ id: jobId });
+      const job = Array.isArray(jobs) ? jobs[0] : jobs;
 
       const formattedDeadline = job.applicationDeadline
         ? new Date(job.applicationDeadline).toISOString().slice(0, 10)
