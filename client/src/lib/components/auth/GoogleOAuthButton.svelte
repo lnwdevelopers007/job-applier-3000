@@ -3,7 +3,7 @@
   export let userType;
   
   function handleGoogleOAuth() {
-    window.location.href = `${import.meta.env.VITE_BACKEND}/auth/google?role=${userType}`;
+    window.location.href = `${import.meta.env.VITE_LOCAL}/auth/google?role=${userType}`;
   }
 </script>
 

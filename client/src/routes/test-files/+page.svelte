@@ -1,5 +1,4 @@
 <script lang="ts">
-    const Backend_URL = import.meta.env.VITE_BACKEND;
 	let selectedFile: File | null = null;
 	let category = 'resume';
 	let userID = ''; // Test user ObjectID
@@ -53,7 +52,7 @@
     formData.append('category', category);
 
     try {
-        const response = await fetch(`${Backend_URL}/files/upload`, {
+        const response = await fetch('/files/upload', {
             method: 'POST',
             credentials: 'include', // Send cookies automatically
             headers: {
@@ -90,7 +89,7 @@
 	async function downloadFile(fileId: string, filename: string) {
 		try {
 			const response = await fetch(
-				`${Backend_URL}/files/download/${fileId}?requestingUserID=${userID}`,
+				`/files/download/${fileId}?requestingUserID=${userID}`,
 				{
 					credentials: 'include', // Send cookies automatically
 					headers: {
@@ -130,7 +129,7 @@
 
 		try {
 			const response = await fetch(
-				`${Backend_URL}/files/user/${userID}?requestingUserID=${userID}`,
+				`/files/user/${userID}?requestingUserID=${userID}`,
 				{
 					credentials: 'include', // Send cookies automatically
 					headers: {
@@ -159,7 +158,7 @@
 
 		try {
 			const response = await fetch(
-				`${Backend_URL}/files/${fileId}?requestingUserID=${userID}`,
+				`/files/${fileId}?requestingUserID=${userID}`,
 				{
 					method: 'DELETE',
 					credentials: 'include', // Send cookies automatically
