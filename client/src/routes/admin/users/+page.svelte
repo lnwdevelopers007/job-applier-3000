@@ -89,8 +89,6 @@
 
 		const role = selectedVals['Roles'];
 		const verified = selectedVals['Verified'];
-		console.log(verified);
-		console.log(role);
 
 		// Update user role
 		if (role !== undefined && role !== selectedUser.role) {
