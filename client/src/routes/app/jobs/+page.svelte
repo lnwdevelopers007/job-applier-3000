@@ -9,7 +9,7 @@
 	import { get } from 'svelte/store';
 	import { isAuthenticated, getUserInfo } from '$lib/utils/auth';
 	import {
-		fetchCompany,
+		fetchUser,
 		fetchCompanyNameLogo,
 		DEFAULT_COMPANY_LOGO,
 		DEFAULT_COMPANY_NAME
@@ -36,8 +36,10 @@
 	let selectedJobBookmarked = $state(false);
 
 	const totalPages = $derived(Math.ceil(filteredJobs.length / pageSize));
-	const paginatedJobs = $derived(filteredJobs.slice((currentPage - 1) * pageSize, currentPage * pageSize));
-	
+	const paginatedJobs = $derived(
+		filteredJobs.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+	);
+
 	$effect(() => {
 		if (selectedJob?.companyID) {
 			fetchCompanyInfo(selectedJob.companyID);
@@ -108,7 +110,7 @@
 
 	async function fetchCompanyInfo(companyID: string) {
 		try {
-			const raw = await fetchCompany(companyID);
+			const raw = await fetchUser(companyID);
 			const infoArray = raw.userInfo || [];
 			const info = Object.fromEntries(infoArray.map((item: any) => [item.Key, item.Value]));
 
@@ -134,19 +136,19 @@
 			isLoading = true;
 			const params = new URLSearchParams();
 			if (query) params.set('title', query);
-			
+
 			if (filters.workType) {
 				params.set('workType', filters.workType);
 			}
-			
+
 			if (filters.postTime) {
 				params.set('postOpenDate', filters.postTime);
 			}
-			
+
 			if (filters.arrangement) {
 				params.set('workArrangement', filters.arrangement);
 			}
-			
+
 			if (sort) params.set('sort', sort);
 			const res = await fetch(`/jobs/query?${params.toString()}`);
 
@@ -176,14 +178,13 @@
 						? job.requiredSkills.split(',').map((skill: string) => skill.trim())
 						: [],
 					posted: job.postOpenDate ? formatDateShort(job.postOpenDate) : 'Unknown',
-					closeDate: job.applicationDeadline
-						? formatDateShort(job.applicationDeadline)
-						: 'Unknown',
+					closeDate: job.applicationDeadline ? formatDateShort(job.applicationDeadline) : 'Unknown',
 					description: job.jobDescription || 'No description provided.',
 					logo: companyLogo,
-					salary: job.minSalary && job.maxSalary 
-						? `${job.currency || 'THB'} ${job.minSalary.toLocaleString()}-${job.maxSalary.toLocaleString()}`
-						: undefined
+					salary:
+						job.minSalary && job.maxSalary
+							? `${job.currency || 'THB'} ${job.minSalary.toLocaleString()}-${job.maxSalary.toLocaleString()}`
+							: undefined
 				};
 			});
 
@@ -244,17 +245,20 @@
 <div class="flex">
 	<main class="w-full min-w-0 flex-1 space-y-6">
 		<!-- Search and Filters -->
-		<div class="-mt-5 pb-8 pt-8" style="margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%); padding-left: calc(50vw - 50%); padding-right: calc(50vw - 50%); background: radial-gradient(circle,rgba(245, 255, 252, 1) 0%, rgba(248, 255, 249, 1) 25%, rgba(243, 255, 245, 1) 50%, rgba(237, 254, 244, 1) 75%, rgba(232, 254, 240, 1) 100%);">
-			<div class="max-w-7xl mx-auto space-y-4">
+		<div
+			class="-mt-5 pb-8 pt-8"
+			style="margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%); padding-left: calc(50vw - 50%); padding-right: calc(50vw - 50%); background: radial-gradient(circle,rgba(245, 255, 252, 1) 0%, rgba(248, 255, 249, 1) 25%, rgba(243, 255, 245, 1) 50%, rgba(237, 254, 244, 1) 75%, rgba(232, 254, 240, 1) 100%);"
+		>
+			<div class="mx-auto max-w-7xl space-y-4">
 				<!-- Search Bar -->
-				<div class="relative max-w-3xl mx-auto">
-					<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+				<div class="relative mx-auto max-w-3xl">
+					<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
 						<Search class="h-5 w-5 text-gray-400" />
 					</div>
 					<input
 						type="text"
 						placeholder="Search for jobs..."
-						class="w-full pl-12 pr-4 py-3 text-gray-900 placeholder-gray-500 bg-white border border-gray-200 rounded-full shadow-sm focus:ring-1 focus:ring-gray-300 focus:border-transparent transition-all duration-200 outline-none"
+						class="w-full rounded-full border border-gray-200 bg-white py-3 pl-12 pr-4 text-gray-900 placeholder-gray-500 shadow-sm outline-none transition-all duration-200 focus:border-transparent focus:ring-1 focus:ring-gray-300"
 						bind:value={searchQuery}
 						oninput={refreshJobs}
 					/>
@@ -264,7 +268,7 @@
 				<div class="flex flex-wrap items-center justify-center gap-3">
 					<div class="flex items-center gap-2">
 						<span class="text-sm font-medium text-gray-600">Filters:</span>
-						
+
 						<FilterPill
 							label="Work Type"
 							options={workTypeOptions}
@@ -302,8 +306,8 @@
 
 		<div class="grid w-full grid-cols-3 gap-6">
 			<!-- Jobs List -->
-			<section class="col-span-1 flex flex-col h-[calc(100vh-280px)]">
-				<div class="flex-1 overflow-y-auto p-2 min-h-0">
+			<section class="col-span-1 flex h-[calc(100vh-280px)] flex-col">
+				<div class="min-h-0 flex-1 overflow-y-auto p-2">
 					<div class="space-y-3">
 						{#if isLoading}
 							<!-- Show skeleton JobCards during loading -->
@@ -318,15 +322,14 @@
 							</div>
 						{:else}
 							{#each paginatedJobs as job (job.id)}
-								<div class={`transition-all duration-100 rounded-lg ${
-								selectedJob?.id === job.id 
-									? 'ring-2 ring-green-600 ring-offset-2 shadow-md border-green-200' 
-									: ''
-							}`}>
-									<JobCard 
-										{job}
-										onclick={() => (selectedJob = job)}
-									/>
+								<div
+									class={`rounded-lg transition-all duration-100 ${
+										selectedJob?.id === job.id
+											? 'border-green-200 shadow-md ring-2 ring-green-600 ring-offset-2'
+											: ''
+									}`}
+								>
+									<JobCard {job} onclick={() => (selectedJob = job)} />
 								</div>
 							{/each}
 
@@ -335,31 +338,31 @@
 								<div class="flex items-center justify-center gap-3 py-3">
 									<button
 										aria-label="Previous page"
-										class="flex items-center gap-2 px-2 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+										class="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-2 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
 										onclick={() => (currentPage = Math.max(1, currentPage - 1))}
 										disabled={currentPage === 1}
 									>
-										<ChevronLeft class="w-4 h-4" />
+										<ChevronLeft class="h-4 w-4" />
 									</button>
 
 									<div class="flex items-center gap-2">
 										<span class="text-sm text-gray-600">Page</span>
-										<span class="text-sm text-gray-600 font-medium">
+										<span class="text-sm font-medium text-gray-600">
 											{currentPage}
 										</span>
 										<span class="text-sm text-gray-600">of</span>
-										<span class="text-sm text-gray-600 font-medium">
+										<span class="text-sm font-medium text-gray-600">
 											{totalPages}
 										</span>
 									</div>
 
 									<button
 										aria-label="Next page"
-										class="flex items-center gap-2 px-2 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+										class="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-2 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
 										onclick={() => (currentPage = Math.min(totalPages, currentPage + 1))}
 										disabled={currentPage === totalPages}
 									>
-										<ChevronRight class="w-4 h-4" />
+										<ChevronRight class="h-4 w-4" />
 									</button>
 								</div>
 							{/if}
@@ -376,7 +379,7 @@
 					<div class="flex flex-1 items-center justify-center text-gray-500">Loading job details...</div>
 				{:else if selectedJob}
 					<div class="h-full overflow-y-auto">
-						<JobDetailCard 
+						<JobDetailCard
 							job={selectedJob}
 							{companyInfo}
 							onApply={() => selectedJob && applyJob(selectedJob)}
@@ -400,11 +403,7 @@
 	</main>
 </div>
 
-
 <!-- Apply Modal -->
 {#if jobToApply}
-	<ApplyModal 
-		bind:isOpen={showApplyModal}
-		job={jobToApply}
-	/>
+	<ApplyModal bind:isOpen={showApplyModal} job={jobToApply} />
 {/if}

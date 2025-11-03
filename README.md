@@ -8,6 +8,14 @@ KU Dept. of Computer Engineering Students and Alumni.
 
 ## How to install (and run)?
 
+### Quick run (No language/compiler installation needed)
+
+1. Setup configurations for .env from .env.example provided in 3 places (Outer most, Backend and Frontend)
+1. For Backend and Frontend, copy your .env to .env.production and read .env.example as standard.
+1. Run `docker-compose up --build`
+1. Run `docker-compose down` to stop the services.
+NOTE: .env is for local development running without docker-compose. .env.production is for docker-compose production running. Those configurations are independent and different.
+
 ### Back-end
 
 1. Install [golang](https://go.dev/)
@@ -18,11 +26,12 @@ KU Dept. of Computer Engineering Students and Alumni.
 1. `go run .`
 1. Visit `localhost:8080/jobs`.
 1. To run tests, use `godotenv -f ./.env go test ./... -v`
-(install [godotenv](https://github.com/joho/godotenv?tab=readme-ov-file#installation) as bin command first.)
+   (install [godotenv](https://github.com/joho/godotenv?tab=readme-ov-file#installation) as bin command first.)
 
 Resources:
-- [Starter Code](https://go.dev/doc/tutorial/web-service-gin)
-- [Connecting to Database](https://www.slingacademy.com/article/securely-storing-secrets-with-environment-variables-in-go/)
+
+-   [Starter Code](https://go.dev/doc/tutorial/web-service-gin)
+-   [Connecting to Database](https://www.slingacademy.com/article/securely-storing-secrets-with-environment-variables-in-go/)
 
 ### Front-end
 

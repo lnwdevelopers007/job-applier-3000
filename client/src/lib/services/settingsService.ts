@@ -84,7 +84,7 @@ export const COMPANY_TABS: Tab[] = [
 		id: 'documents',
 		label: 'Documents',
 		title: 'Company Documents',
-		description: 'Upload and manage company documents and certifications.'
+		description: 'Upload and manage company documents.'
 	}
 ];
 

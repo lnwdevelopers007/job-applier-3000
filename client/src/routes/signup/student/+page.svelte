@@ -11,7 +11,6 @@
   import PasswordInput from '$lib/components/auth/PasswordInput.svelte';
   import FormButton from '$lib/components/auth/FormButton.svelte';
   import GoogleOAuthButton from '$lib/components/auth/GoogleOAuthButton.svelte';
-  import OrDivider from '$lib/components/auth/OrDivider.svelte';
 
   onMount(() => {
     if (isAuthenticated()) {
@@ -30,12 +29,7 @@
   let showPassword = false;
   let showConfirmPassword = false;
   
-  function handleEmailStep() {
-    if (email) {
-      currentStep = 2;
-    }
-  }
-  
+
   function goBackToEmailStep() {
     currentStep = 1;
   }
@@ -58,10 +52,10 @@
   {#if currentStep === 1}
     <div class="mb-8" in:fly={{ x: -20, duration: 200 }}>
       <h1 class="text-3xl font-semibold text-gray-900 mb-2">Sign up</h1>
-      <p class="text-sm text-gray-500">Enter your email to start finding your dream job</p>
+      <p class="text-sm text-gray-500">Register as a job seekeer to start finding your dream job</p>
     </div>
     
-    <form onsubmit={e => { e.preventDefault(); handleEmailStep(); }} class="space-y-6">
+    <!-- <form onsubmit={e => { e.preventDefault(); handleEmailStep(); }} class="space-y-6">
       <FormInput
         id="email"
         type="email"
@@ -74,7 +68,7 @@
       <FormButton type="submit">Continue with Email</FormButton>
     </form>
 
-    <OrDivider />
+    <OrDivider /> -->
     <GoogleOAuthButton text="Continue with Google" userType="jobSeeker" />
 
     <p class="text-center text-sm text-gray-500 mt-8">

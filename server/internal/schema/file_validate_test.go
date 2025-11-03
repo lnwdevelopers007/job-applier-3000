@@ -26,8 +26,8 @@ func TestValidateFileCategoryJobSeekerResume(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestValidateFileCategoryJobSeekerCoverLetter(t *testing.T) {
-	err := ValidateFileCategory(CategoryCoverLetter, RoleJobSeeker)
+func TestValidateFileCategoryJobSeekerTranscript(t *testing.T) {
+	err := ValidateFileCategory(CategoryTranscript, RoleJobSeeker)
 	assert.NoError(t, err)
 }
 
@@ -47,22 +47,19 @@ func TestValidateFileCategoryCompanyVerification(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestValidateFileCategoryCompanyCertification(t *testing.T) {
-	err := ValidateFileCategory(CategoryCertification, RoleCompany)
-	assert.NoError(t, err)
-}
-
 func TestValidateFileCategoryCompanyResume(t *testing.T) {
 	err := ValidateFileCategory(CategoryResume, RoleCompany)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "companies can only upload")
+	assert.Contains(t, err.Error(), "companies can upload verification files only") 
 }
 
-func TestValidateFileCategoryCompanyCoverLetter(t *testing.T) {
-	err := ValidateFileCategory(CategoryCoverLetter, RoleCompany)
+
+func TestValidateFileCategoryCompanyTranscript(t *testing.T) {
+	err := ValidateFileCategory(CategoryTranscript, RoleCompany)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "companies can only upload")
+	assert.Contains(t, err.Error(), "companies can upload verification files only")
 }
+
 
 func TestValidateFileCategoryInvalidRole(t *testing.T) {
 	err := ValidateFileCategory(CategoryResume, "invalid_role")
@@ -158,5 +155,5 @@ func TestValidateFileCompanyInvalidCategory(t *testing.T) {
 
 	err := ValidateFile(file, RoleCompany)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "companies can only upload")
+	assert.Contains(t, err.Error(), "companies can upload verification files only")
 }
