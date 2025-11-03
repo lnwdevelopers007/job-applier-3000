@@ -9,13 +9,13 @@ from construct_webdriver import get_driver
 import time
 
 URL = config('URL')
-EMAIL = config('GOOGLE_EMAIL_JOBSEEKER')
-PASSWORD = config('GOOGLE_PASSWORD_JOBSEEKER')
 SEARCH_KEYWORD = config('TARGET_JOB_SEARCH')
 HEADLESS = config('HEADLESS', default='False') == 'True'
 WAIT_TIME = config('WAIT_TIME', default=5, cast=int)
+PROFILE = config('CHROME_JOBSEEKER')
+NUMBER = config('PROFILE_MUMBER_JOBSEEKER', default="Profile 1")
 
-driver = get_driver(HEADLESS)
+driver = get_driver(PROFILE, NUMBER, HEADLESS)
 actions = ActionChains(driver)
 wait = WebDriverWait(driver, 20)
 
@@ -25,51 +25,36 @@ try:
     print(f"Entering site: {URL}")
 
     time.sleep(WAIT_TIME)
-    # Press Login button
-    login_btn = wait.until(
-        EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Log in') or contains(., 'Log in')]"))
-    )
-    login_btn.click()
-    time.sleep(WAIT_TIME)
-
-    # Login via Google
-    google_btn = wait.until(
-        EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Google') or contains(@aria-label, 'Google')]"))
-    )
-    google_btn.click()
-
-    # Switch the window to Google login
-    driver.switch_to.window(driver.window_handles[-1])
-    time.sleep(WAIT_TIME)
-
-    # Input Email
-    email_input = wait.until(
-        EC.presence_of_element_located((By.XPATH, "//input[@type='email']"))
-    )
-    email_input.send_keys(EMAIL)
-    email_input.send_keys(Keys.ENTER)
-    time.sleep(WAIT_TIME)
-
-    # Input Password
-    password_input = wait.until(
-        EC.presence_of_element_located((By.XPATH, "//input[@type='password']"))
-    )
-    password_input.send_keys(PASSWORD)
-    password_input.send_keys(Keys.ENTER)
-    time.sleep(WAIT_TIME)
-
     try:
-      # Click Continue if it appears for Signing in again?
-      continue_btn = WebDriverWait(driver, 15).until(
-      EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Continue')]"))
-      )
-      continue_btn.click()
-    except:
-        print("Continue button did not appear")
+        # Press Login button
+        login_btn = wait.until(
+            EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Log in') or contains(., 'Log in')]"))
+        )
+        login_btn.click()
+        time.sleep(WAIT_TIME)
 
-    # Wait for redirect to job page
-    wait.until(EC.url_contains("jobs"))
-    print("Login successful")
+        # Login via Google
+        google_btn = wait.until(
+            EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Google') or contains(@aria-label, 'Google')]"))
+        )
+        google_btn.click()
+
+        # Switch the window to Google login
+        driver.switch_to.window(driver.window_handles[-1])
+        time.sleep(WAIT_TIME)
+
+        # Wait for redirect to job page
+        wait.until(EC.url_contains("jobs"))
+        print("Login successful")
+        time.sleep(WAIT_TIME)
+
+    except:
+        print("No login button found")
+
+    job_nav = wait.until(
+        EC.element_to_be_clickable((By.XPATH, "//a[contains(., 'Jobs') or contains(., 'Jobs')]"))
+    )
+    job_nav.click()
     time.sleep(WAIT_TIME)
 
     # Search for a job
