@@ -19,7 +19,7 @@ type User struct {
 	Name      string             `bson:"name,omitempty" json:"name,omitempty"`
 	AvatarURL string             `bson:"avatarURL,omitempty" json:"avatarURL,omitempty"`
 	Role      string             `bson:"role,omitempty" json:"role,omitempty"`
-	Verified  bool               `bson:"verified,omitempty" json:"verified,omitempty"`
+	Verified  bool               `bson:"verified" json:"verified"`
 	UpdatedAt time.Time          `bson:"updatedAt,omitempty" json:"updatedAt,omitempty"`
 	CreatedAt time.Time          `bson:"createdAt,omitempty" json:"createdAt,omitempty"`
 	UserInfo  any                `bson:"userInfo,omitempty" json:"userInfo,omitempty"`
