@@ -21,9 +21,7 @@
 	}
 </script>
 
-<div class="space-y-6">
-	<h2 class="mb-6 text-lg font-medium text-gray-900">Post Setting</h2>
-	
+<div class="space-y-6">	
 	<!-- Posting Timeline -->
 	<div>
 		<h3 class="mb-4 text-sm font-medium text-gray-900">Posting Timeline</h3>
@@ -67,7 +65,7 @@
 	</div>
 
 	<!-- Application Requirements -->
-	<div>
+	<!-- <div>
 		<h3 class="mb-4 text-sm font-medium text-gray-900">Application Requirements</h3>
 		<div class="space-y-3">
 			<label class="flex items-center">
@@ -106,10 +104,10 @@
 				<span class="ml-2 text-sm text-gray-700">LinkedIn profile required</span>
 			</label>
 		</div>
-	</div>
+	</div> -->
 
 	<!-- Screening Questions -->
-	<div>
+	<!-- <div>
 		<h3 class="mb-2 text-sm font-medium text-gray-900">Screening Questions</h3>
 		<textarea
 			bind:value={formData.screeningQuestions}
@@ -120,7 +118,7 @@
 		<p class="mt-1 text-xs text-gray-500">
 			Optional questions to help screen applicants before interviews
 		</p>
-	</div>
+	</div> -->
 
 	<!-- Notification Settings -->
 	<div>

@@ -1,43 +1,40 @@
+import { apiFetch } from "./api";
+
 export const DEFAULT_COMPANY_LOGO =
   'https://images.unsplash.com/photo-1534237710431-e2fc698436d0?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8YnVpbGRpbmd8ZW58MHx8MHx8fDA%3D';
 
 export const DEFAULT_COMPANY_NAME = 'Unknown Company';
 
+export async function fetchData(endpoint: string, params: string = "") {
+  const res = await apiFetch(`/${endpoint}/${params}`)
+  if (!res.ok) throw new Error(`Failed to fetch ${endpoint} details (Status: ${res.status})`);
+  const data = await res.json();
+  return data;
+}
 
 
 export async function fetchJob(jobID: string) {
-  const jobRes = await fetch(`/jobs/${jobID}`, {
-    credentials: 'include'
-  });
-  if (!jobRes.ok) throw new Error('Failed to fetch job details');
-  const jobData = await jobRes.json();
-  return jobData;
+  return fetchData('jobs', jobID)
 }
 
-export async function fetchCompany(companyID: string) {
-  const companyRes = await fetch(`/users/${companyID}`, {
-    credentials: 'include'
-  });
-  if (!companyRes.ok) {
-    if (companyRes.status === 404) {
-      throw new Error(`Company not found (ID: ${companyID})`);
-    }
-    throw new Error(`Failed to fetch company details (Status: ${companyRes.status})`);
-  }
-  const companyData = await companyRes.json()
-  return companyData
+export async function fetchUser(userID: string) {
+  return fetchData('users', userID)
+}
+
+export async function fetchUsers(params?: string) {
+  return fetchData('users', params)
 }
 
 export async function fetchCompanyNameLogo(companyID: any) {
   let companyName = DEFAULT_COMPANY_NAME
   let companyLogo = DEFAULT_COMPANY_LOGO
-  
+
   if (!companyID) {
     return [companyName, companyLogo];
   }
-  
+
   try {
-    const companyData = await fetchCompany(companyID);
+    const companyData = await fetchUser(companyID);
     [companyName, companyLogo] = getCompanyInfo(companyData);
   } catch (err) {
     // Only log warning for non-404 errors to reduce noise
@@ -48,7 +45,6 @@ export async function fetchCompanyNameLogo(companyID: any) {
 
   return [companyName, companyLogo];
 }
-
 
 function getCompanyInfo(company: any) {
 
