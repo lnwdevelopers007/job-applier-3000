@@ -53,6 +53,7 @@ dist
 *.local
 **/*.local
 .env
+**/.env.production
 **/.env
 
 #node_modules and pnpm

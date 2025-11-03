@@ -1,5 +1,3 @@
-const BACKEND_URL = import.meta.env.VITE_BACKEND;
-
 export interface FileMetadata {
   id: string;
   userID: string;
@@ -31,7 +29,7 @@ class FileService {
     formData.append('file', file);
     formData.append('category', category);
 
-    const response = await fetch(`${BACKEND_URL}/files/upload`, {
+    const response = await fetch('/files/upload', {
       method: 'POST',
       credentials: 'include',
       body: formData
@@ -49,7 +47,7 @@ class FileService {
    * List all files for a user
    */
   async listUserFiles(userId: string): Promise<FileMetadata[]> {
-    const response = await fetch(`${BACKEND_URL}/files/user/${userId}`, {
+    const response = await fetch(`/files/user/${userId}`, {
       credentials: 'include'
     });
 
@@ -66,7 +64,7 @@ class FileService {
    * Download a file as Blob
    */
   async downloadFile(fileId: string): Promise<Blob> {
-    const response = await fetch(`${BACKEND_URL}/files/download/${fileId}`, {
+    const response = await fetch(`/files/download/${fileId}`, {
       credentials: 'include'
     });
 
@@ -90,7 +88,7 @@ class FileService {
    * Delete a file
    */
   async deleteFile(fileId: string): Promise<void> {
-    const response = await fetch(`${BACKEND_URL}/files/${fileId}`, {
+    const response = await fetch(`/files/${fileId}`, {
       method: 'DELETE',
       credentials: 'include'
     });
@@ -110,7 +108,7 @@ class FileService {
     jobID: string;
     files: FileMetadata[];
   }> {
-    const response = await fetch(`${BACKEND_URL}/files/application/${applicationId}`, {
+    const response = await fetch(`/files/application/${applicationId}`, {
       credentials: 'include'
     });
 
@@ -126,7 +124,7 @@ class FileService {
    * Download an applicant's file (company use)
    */
   async downloadApplicantFile(applicationId: string, fileId: string): Promise<Blob> {
-    const response = await fetch(`${BACKEND_URL}/files/application/${applicationId}/download/${fileId}`, {
+    const response = await fetch(`/files/application/${applicationId}/download/${fileId}`, {
       credentials: 'include'
     });
 

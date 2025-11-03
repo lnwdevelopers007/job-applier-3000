@@ -1,7 +1,6 @@
 <script lang="ts">
 	import FilesInfo from '$lib/components/ui/FilesInfo.svelte';
 
-	const Backend_URL = import.meta.env.VITE_BACKEND;
 	let selectedFile: File | null = null;
 	let category = 'resume';
 	let userID = ''; // Test user ObjectID
@@ -54,16 +53,16 @@
 		formData.append('file', selectedFile);
 		formData.append('category', category);
 
-		try {
-			const response = await fetch(`${Backend_URL}/files/upload`, {
-				method: 'POST',
-				credentials: 'include', // Send cookies automatically
-				headers: {
-					'X-User-Id': userID,
-					'X-User-Role': userRole
-				},
-				body: formData
-			});
+    try {
+        const response = await fetch('/files/upload', {
+            method: 'POST',
+            credentials: 'include', // Send cookies automatically
+            headers: {
+				'X-User-Id': userID,
+    			'X-User-Role': userRole
+            },
+            body: formData
+        });
 
 			if (!response.ok) {
 				const errorData = await response.json();
@@ -92,7 +91,7 @@
 	async function downloadFile(fileId: string, filename: string) {
 		try {
 			const response = await fetch(
-				`${Backend_URL}/files/download/${fileId}?requestingUserID=${userID}`,
+				`/files/download/${fileId}?requestingUserID=${userID}`,
 				{
 					credentials: 'include', // Send cookies automatically
 					headers: {
@@ -132,7 +131,7 @@
 
 		try {
 			const response = await fetch(
-				`${Backend_URL}/files/user/${userID}?requestingUserID=${userID}`,
+				`/files/user/${userID}?requestingUserID=${userID}`,
 				{
 					credentials: 'include', // Send cookies automatically
 					headers: {
@@ -160,14 +159,17 @@
 		if (!confirm(`Are you sure you want to delete "${filename}"?`)) return;
 
 		try {
-			const response = await fetch(`${Backend_URL}/files/${fileId}?requestingUserID=${userID}`, {
-				method: 'DELETE',
-				credentials: 'include', // Send cookies automatically
-				headers: {
-					'X-User-Id': userID,
-					'X-User-Role': userRole
+			const response = await fetch(
+				`/files/${fileId}?requestingUserID=${userID}`,
+				{
+					method: 'DELETE',
+					credentials: 'include', // Send cookies automatically
+					headers: {
+						'X-User-Id': userID,
+    					'X-User-Role': userRole
+					}
 				}
-			});
+			);
 
 			if (!response.ok) {
 				const errorData = await response.json();

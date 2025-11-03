@@ -20,7 +20,7 @@ func LoadEnv(env string) string {
 }
 
 func LoadCallbackURI(protocol string, provider string) string {
-	return protocol + "://" + LoadEnv("SERVER_ADDR") + "/auth/" + provider + "/callback"
+	return LoadEnv("OAUTH_REDIRECT_URL")
 }
 
 func LoadBoolean(env string) bool {
