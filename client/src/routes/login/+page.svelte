@@ -4,16 +4,8 @@
   import { isAuthenticated } from '$lib/utils/auth';
   import AuthLayout from '$lib/components/auth/AuthLayout.svelte';
   import AuthHeader from '$lib/components/auth/AuthHeader.svelte';
-  import FormInput from '$lib/components/auth/FormInput.svelte';
-  import PasswordInput from '$lib/components/auth/PasswordInput.svelte';
-  import FormButton from '$lib/components/auth/FormButton.svelte';
   import GoogleOAuthButton from '$lib/components/auth/GoogleOAuthButton.svelte';
-  import OrDivider from '$lib/components/auth/OrDivider.svelte';
-  
-  let email = '';
-  let password = '';
-  let rememberMe = false;
-  let showPassword = false;
+
 
   onMount(() => {
     if (isAuthenticated()) {
@@ -21,9 +13,6 @@
     }
   });
 
-  function handleLogin() {
-    console.log('Login:', { email, password, rememberMe });
-  }
 
 </script>
 
@@ -35,7 +24,7 @@
     <p class="text-sm text-gray-500">Welcome back! Please login to continue.</p>
   </div>
 
-  <form onsubmit={e => { e.preventDefault(); handleLogin(); }} class="space-y-6">
+  <!-- <form onsubmit={e => { e.preventDefault(); handleLogin(); }} class="space-y-6">
     <FormInput
       id="email"
       type="email"
@@ -57,7 +46,7 @@
     <FormButton type="submit">Login</FormButton>
   </form>
 
-  <OrDivider />
+  <OrDivider /> -->
   
   <GoogleOAuthButton text="Continue with Google" userType="login" />
   
