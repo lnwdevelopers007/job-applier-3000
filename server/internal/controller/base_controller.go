@@ -9,6 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/database"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/repository"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -51,7 +53,7 @@ func (controller BaseController[Schema]) Create(c *gin.Context) {
 func (controller BaseController[Schema]) RetrieveAll(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	res, err := findAll[Schema](ctx, controller.collectionName, bson.M{})
+	res, err := repository.FindAll[Schema](ctx, controller.collectionName, bson.M{})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -144,7 +146,7 @@ func (controller BaseController[Schema]) RetrieveOne(c *gin.Context) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	res, err := findOne[Schema](ctx, controller.collectionName, objID)
+	res, err := repository.FindOne[Schema](ctx, controller.collectionName, objID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": controller.displayName + " not found"})
 		return

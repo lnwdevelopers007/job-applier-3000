@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lnwdevelopers007/job-applier-3000/server/internal/database"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/email"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/repository"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -54,9 +54,6 @@ func NewJobController() JobController {
 // @Failure 500 {object} map[string]string
 // @Router /jobs/query [get]
 func (jc JobController) Query(c *gin.Context) {
-	db := database.GetDatabase()
-	collection := db.Collection(jc.baseController.collectionName)
-
 	// Allowed query params
 	allowedParams := map[string]func(string) (interface{}, error){
 		"id": func(v string) (interface{}, error) {
@@ -191,7 +188,7 @@ func (jc JobController) Query(c *gin.Context) {
 	if latestParam == "true" {
 		now := time.Now()
 		filter["postOpenDate"] = bson.M{"$lte": now}
-		findOptions.SetSort(bson.D{{Key: "postOpenDate",Value:  -1}})
+		findOptions.SetSort(bson.D{{Key: "postOpenDate", Value: -1}})
 		findOptions.SetLimit(3)
 	}
 
@@ -213,14 +210,8 @@ func (jc JobController) Query(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	cursor, err := collection.Find(ctx, filter, findOptions)
+	jobs, err := repository.FindAll[schema.Job](ctx, jc.baseController.collectionName, filter, findOptions)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	var jobs []schema.Job
-	if err := cursor.All(ctx, &jobs); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -306,7 +297,7 @@ func (jc JobController) Delete(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	id, _ := primitive.ObjectIDFromHex(c.Param("id"))
-	deleteMany[schema.JobApplication](ctx, "job_applications", bson.M{"jobID": bson.M{"$eq": id}})
+	repository.DeleteMany[schema.JobApplication](ctx, "job_applications", bson.M{"jobID": bson.M{"$eq": id}})
 }
 
 // notifyJobDeletion send emails to all applicants when a job they applied to got deleted.
@@ -332,14 +323,14 @@ func notifyJobDeletion(c *gin.Context) bool {
 		reason = "No reason provided."
 	}
 
-	job, err := findOne[schema.Job](ctx, "jobs", jobID)
+	job, err := repository.FindOne[schema.Job](ctx, "jobs", jobID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No job Found"})
 		return true
 	}
 
 	filter := bson.M{"jobID": bson.M{"$eq": job.ID}}
-	jobApplications, err := findAll[schema.JobApplication](ctx, "job_applications", filter)
+	jobApplications, err := repository.FindAll[schema.JobApplication](ctx, "job_applications", filter)
 	if err == mongo.ErrNoDocuments {
 		return false
 	}
