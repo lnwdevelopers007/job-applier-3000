@@ -68,11 +68,15 @@ func (controller BaseController[Schema]) Update(c *gin.Context) {
 		return
 	}
 
-	var raw Schema
-	if err := c.ShouldBindJSON(&raw); err != nil {
+	// Use map to only update fields that are actually provided in the request
+	var updateFields map[string]any
+	if err := c.ShouldBindJSON(&updateFields); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	// Add updatedAt timestamp
+	updateFields["updatedAt"] = time.Now()
 
 	db := database.GetDatabase()
 	collection := db.Collection(controller.collectionName)
@@ -81,7 +85,7 @@ func (controller BaseController[Schema]) Update(c *gin.Context) {
 	defer cancel()
 
 	// use $set to update only provided fields
-	update := bson.M{"$set": raw}
+	update := bson.M{"$set": updateFields}
 
 	res, err := collection.UpdateOne(ctx, bson.M{"_id": objID}, update)
 	if err != nil {
