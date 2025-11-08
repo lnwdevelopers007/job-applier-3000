@@ -25,8 +25,6 @@ type BaseController[Schema any] struct {
 
 // Create() inserts one document (row) to collectionName collection.
 func (controller BaseController[Schema]) Create(c *gin.Context) {
-	db := database.GetDatabase()
-	collection := db.Collection(controller.collectionName)
 
 	var raw Schema
 	if err := c.ShouldBindBodyWith(&raw, binding.JSON); err != nil {
@@ -37,7 +35,7 @@ func (controller BaseController[Schema]) Create(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	res, err := collection.InsertOne(ctx, raw)
+	res, err := repository.InsertOne(ctx, controller.collectionName, raw)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to create " + controller.displayName,
@@ -76,14 +74,14 @@ func (controller BaseController[Schema]) Update(c *gin.Context) {
 		return
 	}
 
-	db := database.GetDatabase()
-	collection := db.Collection(controller.collectionName)
-
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	// use $set to update only provided fields
 	update := bson.M{"$set": raw}
+
+	db := database.GetDatabase()
+	collection := db.Collection(controller.collectionName)
 
 	res, err := collection.UpdateOne(ctx, bson.M{"_id": objID}, update)
 	if err != nil {
