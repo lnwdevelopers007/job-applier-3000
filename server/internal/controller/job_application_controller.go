@@ -73,7 +73,7 @@ func (jc JobApplicationController) Query(c *gin.Context) {
 	)
 
 	// query users
-	userMap, err := getUsersFromID(
+	userMap, err := getUsersFromIDs(
 		ctx,
 		userIDs,
 	)

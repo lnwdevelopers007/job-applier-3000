@@ -352,7 +352,7 @@ func notifyJobDeletion(c *gin.Context) bool {
 		return false
 	}
 
-	applicants, err := getUsersFromID(ctx, applicantIDs)
+	applicants, err := getUsersFromIDs(ctx, applicantIDs)
 	if err == mongo.ErrNoDocuments {
 		return false
 	}
