@@ -81,6 +81,17 @@ func NewRouter() *gin.Engine {
 	})
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
+	note := NewNoteController()
+	noteRoutes := router.Group("/notes")
+	noteRoutes.Use(middleware.AuthMiddleware())
+	{
+		noteRoutes.GET("/", note.RetrieveAll)
+		noteRoutes.GET("/:id", note.RetrieveOne)
+		noteRoutes.POST("/", note.Create)
+		noteRoutes.PUT("/", note.Update)
+		noteRoutes.DELETE("/:id", note.Delete)
+	}
+
 	return router
 }
 
