@@ -236,14 +236,11 @@
 	async function loadUserData() {
 		const usersFromDB = await fetchUsers();
 		for (let user of usersFromDB) {
-			user.actions = [
-				{ label: 'Edit Permissions', disabled: false },
-				{
-					label: user.ban ? 'Unban' : 'Ban',
-					disabled: false
-				},
-				{ label: 'Delete', disabled: false }
-			];
+			user.actions = USER_ACTIONS.map((a) =>
+				a.label === 'Ban'
+					? { ...a, label: user.ban ? 'Unban' : 'Ban' }
+					: a
+			);
 		}
 		users = originalUsers = usersFromDB;
 	}
