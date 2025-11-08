@@ -24,3 +24,7 @@ type User struct {
 	CreatedAt time.Time          `bson:"createdAt,omitempty" json:"createdAt,omitempty"`
 	UserInfo  any                `bson:"userInfo,omitempty" json:"userInfo,omitempty"`
 }
+
+func (u User) GetCollectionName() string {
+	return "users"
+}

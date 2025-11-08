@@ -44,7 +44,6 @@ func (nc NoteController) validateNoteOwner(c *gin.Context) (shouldReturn bool) {
 
 	jobApplication, err := repository.FindOne[schema.JobApplication](
 		ctx,
-		"job_applications",
 		raw.JobApplicationID,
 	)
 	if err != nil {
@@ -54,7 +53,6 @@ func (nc NoteController) validateNoteOwner(c *gin.Context) (shouldReturn bool) {
 
 	job, err := repository.FindOne[schema.Job](
 		ctx,
-		"jobs",
 		jobApplication.JobID,
 	)
 	if err != nil {

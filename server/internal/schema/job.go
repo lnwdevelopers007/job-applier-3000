@@ -23,10 +23,14 @@ type Job struct {
 	Education           string             `bson:"education" json:"education" binding:"required,gte=0"`
 	NiceToHave          string             `bson:"niceToHave" json:"niceToHave"`
 	Questions           string             `bson:"questions" json:"questions"`
-	PostOpenDate	      time.Time	         `bson:"postOpenDate" json:"postOpenDate" binding:"required"`
+	PostOpenDate        time.Time          `bson:"postOpenDate" json:"postOpenDate" binding:"required"`
 	ApplicationDeadline time.Time          `bson:"applicationDeadline" json:"applicationDeadline" binding:"required"`
 	NumberOfPositions   int                `bson:"numberOfPositions" json:"numberOfPositions" binding:"required"`
 	Visibility          string             `bson:"visibility" json:"visibility" binding:"required,gte=0"`
 	EmailNotifications  bool               `bson:"emailNotifications" json:"emailNotifications" binding:"boolean"`
 	AutoReject          bool               `bson:"autoReject" json:"autoReject" binding:"boolean"`
+}
+
+func (j Job) GetCollectionName() string {
+	return "jobs"
 }

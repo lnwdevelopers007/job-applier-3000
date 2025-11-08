@@ -55,7 +55,7 @@ func (jc JobApplicationController) Query(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	findOpts := options.Find().SetSort(bson.D{{Key: "createdAt", Value: -1}})
-	applications, err := repository.FindAll[schema.JobApplication](ctx, jc.baseController.collectionName, jobApplicationFilter, findOpts)
+	applications, err := repository.FindAll[schema.JobApplication](ctx, jobApplicationFilter, findOpts)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -195,8 +195,8 @@ func (jc JobApplicationController) Create(c *gin.Context) {
 				return
 			}
 
-			applicant, _ := repository.FindOne[schema.User](ctx, "users", validApplicantID)
-			job, _ := repository.FindOne[schema.Job](ctx, "jobs", validJobID)
+			applicant, _ := repository.FindOne[schema.User](ctx, validApplicantID)
+			job, _ := repository.FindOne[schema.Job](ctx, validJobID)
 
 			subject := "New applicant applied to your job"
 			body := fmt.Sprintf(
@@ -219,7 +219,7 @@ func (jc JobApplicationController) shouldNotifyCompany(c *gin.Context) (companyE
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	job, jobErr := repository.FindOne[schema.Job](ctx, "jobs", raw.JobID)
+	job, jobErr := repository.FindOne[schema.Job](ctx, raw.JobID)
 	if jobErr != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": jobErr.Error()})
 		return "", true
@@ -227,7 +227,7 @@ func (jc JobApplicationController) shouldNotifyCompany(c *gin.Context) (companyE
 	if !job.EmailNotifications {
 		return "", false
 	}
-	company, companyErr := repository.FindOne[schema.User](ctx, "users", job.CompanyID)
+	company, companyErr := repository.FindOne[schema.User](ctx, job.CompanyID)
 	if companyErr != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": companyErr.Error()})
 		return "", true
@@ -260,7 +260,7 @@ func (jc JobApplicationController) Update(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	updatedApp, err := repository.FindOne[schema.JobApplication](ctx, jc.baseController.collectionName, objID)
+	updatedApp, err := repository.FindOne[schema.JobApplication](ctx, objID)
 	if err != nil {
 		fmt.Println("Failed to fetch updated application for notification:", err)
 		return
@@ -271,13 +271,13 @@ func (jc JobApplicationController) Update(c *gin.Context) {
 
 // notifyApplicantOnStatusChange notifies the applicant when their application status changes
 func (jc JobApplicationController) notifyApplicantOnStatusChange(ctx context.Context, app schema.JobApplication) {
-	applicant, err := repository.FindOne[schema.User](ctx, "users", app.ApplicantID)
+	applicant, err := repository.FindOne[schema.User](ctx, app.ApplicantID)
 	if err != nil {
 		fmt.Println("Failed to fetch applicant for notification:", err)
 		return
 	}
 
-	job, err := repository.FindOne[schema.Job](ctx, "jobs", app.JobID)
+	job, err := repository.FindOne[schema.Job](ctx, app.JobID)
 	if err != nil {
 		fmt.Println("Failed to fetch job for notification:", err)
 		return

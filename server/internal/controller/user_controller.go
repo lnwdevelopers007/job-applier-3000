@@ -47,7 +47,7 @@ func (jc UserController) Query(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	users, err := repository.FindAll[schema.User](ctx, jc.baseController.collectionName, userFilter)
+	users, err := repository.FindAll[schema.User](ctx, userFilter)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

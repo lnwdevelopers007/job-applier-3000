@@ -8,8 +8,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"github.com/lnwdevelopers007/job-applier-3000/server/internal/database"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/repository"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -18,7 +18,7 @@ import (
 // BaseController implements IController interface.
 // It is a basic controller for basic CRUD operations
 // involving only one specific collection in the database.
-type BaseController[Schema any] struct {
+type BaseController[Schema schema.CollectionEntity] struct {
 	collectionName string
 	displayName    string
 }
@@ -35,7 +35,7 @@ func (controller BaseController[Schema]) Create(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	res, err := repository.InsertOne(ctx, controller.collectionName, raw)
+	res, err := repository.InsertOne(ctx, raw)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to create " + controller.displayName,
@@ -51,7 +51,7 @@ func (controller BaseController[Schema]) Create(c *gin.Context) {
 func (controller BaseController[Schema]) RetrieveAll(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	res, err := repository.FindAll[Schema](ctx, controller.collectionName, bson.M{})
+	res, err := repository.FindAll[Schema](ctx, bson.M{})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -78,12 +78,7 @@ func (controller BaseController[Schema]) Update(c *gin.Context) {
 	defer cancel()
 
 	// use $set to update only provided fields
-	update := bson.M{"$set": raw}
-
-	db := database.GetDatabase()
-	collection := db.Collection(controller.collectionName)
-
-	res, err := collection.UpdateOne(ctx, bson.M{"_id": objID}, update)
+	res, err := repository.Update(ctx, objID, raw)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to update " + controller.displayName,
@@ -112,21 +107,22 @@ func (controller BaseController[Schema]) Delete(c *gin.Context) {
 		return
 	}
 
-	db := database.GetDatabase()
-	collection := db.Collection(controller.collectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-	// Delete the document from MongoDB
-	result, err := collection.DeleteOne(context.Background(), bson.M{"_id": objID})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
+	result, err := repository.DeleteOne[Schema](ctx, objID)
 
 	if result.DeletedCount == 0 {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "No " + controller.displayName + " found",
 		})
 		return
+	}
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Bad Delete Request",
+		})
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -144,7 +140,7 @@ func (controller BaseController[Schema]) RetrieveOne(c *gin.Context) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	res, err := repository.FindOne[Schema](ctx, controller.collectionName, objID)
+	res, err := repository.FindOne[Schema](ctx, objID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": controller.displayName + " not found"})
 		return

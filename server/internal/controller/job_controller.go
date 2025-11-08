@@ -210,7 +210,7 @@ func (jc JobController) Query(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	jobs, err := repository.FindAll[schema.Job](ctx, jc.baseController.collectionName, filter, findOptions)
+	jobs, err := repository.FindAll[schema.Job](ctx, filter, findOptions)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -323,14 +323,14 @@ func notifyJobDeletion(c *gin.Context) bool {
 		reason = "No reason provided."
 	}
 
-	job, err := repository.FindOne[schema.Job](ctx, "jobs", jobID)
+	job, err := repository.FindOne[schema.Job](ctx, jobID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No job Found"})
 		return true
 	}
 
 	filter := bson.M{"jobID": bson.M{"$eq": job.ID}}
-	jobApplications, err := repository.FindAll[schema.JobApplication](ctx, "job_applications", filter)
+	jobApplications, err := repository.FindAll[schema.JobApplication](ctx, filter)
 	if err == mongo.ErrNoDocuments {
 		return false
 	}

@@ -18,3 +18,7 @@ type ApplicationWithApplicant struct {
 	JobApplication JobApplication `json:"jobApplication"`
 	Applicant      any            `json:"applicant"`
 }
+
+func (ja JobApplication) GetCollectionName() string {
+	return "job_applications"
+}

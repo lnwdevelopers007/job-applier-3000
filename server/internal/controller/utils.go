@@ -35,7 +35,7 @@ func getUsersFromIDs(
 	error,
 ) {
 	filter := bson.M{"_id": bson.M{"$in": userIDs}}
-	result, err := repository.FindAll[schema.User](ctx, "users", filter)
+	result, err := repository.FindAll[schema.User](ctx, filter)
 
 	// Create a map of job seekers for easy lookup
 	resultMap := make(map[primitive.ObjectID]schema.User)
