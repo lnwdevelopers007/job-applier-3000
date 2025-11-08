@@ -177,8 +177,26 @@ func (jc JobApplicationController) Create(c *gin.Context) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 
-			applicant, _ := repository.FindOne[schema.User](ctx, "users", raw.ApplicantID)
-			job, _ := repository.FindOne[schema.Job](ctx, "jobs", raw.JobID)
+			applicantID := raw.ApplicantID
+			jobID := raw.JobID
+
+			var validApplicantID, validJobID primitive.ObjectID
+			var convErr error
+			// Validate applicant ID
+			validApplicantID, convErr = primitive.ObjectIDFromHex(applicantID.Hex())
+			if convErr != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ApplicantID format"})
+				return
+			}
+			// Validate job ID
+			validJobID, convErr = primitive.ObjectIDFromHex(jobID.Hex())
+			if convErr != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JobID format"})
+				return
+			}
+
+			applicant, _ := repository.FindOne[schema.User](ctx, "users", validApplicantID)
+			job, _ := repository.FindOne[schema.Job](ctx, "jobs", validJobID)
 
 			subject := "New applicant applied to your job"
 			body := fmt.Sprintf(
