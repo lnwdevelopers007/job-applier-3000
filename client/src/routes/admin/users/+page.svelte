@@ -16,6 +16,7 @@
 
 	const VALID_ROLES = ['jobSeeker', 'company', 'faculty', 'admin'];
 	const VALID_VERIFICATION_OPTIONS = [true, false];
+	let currentFilteredBannedStatus = $state('');
 
 	const SORT_OPTIONS = [
 		{ value: 'name', label: 'Name' },
@@ -35,6 +36,10 @@
 	let showBanModal = $state(false);
 	let banReason = $state('');
 	let isBanning = $state(false);
+
+	let showUnbanModal = $state(false);
+	let unbanReason = $state('');
+	let isUnbanning = $state(false);
 
 	let showPermissionEditModal = $state(false);
 	let showPermissionEditConfirmButton = $state(false);
@@ -79,9 +84,52 @@
 
 	async function onBanUser() {
 		isBanning = true;
-		// TODO: add a real ban operation here
-		showBanModal = false;
-		isBanning = false;
+
+		try {
+			const newBanStatus = !selectedUser.ban;
+			const res = await fetch(`/users/${selectedUser.id}`, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ ban: newBanStatus })
+			});
+
+			if (!res.ok) {
+				console.error('Error: Failed to update ban status');
+				isBanning = false;
+				return;
+			}
+
+			selectedUser.ban = newBanStatus;
+
+			originalUsers = originalUsers.map((u) =>
+				u.id === selectedUser.id
+					? {
+							...u,
+							ban: newBanStatus,
+							actions: u.actions.map((a: { label: string; }) =>
+								a.label === 'Ban' || a.label === 'Unban'
+									? {
+											...a,
+											label: newBanStatus ? 'Unban' : 'Ban'
+									  }
+									: a
+							)
+					  }
+					: u
+			);
+
+			users = [...originalUsers];
+			console.log(
+				`User ${selectedUser.name} has been ${newBanStatus ? 'banned' : 'unbanned'} successfully ✅`
+			);
+		} catch (err) {
+			console.error('Network error banning user:', err);
+		} finally {
+			showBanModal = false;
+			isBanning = false;
+		}
 	}
 
 	async function onConfirmPermissions(selectedVals: Record<string, any>) {
@@ -132,6 +180,14 @@
 				: originalUsers.filter((user: any) => user.verified === strToBool(status));
 	}
 
+	function onFilteringBannedStatus(status: string) {
+		let strToBool = (str: string) => str === 'true';
+		users =
+			status === ''
+				? originalUsers
+				: originalUsers.filter((user: any) => user.ban === strToBool(status));
+	}
+
 	function onUserSearch() {
 		users =
 			searchQuery === ''
@@ -166,6 +222,9 @@
 			case 'Ban':
 				showBanModal = true;
 				break;
+			case 'Unban':
+				showUnbanModal = true;
+				break;
 			case 'Delete':
 				showDeleteModal = true;
 				break;
@@ -177,9 +236,56 @@
 	async function loadUserData() {
 		const usersFromDB = await fetchUsers();
 		for (let user of usersFromDB) {
-			user.actions = USER_ACTIONS;
+			user.actions = [
+				{ label: 'Edit Permissions', disabled: false },
+				{
+					label: user.ban ? 'Unban' : 'Ban',
+					disabled: false
+				},
+				{ label: 'Delete', disabled: false }
+			];
 		}
 		users = originalUsers = usersFromDB;
+	}
+
+	async function onUnbanUser() {
+		isUnbanning = true;
+		try {
+			const res = await fetch(`/users/${selectedUser.id}`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ ban: false })
+			});
+			if (!res.ok) {
+				console.error('Error: Failed to unban user');
+				isUnbanning = false;
+				return;
+			}
+			selectedUser.ban = false;
+			originalUsers = originalUsers.map((u) =>
+				u.id === selectedUser.id
+					? {
+							...u,
+							ban: false,
+							actions: u.actions.map((a: { label: string }) =>
+								a.label === 'Ban' || a.label === 'Unban'
+									? {
+											...a,
+											label: 'Ban'
+										}
+									: a
+							)
+					  }
+					: u
+			);
+			users = [...originalUsers];
+			console.log(`User ${selectedUser.name} has been unbanned successfully ✅`);
+		} catch (err) {
+			console.error('Network error unbanning user:', err);
+		} finally {
+			showUnbanModal = false;
+			isUnbanning = false;
+		}
 	}
 
 	$effect(() => {
@@ -226,6 +332,16 @@
 					}))}
 					bind:selectedValue={currentFilteredVerificationStatus}
 					onSelectionChange={onFilteringVerificationStatus}
+				/>
+
+				<FilterPill
+					label="Banned"
+					options={[
+						{ value: 'true', label: 'true' },
+						{ value: 'false', label: 'false' }
+					]}
+					bind:selectedValue={currentFilteredBannedStatus}
+					onSelectionChange={onFilteringBannedStatus}
 				/>
 
 				<!-- sort -->
@@ -285,4 +401,14 @@
 				link: 'https://www.google.com'
 			}
 		: null}
+/>
+
+<ConfirmActionWithReason
+	bind:isVisible={showUnbanModal}
+	actionName="Unban"
+	actOnKind="User"
+	actOnIndividual={selectedUser === null ? '' : selectedUser.name}
+	bind:isActionInProgress={isUnbanning}
+	reasonForAction={unbanReason}
+	action={onUnbanUser}
 />
