@@ -136,33 +136,44 @@
 	async function onConfirmPermissions(selectedVals: Record<string, any>) {
 		if (!selectedUser) return;
 
-		// 1. update selectedUser fields locally
+		const role = selectedVals['Roles'];
+		const verified = selectedVals['Verified'];
+
+		// Update user role
+		if (role !== undefined && role !== selectedUser.role) {
+			const resRole = await fetch(`/users/${selectedUser.id}/role`, {
+				method: 'PATCH',
+        headers: {'Content-Type': 'application/json' },
+				credentials: "include",
+				body: JSON.stringify({ role })
+			});
+			if (!resRole.ok) console.error("Error: Can't update role");
+			else selectedUser.role = role;
+		}
+
+		// Update verified status
+		if (verified !== undefined && verified !== selectedUser.verified) {
+			const resVerified = await fetch(`/users/${selectedUser.id}/verify`, {
+				method: 'PATCH',
+				headers: {'Content-Type': 'application/json' },
+				credentials: "include",
+				body: JSON.stringify({ verified })
+			});
+			if (!resVerified.ok) console.error("Error: Can't update verified status");
+			else selectedUser.verified = verified;
+		}
+
+		// Update field locally
 		Object.entries(selectedVals).forEach(([key, val]) => {
 			if (key === 'Roles') selectedUser.role = val;
 			if (key === 'Verified') selectedUser.verified = val;
 		});
 
-		// 2. update the entire users array (immutably)
+		// Update the user array
 		originalUsers = originalUsers.map((u) =>
 			u.id === selectedUser.id ? { ...u, ...selectedUser } : u
 		);
 		users = users.map((u) => (u.id === selectedUser.id ? { ...u, ...selectedUser } : u));
-
-		//TODO: Send updated data to server
-		const res = await fetch(`/users/${selectedUser.id}`, {
-			method: 'PUT',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				role: selectedUser.role,
-				verified: selectedUser.verified
-			})
-		});
-
-		if (!res.ok) {
-			console.log("Error: can't update");
-		}
 
 		// 4. close modal
 		showPermissionEditModal = false;
