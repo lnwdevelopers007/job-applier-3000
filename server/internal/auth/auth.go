@@ -1,10 +1,9 @@
 package auth
 
 import (
-	"fmt"
+	"net/http"
 	"os"
 	"strconv"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/sessions"
@@ -42,7 +41,6 @@ func init() {
 func OAuthCallback(c *gin.Context) {
 	addProvider(c)
 	role := c.Query("state")
-	fmt.Println(role)
 	user, err := gothic.CompleteUserAuth(c.Writer, c.Request)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
@@ -55,7 +53,6 @@ func OAuthCallback(c *gin.Context) {
 		return
 	}
 
-	fmt.Println(res)
 	accessToken, refreshToken, err := generateTokens(user.Email, user.Name, user.AvatarURL, res)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
