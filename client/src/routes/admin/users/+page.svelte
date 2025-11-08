@@ -129,6 +129,7 @@
 		} finally {
 			showBanModal = false;
 			isBanning = false;
+			banReason = '';
 		}
 	}
 
@@ -282,6 +283,7 @@
 		} finally {
 			showUnbanModal = false;
 			isUnbanning = false;
+			unbanReason = '';
 		}
 	}
 
@@ -372,7 +374,7 @@
 	actOnKind="User"
 	actOnIndividual={selectedUser === null ? '' : selectedUser.name}
 	bind:isActionInProgress={isDeleting}
-	reasonForAction={deleteReason}
+	bind:reasonForAction={deleteReason}
 	action={onDeleteUser}
 />
 
@@ -382,7 +384,7 @@
 	actOnKind="User"
 	actOnIndividual={selectedUser === null ? '' : selectedUser.name}
 	bind:isActionInProgress={isBanning}
-	reasonForAction={banReason}
+	bind:reasonForAction={banReason}
 	action={onBanUser}
 />
 
@@ -406,6 +408,6 @@
 	actOnKind="User"
 	actOnIndividual={selectedUser === null ? '' : selectedUser.name}
 	bind:isActionInProgress={isUnbanning}
-	reasonForAction={unbanReason}
+	bind:reasonForAction={unbanReason}
 	action={onUnbanUser}
 />
