@@ -2,7 +2,9 @@ package controller
 
 import (
 	"context"
+	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/repository"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
 	"go.mongodb.org/mongo-driver/bson"
@@ -24,8 +26,8 @@ func extractUnique[Schema any, ValueType comparable](items []Schema, getValue fu
 	return uniqueSlice
 }
 
-// getUsersFromID returns a map of users from a slice of IDs.
-func getUsersFromID(
+// getUsersFromIDs returns a map of users from a slice of IDs.
+func getUsersFromIDs(
 	ctx context.Context,
 	userIDs []primitive.ObjectID,
 ) (
@@ -42,4 +44,48 @@ func getUsersFromID(
 	}
 
 	return resultMap, err
+}
+
+// getUserFromMiddleware returns user injected from the middleware, which gets the user from jwt.
+func getUserFromMiddleware(c *gin.Context) (userID primitive.ObjectID, role string, err error) {
+	userIDStr, exists := c.Get("userID")
+	if !exists {
+		err = http.ErrNotSupported
+		return
+	}
+
+	userID, err = primitive.ObjectIDFromHex(userIDStr.(string))
+	if err != nil {
+		return
+	}
+
+	roleVal, _ := c.Get("role")
+	role, _ = roleVal.(string)
+	return userID, role, nil
+}
+
+// getFakeUser generates a new userID from void.
+func getFakeUser(c *gin.Context) (userID primitive.ObjectID, role string, err error) {
+	userIDStr, exists := c.Get("userID")
+	if !exists {
+		userID = primitive.NewObjectID()
+		role = "jobSeeker"
+		err = nil
+		return
+	}
+
+	userID, err = primitive.ObjectIDFromHex(userIDStr.(string))
+	if err != nil {
+		userID = primitive.NewObjectID()
+	}
+
+	roleVal, _ := c.Get("role")
+	role, _ = roleVal.(string)
+	if role == "" {
+		role = "jobSeeker"
+	}
+	err = nil
+
+	return userID, role, nil
+
 }
