@@ -36,21 +36,6 @@ func rawJobApplication(applicantID primitive.ObjectID, jobID primitive.ObjectID)
 	}
 }
 
-func createJob(router *gin.Engine, r *regexp.Regexp) string {
-	w := httptest.NewRecorder()
-
-	body, _ := json.Marshal(rawJob("Job for Job Application Creation Test"))
-
-	req, _ := http.NewRequest("POST", "/jobs/", bytes.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-
-	router.ServeHTTP(w, req)
-
-	jobIDMatches := r.FindStringSubmatch(w.Body.String())
-	jobID := jobIDMatches[1]
-	return jobID
-}
-
 func deleteJobApplication(jobAppID string, router *gin.Engine) *httptest.ResponseRecorder {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("DELETE", "/apply/"+jobAppID, nil)

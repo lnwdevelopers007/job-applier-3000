@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"regexp"
 	"testing"
 	"time"
@@ -26,6 +27,7 @@ var globalApplicantID string
 // more info: https://pkg.go.dev/testing#hdr-Main
 func TestMain(m *testing.M) {
 	db := database.GetDatabase()
+	os.Setenv("ENABLE_AUTH", "false")
 
 	collections := []string{
 		"job_applications",

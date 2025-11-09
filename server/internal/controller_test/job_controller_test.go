@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -48,6 +49,21 @@ func rawJob(title string, companyID ...string) map[string]any {
 		data["companyID"] = companyID[0]
 	}
 	return data
+}
+
+func createJob(router *gin.Engine, r *regexp.Regexp, companyID ...string) string {
+	w := httptest.NewRecorder()
+
+	body, _ := json.Marshal(rawJob("Job for Job Application Creation Test", companyID...))
+
+	req, _ := http.NewRequest("POST", "/jobs/", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	router.ServeHTTP(w, req)
+
+	jobIDMatches := r.FindStringSubmatch(w.Body.String())
+	jobID := jobIDMatches[1]
+	return jobID
 }
 
 func TestRetrieveAllJobs(t *testing.T) {
