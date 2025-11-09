@@ -85,7 +85,8 @@ func NewRouter() *gin.Engine {
 	noteRoutes := router.Group("/notes")
 	noteRoutes.Use(middleware.AuthMiddleware())
 	{
-		noteRoutes.GET("/", note.RetrieveAll)
+		noteRoutes.GET("/", note.Query)
+		noteRoutes.GET("/query", note.Query)
 		noteRoutes.GET("/:id", note.RetrieveOne)
 		noteRoutes.POST("/", note.Create)
 		noteRoutes.PUT("/", note.Update)
