@@ -19,7 +19,6 @@
   import FileUploadModal from '$lib/components/files/FileUploadModal.svelte';
 	import DeleteConfirmModal from '$lib/components/files/DeleteConfirmModal.svelte';
 	import { userService } from '$lib/services/userService';
-	import { authStore } from '$lib/stores/auth.svelte';
 
   let currentStep = 1;
   let email = '';
@@ -54,7 +53,7 @@
     try {
       files = await fileService.listUserFiles(userID);
     } catch (err) {
-      toast.error('Failed to load documents');
+      toast.error(err instanceof Error ? err.message : 'Failed to load files');
     }
   }
 
@@ -112,7 +111,6 @@
       foundedYear = frontendData.foundedYear as string;
       headquarters = frontendData.headquarters as string;
       companyLinkedin = frontendData.companyLinkedin as string;
-      console.log(frontendData);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to load company details');
     }
