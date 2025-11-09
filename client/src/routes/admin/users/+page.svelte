@@ -9,7 +9,7 @@
 	const USER_ACTIONS = [
 		// { label: 'View', disabled: false },
 		{ label: 'Edit Permissions', disabled: false },
-		{ label: 'Banned', disabled: false },
+		{ label: 'Ban', disabled: false },
 		{ label: 'Delete', disabled: false }
 	];
 	const TABLE_HEADER = ['Name', 'Email', 'Role', 'Verified'];
@@ -109,10 +109,10 @@
 							...u,
 							banned: newBanStatus,
 							actions: u.actions.map((a: { label: string; }) =>
-								a.label === 'Banned' || a.label === 'Unbanned'
+								a.label === 'Ban' || a.label === 'Unban'
 									? {
 											...a,
-											label: newBanStatus ? 'Unbanned' : 'Banned'
+											label: newBanStatus ? 'Unban' : 'Ban'
 									  }
 									: a
 							)
@@ -231,10 +231,10 @@
 				showPermissionEditModal = true;
 				console.log(showPermissionEditModal);
 				break;
-			case 'Banned':
+			case 'Ban':
 				showBanModal = true;
 				break;
-			case 'Unbanned':
+			case 'Unban':
 				showUnbanModal = true;
 				break;
 			case 'Delete':
@@ -249,8 +249,8 @@
 		const usersFromDB = await fetchUsers();
 		for (let user of usersFromDB) {
 			user.actions = USER_ACTIONS.map((a) =>
-				a.label === 'Banned'
-					? { ...a, label: user.banned ? 'Unbanned' : 'Banned' }
+				a.label === 'Ban'
+					? { ...a, label: user.banned ? 'Unban' : 'Ban' }
 					: a
 			);
 		}
@@ -277,10 +277,10 @@
 							...u,
 							banned: false,
 							actions: u.actions.map((a: { label: string }) =>
-								a.label === 'Banned' || a.label === 'Unbanned'
+								a.label === 'Ban' || a.label === 'Unban'
 									? {
 											...a,
-											label: 'Banned'
+											label: 'Ban'
 										}
 									: a
 							)
@@ -391,7 +391,7 @@
 
 <ConfirmActionWithReason
 	bind:isVisible={showBanModal}
-	actionName="Banned"
+	actionName="Ban"
 	actOnKind="User"
 	actOnIndividual={selectedUser === null ? '' : selectedUser.name}
 	bind:isActionInProgress={isBanning}
@@ -415,7 +415,7 @@
 
 <ConfirmActionWithReason
 	bind:isVisible={showUnbanModal}
-	actionName="Unbanned"
+	actionName="Unban"
 	actOnKind="User"
 	actOnIndividual={selectedUser === null ? '' : selectedUser.name}
 	bind:isActionInProgress={isUnbanning}
