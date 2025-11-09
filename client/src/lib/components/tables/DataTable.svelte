@@ -147,7 +147,7 @@
 						<button
 							onclick={() => (currentPage = Math.max(0, currentPage - 1))}
 							disabled={currentPage === 0}
-							class="flex items-center px-2 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+							class="flex items-center px-2 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
 						>
 							<ChevronLeft class="w-4 h-4" />
 						</button>
@@ -173,7 +173,7 @@
 						<button
 							onclick={() => (currentPage = Math.min(totalPages - 1, currentPage + 1))}
 							disabled={currentPage === totalPages - 1}
-							class="flex items-center px-2 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+							class="flex items-center px-2 py-2 text-sm font-medium text-gray-600rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
 						>
 							<ChevronRight class="w-4 h-4" />
 						</button>

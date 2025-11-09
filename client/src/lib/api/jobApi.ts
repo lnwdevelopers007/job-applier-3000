@@ -49,18 +49,11 @@ export class JobApi {
   }
 
   /**
-   * Delete a job - DELETE /jobs/:id
-   */
-  async delete(id: string): Promise<void> {
-    await this.client.delete(`/jobs/${id}`);
-  }
-
-  /**
-   * Delete a job with reason - POST /jobs/:id/delete
+   * Delete a job with reason - DELETE /jobs/:id
    */
   async deleteWithReason(id: string, reason: string): Promise<void> {
     const deleteRequest: DeleteJobRequest = { reason };
-    await this.client.post(`/jobs/${id}/delete`, deleteRequest);
+    await this.client.delete(`/jobs/${id}`, deleteRequest);
   }
 
   /**
