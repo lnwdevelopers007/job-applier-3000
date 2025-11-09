@@ -14,6 +14,7 @@
 		companyID?: string;
 		showCompanyColumn?: boolean;
 		editUrlPrefix?: string;
+		allowEdit?: boolean;
 	}
 
 	let {
@@ -21,7 +22,8 @@
 		description = 'Manage and monitor all job postings across your platform',
 		companyID,
 		showCompanyColumn = true,
-		editUrlPrefix = '/company/edit'
+		editUrlPrefix = '/company/edit',
+		allowEdit = true
 	}: Props = $props();
 
 	let jobs = $state<JobDisplay[]>([]);
@@ -86,7 +88,7 @@
 		createJobColumns({
 			showCompanyColumn,
 			onView: handleView,
-			onEdit: handleEdit,
+			onEdit: allowEdit ? handleEdit : undefined,
 			onDelete: handleDelete
 		})
 	);

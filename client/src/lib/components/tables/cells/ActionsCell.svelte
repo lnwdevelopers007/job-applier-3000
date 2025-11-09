@@ -3,9 +3,9 @@
 	import Dropdown from '$lib/components/ui/Dropdown.svelte';
 
 	interface Props {
-		onView: () => void;
-		onEdit: () => void;
-		onDelete: () => void;
+		onView?: () => void;
+		onEdit?: () => void;
+		onDelete?: () => void;
 	}
 
 	let { onView, onEdit, onDelete }: Props = $props();
@@ -13,22 +13,22 @@
 	let triggerElement = $state<HTMLElement>();
 
 	const dropdownItems = [
-		{
+		onView && {
 			label: 'View',
 			action: onView,
 			variant: 'default' as const
 		},
-		{
+		onEdit && {
 			label: 'Edit',
 			action: onEdit,
 			variant: 'default' as const
 		},
-		{
+		onDelete && {
 			label: 'Delete',
 			action: onDelete,
 			variant: 'danger' as const
 		}
-	];
+	].filter((item): item is NonNullable<typeof item> => Boolean(item));
 </script>
 
 <div class="relative">

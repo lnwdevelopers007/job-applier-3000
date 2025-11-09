@@ -6,7 +6,7 @@ import StatusBadge from '$lib/components/ui/StatusBadge.svelte';
 export type JobColumnOptions = {
 	showCompanyColumn: boolean;
 	onView: (job: JobDisplay) => void;
-	onEdit: (job: JobDisplay) => void;
+	onEdit?: (job: JobDisplay) => void;
 	onDelete: (job: JobDisplay) => void;
 };
 
@@ -87,7 +87,7 @@ export function createJobColumns(options: JobColumnOptions) {
 				component: ActionsCell,
 				props: {
 					onView: () => onView(job),
-					onEdit: () => onEdit(job),
+					onEdit: onEdit ? () => onEdit(job) : undefined,
 					onDelete: () => onDelete(job)
 				}
 			}),
