@@ -61,7 +61,8 @@ func NewRouter() *gin.Engine {
 		userRoutes.PUT("/:id", userController.Update)
 		userRoutes.DELETE("/:id", userController.Delete)
 		userRoutes.GET("/:id", userController.RetrieveOne)
-
+		userRoutes.PATCH("/:id/verify", userController.VerifyUser)
+		userRoutes.PATCH("/:id/role", userController.EditPermission)
 	}
 
 	file := NewFileController()

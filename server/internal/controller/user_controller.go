@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/auth"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -172,3 +173,79 @@ func (jc UserController) RetrieveAll(c *gin.Context) {
 func (jc UserController) RetrieveOne(c *gin.Context) {
 	jc.baseController.RetrieveOne(c)
 }
+
+// VerifyUser godoc
+// @Summary      Verify or unverify a user
+// @Description  Change only the 'verified' status of a user (admin only)
+// @Tags         Users
+// @Accept       json
+// @Produce      json
+// @Param        id        path      string          true  "User ID"
+// @Param        verified  body      map[string]bool true  "Verified status"
+// @Success      200  {object}  map[string]string
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      403  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /users/{id}/verify [patch]
+func (jc UserController) VerifyUser(c *gin.Context) {
+    tokenStr, err := c.Cookie("access_token")
+    if err != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "No auth token"})
+        return
+    }
+
+    claims, err := auth.ParseJWT(tokenStr)
+    if err != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+        return
+    }
+
+    if claims.Role != "admin" {
+        c.JSON(http.StatusForbidden, gin.H{"error": "Admin only"})
+        return
+    }
+
+    jc.baseController.PatchOne(c)
+}
+
+
+// EditPermission godoc
+// @Summary      Change a user's role (admin only)
+// @Description  Modify only the 'role' of a user
+// @Tags         Users
+// @Accept       json
+// @Produce      json
+// @Param        id    path      string            true  "User ID"
+// @Param        role  body      map[string]string true  "New role"
+// @Success      200  {object}  map[string]string
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      403  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /users/{id}/role [patch]
+func (jc UserController) EditPermission(c *gin.Context) {
+    tokenStr, err := c.Cookie("access_token")
+    if err != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "No auth token"})
+        return
+    }
+
+    claims, err := auth.ParseJWT(tokenStr)
+    if err != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+        return
+    }
+
+    if claims.Role != "admin" {
+        c.JSON(http.StatusForbidden, gin.H{"error": "Admin only"})
+        return
+    }
+
+    jc.baseController.PatchOne(c)
+}
+
+
+
