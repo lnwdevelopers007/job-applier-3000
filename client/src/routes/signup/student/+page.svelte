@@ -1,4 +1,6 @@
 <script>
+  import { get } from 'svelte/store';
+  import { page } from '$app/stores';
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { isAuthenticated } from '$lib/utils/auth';
@@ -13,6 +15,10 @@
   import GoogleOAuthButton from '$lib/components/auth/GoogleOAuthButton.svelte';
 
   onMount(() => {
+    const urlStep = Number(get(page).url.searchParams.get('currentStep'));
+    if (urlStep === 2) {
+        currentStep = 2;
+    }
     if (isAuthenticated()) {
       goto('/app/jobs');
     }
