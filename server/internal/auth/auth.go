@@ -2,9 +2,9 @@ package auth
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"strconv"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/sessions"
@@ -56,6 +56,21 @@ func OAuthCallback(c *gin.Context) {
 	}
 
 	fmt.Println(res)
+
+	// Check if user is banned before generating tokens
+	dbUser, err := findUser(res)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	if dbUser.Banned {
+		// Redirect to frontend with banned error
+		redirectURL := config.LoadEnv("FRONTEND") + "/banned"
+		c.Redirect(http.StatusFound, redirectURL)
+		return
+	}
+
 	accessToken, refreshToken, err := generateTokens(user.Email, user.Name, user.AvatarURL, res)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
@@ -128,12 +143,14 @@ func Me(c *gin.Context) {
 	role, _ := c.Get("role")
 	email, _ := c.Get("email")
 	name, _ := c.Get("name")
+	banned, _ := c.Get("banned")
 
 	c.JSON(http.StatusOK, gin.H{
 		"userID": userID,
 		"role":   role,
 		"email":  email,
 		"name":   name,
+		"banned": banned, // Include ban status
 		// Note: 'verified' status is managed by admin and stored in database
 		// Query user document if you need verification status
 	})
