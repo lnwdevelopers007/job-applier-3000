@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/database"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/repository"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
 
@@ -68,17 +69,26 @@ func (controller BaseController[Schema]) Update(c *gin.Context) {
 		return
 	}
 
-	var raw Schema
-	if err := c.ShouldBindJSON(&raw); err != nil {
+	// Use map to only update fields that are actually provided in the request
+	var updateFields map[string]any
+	if err := c.ShouldBindJSON(&updateFields); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	// Add updatedAt timestamp
+	updateFields["updatedAt"] = time.Now()
+
+	db := database.GetDatabase()
+	collection := db.Collection(controller.collectionName)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	// use $set to update only provided fields
-	res, err := repository.Update(ctx, objID, raw)
+	update := bson.M{"$set": updateFields}
+
+	res, err := collection.UpdateOne(ctx, bson.M{"_id": objID}, update)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to update " + controller.displayName,
@@ -146,4 +156,51 @@ func (controller BaseController[Schema]) RetrieveOne(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, res)
+}
+
+func (controller BaseController[Schema]) PatchOne(c *gin.Context) {
+	id := c.Param("id")
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		return
+	}
+
+	var body map[string]interface{}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON body"})
+		return
+	}
+
+	if len(body) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Empty update payload"})
+		return
+	}
+
+	update := bson.M{"$set": body}
+
+	db := database.GetDatabase()
+	collection := db.Collection(controller.collectionName)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	res, err := collection.UpdateOne(ctx, bson.M{"_id": objID}, update)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to update " + controller.displayName,
+		})
+		return
+	}
+
+	if res.MatchedCount == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": controller.displayName + " not found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": controller.displayName + " patched successfully",
+	})
 }

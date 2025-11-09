@@ -16,6 +16,7 @@
 
 	const VALID_ROLES = ['jobSeeker', 'company', 'faculty', 'admin'];
 	const VALID_VERIFICATION_OPTIONS = [true, false];
+	let currentFilteredBannedStatus = $state('');
 
 	const SORT_OPTIONS = [
 		{ value: 'name', label: 'Name' },
@@ -35,6 +36,10 @@
 	let showBanModal = $state(false);
 	let banReason = $state('');
 	let isBanning = $state(false);
+
+	let showUnbanModal = $state(false);
+	let unbanReason = $state('');
+	let isUnbanning = $state(false);
 
 	let showPermissionEditModal = $state(false);
 	let showPermissionEditConfirmButton = $state(false);
@@ -79,41 +84,96 @@
 
 	async function onBanUser() {
 		isBanning = true;
-		// TODO: add a real ban operation here
-		showBanModal = false;
-		isBanning = false;
+
+		try {
+			const newBanStatus = !selectedUser.ban;
+			const res = await fetch(`/users/${selectedUser.id}`, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ ban: newBanStatus })
+			});
+
+			if (!res.ok) {
+				console.error('Error: Failed to update ban status');
+				isBanning = false;
+				return;
+			}
+
+			selectedUser.ban = newBanStatus;
+
+			originalUsers = originalUsers.map((u) =>
+				u.id === selectedUser.id
+					? {
+							...u,
+							ban: newBanStatus,
+							actions: u.actions.map((a: { label: string; }) =>
+								a.label === 'Ban' || a.label === 'Unban'
+									? {
+											...a,
+											label: newBanStatus ? 'Unban' : 'Ban'
+									  }
+									: a
+							)
+					  }
+					: u
+			);
+
+			users = [...originalUsers];
+			console.log(
+				`User ${selectedUser.name} has been ${newBanStatus ? 'banned' : 'unbanned'} successfully ✅`
+			);
+		} catch (err) {
+			console.error('Network error banning user:', err);
+		} finally {
+			showBanModal = false;
+			isBanning = false;
+			banReason = '';
+		}
 	}
 
 	async function onConfirmPermissions(selectedVals: Record<string, any>) {
 		if (!selectedUser) return;
 
-		// 1. update selectedUser fields locally
+		const role = selectedVals['Roles'];
+		const verified = selectedVals['Verified'];
+
+		// Update user role
+		if (role !== undefined && role !== selectedUser.role) {
+			const resRole = await fetch(`/users/${selectedUser.id}/role`, {
+				method: 'PATCH',
+        headers: {'Content-Type': 'application/json' },
+				credentials: "include",
+				body: JSON.stringify({ role })
+			});
+			if (!resRole.ok) console.error("Error: Can't update role");
+			else selectedUser.role = role;
+		}
+
+		// Update verified status
+		if (verified !== undefined && verified !== selectedUser.verified) {
+			const resVerified = await fetch(`/users/${selectedUser.id}/verify`, {
+				method: 'PATCH',
+				headers: {'Content-Type': 'application/json' },
+				credentials: "include",
+				body: JSON.stringify({ verified })
+			});
+			if (!resVerified.ok) console.error("Error: Can't update verified status");
+			else selectedUser.verified = verified;
+		}
+
+		// Update field locally
 		Object.entries(selectedVals).forEach(([key, val]) => {
 			if (key === 'Roles') selectedUser.role = val;
 			if (key === 'Verified') selectedUser.verified = val;
 		});
 
-		// 2. update the entire users array (immutably)
+		// Update the user array
 		originalUsers = originalUsers.map((u) =>
 			u.id === selectedUser.id ? { ...u, ...selectedUser } : u
 		);
 		users = users.map((u) => (u.id === selectedUser.id ? { ...u, ...selectedUser } : u));
-
-		//TODO: Send updated data to server
-		const res = await fetch(`/users/${selectedUser.id}`, {
-			method: 'PUT',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				role: selectedUser.role,
-				verified: selectedUser.verified
-			})
-		});
-
-		if (!res.ok) {
-			console.log("Error: can't update");
-		}
 
 		// 4. close modal
 		showPermissionEditModal = false;
@@ -130,6 +190,14 @@
 			status === ''
 				? originalUsers
 				: originalUsers.filter((user: any) => user.verified === strToBool(status));
+	}
+
+	function onFilteringBannedStatus(status: string) {
+		let strToBool = (str: string) => str === 'true';
+		users =
+			status === ''
+				? originalUsers
+				: originalUsers.filter((user: any) => user.ban === strToBool(status));
 	}
 
 	function onUserSearch() {
@@ -166,6 +234,9 @@
 			case 'Ban':
 				showBanModal = true;
 				break;
+			case 'Unban':
+				showUnbanModal = true;
+				break;
 			case 'Delete':
 				showDeleteModal = true;
 				break;
@@ -177,9 +248,54 @@
 	async function loadUserData() {
 		const usersFromDB = await fetchUsers();
 		for (let user of usersFromDB) {
-			user.actions = USER_ACTIONS;
+			user.actions = USER_ACTIONS.map((a) =>
+				a.label === 'Ban'
+					? { ...a, label: user.ban ? 'Unban' : 'Ban' }
+					: a
+			);
 		}
 		users = originalUsers = usersFromDB;
+	}
+
+	async function onUnbanUser() {
+		isUnbanning = true;
+		try {
+			const res = await fetch(`/users/${selectedUser.id}`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ ban: false })
+			});
+			if (!res.ok) {
+				console.error('Error: Failed to unban user');
+				isUnbanning = false;
+				return;
+			}
+			selectedUser.ban = false;
+			originalUsers = originalUsers.map((u) =>
+				u.id === selectedUser.id
+					? {
+							...u,
+							ban: false,
+							actions: u.actions.map((a: { label: string }) =>
+								a.label === 'Ban' || a.label === 'Unban'
+									? {
+											...a,
+											label: 'Ban'
+										}
+									: a
+							)
+					  }
+					: u
+			);
+			users = [...originalUsers];
+			console.log(`User ${selectedUser.name} has been unbanned successfully ✅`);
+		} catch (err) {
+			console.error('Network error unbanning user:', err);
+		} finally {
+			showUnbanModal = false;
+			isUnbanning = false;
+			unbanReason = '';
+		}
 	}
 
 	$effect(() => {
@@ -228,6 +344,16 @@
 					onSelectionChange={onFilteringVerificationStatus}
 				/>
 
+				<FilterPill
+					label="Banned"
+					options={[
+						{ value: 'true', label: 'true' },
+						{ value: 'false', label: 'false' }
+					]}
+					bind:selectedValue={currentFilteredBannedStatus}
+					onSelectionChange={onFilteringBannedStatus}
+				/>
+
 				<!-- sort -->
 
 				<!-- <div class="h-4 w-px bg-gray-300"></div> -->
@@ -259,7 +385,7 @@
 	actOnKind="User"
 	actOnIndividual={selectedUser === null ? '' : selectedUser.name}
 	bind:isActionInProgress={isDeleting}
-	reasonForAction={deleteReason}
+	bind:reasonForAction={deleteReason}
 	action={onDeleteUser}
 />
 
@@ -269,7 +395,7 @@
 	actOnKind="User"
 	actOnIndividual={selectedUser === null ? '' : selectedUser.name}
 	bind:isActionInProgress={isBanning}
-	reasonForAction={banReason}
+	bind:reasonForAction={banReason}
 	action={onBanUser}
 />
 
@@ -285,4 +411,14 @@
 				link: 'https://www.google.com'
 			}
 		: null}
+/>
+
+<ConfirmActionWithReason
+	bind:isVisible={showUnbanModal}
+	actionName="Unban"
+	actOnKind="User"
+	actOnIndividual={selectedUser === null ? '' : selectedUser.name}
+	bind:isActionInProgress={isUnbanning}
+	bind:reasonForAction={unbanReason}
+	action={onUnbanUser}
 />

@@ -23,6 +23,7 @@ type User struct {
 	UpdatedAt time.Time          `bson:"updatedAt,omitempty" json:"updatedAt,omitempty"`
 	CreatedAt time.Time          `bson:"createdAt,omitempty" json:"createdAt,omitempty"`
 	UserInfo  any                `bson:"userInfo,omitempty" json:"userInfo,omitempty"`
+	Ban       bool               `bson:"ban,omitempty" json:"ban,omitempty"`
 }
 
 func (u User) GetCollectionName() string {
