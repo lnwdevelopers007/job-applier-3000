@@ -9,7 +9,7 @@
 	const USER_ACTIONS = [
 		// { label: 'View', disabled: false },
 		{ label: 'Edit Permissions', disabled: false },
-		{ label: 'Ban', disabled: false },
+		{ label: 'Banned', disabled: false },
 		{ label: 'Delete', disabled: false }
 	];
 	const TABLE_HEADER = ['Name', 'Email', 'Role', 'Verified'];
@@ -86,13 +86,13 @@
 		isBanning = true;
 
 		try {
-			const newBanStatus = !selectedUser.ban;
+			const newBanStatus = !selectedUser.banned;
 			const res = await fetch(`/users/${selectedUser.id}`, {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json'
 				},
-				body: JSON.stringify({ ban: newBanStatus })
+				body: JSON.stringify({ banned: newBanStatus })
 			});
 
 			if (!res.ok) {
@@ -101,18 +101,18 @@
 				return;
 			}
 
-			selectedUser.ban = newBanStatus;
+			selectedUser.banned = newBanStatus;
 
 			originalUsers = originalUsers.map((u) =>
 				u.id === selectedUser.id
 					? {
 							...u,
-							ban: newBanStatus,
+							banned: newBanStatus,
 							actions: u.actions.map((a: { label: string; }) =>
-								a.label === 'Ban' || a.label === 'Unban'
+								a.label === 'Banned' || a.label === 'Unbanned'
 									? {
 											...a,
-											label: newBanStatus ? 'Unban' : 'Ban'
+											label: newBanStatus ? 'Unbanned' : 'Banned'
 									  }
 									: a
 							)
@@ -197,7 +197,7 @@
 		users =
 			status === ''
 				? originalUsers
-				: originalUsers.filter((user: any) => user.ban === strToBool(status));
+				: originalUsers.filter((user: any) => user.banned === strToBool(status));
 	}
 
 	function onUserSearch() {
@@ -231,10 +231,10 @@
 				showPermissionEditModal = true;
 				console.log(showPermissionEditModal);
 				break;
-			case 'Ban':
+			case 'Banned':
 				showBanModal = true;
 				break;
-			case 'Unban':
+			case 'Unbanned':
 				showUnbanModal = true;
 				break;
 			case 'Delete':
@@ -249,8 +249,8 @@
 		const usersFromDB = await fetchUsers();
 		for (let user of usersFromDB) {
 			user.actions = USER_ACTIONS.map((a) =>
-				a.label === 'Ban'
-					? { ...a, label: user.ban ? 'Unban' : 'Ban' }
+				a.label === 'Banned'
+					? { ...a, label: user.banned ? 'Unbanned' : 'Banned' }
 					: a
 			);
 		}
@@ -263,24 +263,24 @@
 			const res = await fetch(`/users/${selectedUser.id}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ ban: false })
+				body: JSON.stringify({ banned: false })
 			});
 			if (!res.ok) {
 				console.error('Error: Failed to unban user');
 				isUnbanning = false;
 				return;
 			}
-			selectedUser.ban = false;
+			selectedUser.banned = false;
 			originalUsers = originalUsers.map((u) =>
 				u.id === selectedUser.id
 					? {
 							...u,
-							ban: false,
+							banned: false,
 							actions: u.actions.map((a: { label: string }) =>
-								a.label === 'Ban' || a.label === 'Unban'
+								a.label === 'Banned' || a.label === 'Unbanned'
 									? {
 											...a,
-											label: 'Ban'
+											label: 'Banned'
 										}
 									: a
 							)
@@ -391,7 +391,7 @@
 
 <ConfirmActionWithReason
 	bind:isVisible={showBanModal}
-	actionName="Ban"
+	actionName="Banned"
 	actOnKind="User"
 	actOnIndividual={selectedUser === null ? '' : selectedUser.name}
 	bind:isActionInProgress={isBanning}
@@ -415,7 +415,7 @@
 
 <ConfirmActionWithReason
 	bind:isVisible={showUnbanModal}
-	actionName="Unban"
+	actionName="Unbanned"
 	actOnKind="User"
 	actOnIndividual={selectedUser === null ? '' : selectedUser.name}
 	bind:isActionInProgress={isUnbanning}
