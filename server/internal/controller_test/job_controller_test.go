@@ -7,9 +7,48 @@ import (
 	"net/http/httptest"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+func rawJob(title string, companyID ...string) map[string]any {
+	now := time.Now().UTC().Truncate(time.Second)
+	data := map[string]any{
+		// basic info
+		"title":           title,
+		"companyID":       primitive.NewObjectID().Hex(),
+		"location":        "Kivotos",
+		"workType":        "onsite",
+		"workArrangement": "full-time",
+		"currency":        "THB",
+		"minSalary":       2000.34,
+		"maxSalary":       300000.213213,
+
+		// description
+		"jobDescription": "long",
+		"jobSummary":     "longer",
+
+		// requirements
+		"requiredSkills":  "none",
+		"experienceLevel": "a lot",
+		"education":       "maybe",
+		"niceToHave":      "noting",
+
+		// post settings
+		"postOpenDate":        now,
+		"applicationDeadline": now,
+		"numberOfPositions":   1,
+		"visibility":          "public",
+		"emailNotifications":  false,
+		"autoReject":          false,
+	}
+	if len(companyID) > 0 && companyID[0] != "" {
+		data["companyID"] = companyID[0]
+	}
+	return data
+}
 
 func TestRetrieveAllJobs(t *testing.T) {
 	router := getTestRouter()

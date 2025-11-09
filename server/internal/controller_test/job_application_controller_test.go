@@ -8,10 +8,55 @@ import (
 	"net/http/httptest"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+func createJobApplication(router *gin.Engine, userID string, jobID string) (*httptest.ResponseRecorder, *http.Request) {
+	w := httptest.NewRecorder()
+	objID, _ := primitive.ObjectIDFromHex(userID)
+	jobIDReal, _ := primitive.ObjectIDFromHex(jobID)
+	body, _ := json.Marshal(rawJobApplication(objID, jobIDReal))
+	req, _ := http.NewRequest("POST", "/apply/", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+	return w, req
+}
+
+func rawJobApplication(applicantID primitive.ObjectID, jobID primitive.ObjectID) map[string]any {
+	now := time.Now().UTC().Truncate(time.Second)
+	return map[string]any{
+		"applicantID": applicantID,
+		"jobID":       jobID,
+		"status":      "waiting for approval",
+		"createdAt":   now,
+	}
+}
+
+func createJob(router *gin.Engine, r *regexp.Regexp) string {
+	w := httptest.NewRecorder()
+
+	body, _ := json.Marshal(rawJob("Job for Job Application Creation Test"))
+
+	req, _ := http.NewRequest("POST", "/jobs/", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	router.ServeHTTP(w, req)
+
+	jobIDMatches := r.FindStringSubmatch(w.Body.String())
+	jobID := jobIDMatches[1]
+	return jobID
+}
+
+func deleteJobApplication(jobAppID string, router *gin.Engine) *httptest.ResponseRecorder {
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("DELETE", "/apply/"+jobAppID, nil)
+	router.ServeHTTP(w, req)
+	return w
+}
 
 // Test the GET /apply/query endpoint with valid data (200 status)
 func TestQueryJobApplicationsSuccess(t *testing.T) {
@@ -90,26 +135,4 @@ func TestCreateAndDeleteJobApplication(t *testing.T) {
 
 	w3 := deleteJobApplication(jobAppID, router)
 	assert.Equal(t, http.StatusOK, w3.Code)
-}
-
-func deleteJobApplication(jobAppID string, router *gin.Engine) *httptest.ResponseRecorder {
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("DELETE", "/apply/"+jobAppID, nil)
-	router.ServeHTTP(w, req)
-	return w
-}
-
-func createJob(router *gin.Engine, r *regexp.Regexp) string {
-	w := httptest.NewRecorder()
-
-	body, _ := json.Marshal(rawJob("Job for Job Application Creation Test"))
-
-	req, _ := http.NewRequest("POST", "/jobs/", bytes.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-
-	router.ServeHTTP(w, req)
-
-	jobIDMatches := r.FindStringSubmatch(w.Body.String())
-	jobID := jobIDMatches[1]
-	return jobID
 }
