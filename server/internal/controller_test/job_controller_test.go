@@ -154,7 +154,7 @@ func TestUpdateJob(t *testing.T) {
 	// Perform the request
 	router.ServeHTTP(w2, req)
 	assert.Contains(t, w2.Body.String(), "updated")
-	assert.Equal(t, w2.Code, http.StatusOK)
+	assert.Equal(t, http.StatusOK, w2.Code)
 	// t.Log(w2.Body.String())
 
 }
