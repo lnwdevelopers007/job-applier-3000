@@ -1,14 +1,14 @@
 <script lang="ts">
   import Modal from './Modal.svelte';
-  import { NoteService, type Note } from '$lib/services/noteService';
+  import { NoteService } from '$lib/services/noteService';
+  import type { Note } from '$lib/types';
   import { Plus, CircleAlert, LoaderCircle, Pencil, Trash2, Save, X } from 'lucide-svelte';
-  import { formatRelativeTime } from '$lib/utils/datetime';
   import toast from 'svelte-french-toast';
 
   interface Props {
     isOpen: boolean;
     onClose: () => void;
-    candidateId: string;
+    jobApplicationId: string;
     candidateName: string;
     candidateAvatar?: string;
   }
@@ -16,7 +16,7 @@
   let {
     isOpen = $bindable(),
     onClose,
-    candidateId,
+    jobApplicationId,
     candidateName,
     candidateAvatar
   }: Props = $props();
@@ -33,12 +33,12 @@
   let updating = $state(false);
 
   async function loadNotes() {
-    if (!candidateId) return;
+    if (!jobApplicationId) return;
     
     try {
       loading = true;
       error = null;
-      notes = await NoteService.getNotesByCandidate(candidateId);
+      notes = await NoteService.getNotesByJobApplication(jobApplicationId);
     } catch (err) {
       console.error('Failed to load notes:', err);
       error = 'Failed to load notes. Please try again.';
@@ -53,7 +53,7 @@
     try {
       submitting = true;
       const newNote = await NoteService.createNote({
-        candidateId,
+        jobApplicationID: jobApplicationId,
         content: newNoteContent.trim()
       });
       
@@ -69,6 +69,7 @@
   }
 
   function startEditing(note: Note) {
+    if (!note.id) return;
     editingNoteId = note.id;
     editContent = note.content;
   }
@@ -124,7 +125,7 @@
 
   // Load notes when modal opens
   $effect(() => {
-    if (isOpen && candidateId) {
+    if (isOpen && jobApplicationId) {
       loadNotes();
     }
   });
@@ -135,6 +136,11 @@
       event.preventDefault();
       addNote();
     }
+  }
+
+  // Format timestamp for display
+  function formatRelativeTime(timestamp: string): string {
+    return NoteService.formatNoteTimestamp(timestamp);
   }
 </script>
 
@@ -194,16 +200,16 @@
                   <span class="text-xs text-gray-500">{editContent.length}/1000</span>
                   <div class="flex gap-2">
                     <button
-                      class="flex items-center px-3 py-1.5 text-xs bg-white border border-gray-200 rounded hover:bg-gray-50"
+                      class="flex items-center px-3 py-1.5 text-xs rounded-md text-gray-600 hover:text-gray-700"
                       onclick={cancelEditing}
                       disabled={updating}
                     >
                       Cancel
                     </button>
                     <button
-                      class="flex items-center px-3 py-1.5 text-xs bg-green-600 font-medium text-white rounded hover:bg-green-700 disabled:opacity-50"
+                      class="flex items-center px-3 py-1.5 text-xs bg-green-600 font-medium text-white rounded-md hover:bg-green-700 disabled:opacity-50"
                       disabled={!editContent.trim() || updating}
-                      onclick={() => saveEdit(note.id)}
+                      onclick={() => note.id && saveEdit(note.id)}
                     >
                       Save
                     </button>
@@ -226,7 +232,7 @@
                     </button>
                     <button
                       class="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
-                      onclick={() => deleteNote(note.id)}
+                      onclick={() => note.id && deleteNote(note.id)}
                       title="Delete note"
                     >
                       <Trash2 class="w-4 h-4" />
@@ -235,10 +241,7 @@
                 </div>
                 <div class="mt-2 flex items-center justify-between">
                   <div class="text-xs text-gray-400">
-                    <span>{formatRelativeTime(note.createdAt)}</span>
-                    {#if note.updatedAt !== note.createdAt}
-                      <span> • Edited {formatRelativeTime(note.updatedAt)}</span>
-                    {/if}
+                    <span>{formatRelativeTime(note.timestamp)}</span>
                   </div>
                 </div>
               </div>
