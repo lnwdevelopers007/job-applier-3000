@@ -2,10 +2,11 @@
   import { onMount } from 'svelte';
   import { Search } from 'lucide-svelte';
   import { getUserInfo, isAuthenticated } from '$lib/utils/auth';
-  import { authStore } from '$lib/stores/auth.svelte';
   import { goto } from '$app/navigation';
   import SeekerProfileCard from '$lib/components/profile/SeekerProfileCard.svelte';
   import Badge from '$lib/components/ui/Badge.svelte';
+  import { JobApplicationService } from '$lib/services/jobApplicationService';
+  import { JobService } from '$lib/services/jobService';
   
   type BadgeVariant = 'primary' | 'secondary' | 'warning' | 'danger' | 'success' | 'info' | 'purple';
 
@@ -97,12 +98,9 @@
     if (!company?.userID) return [];
     
     try {
-      const jobsRes = await fetch(`/jobs/query?companyID=${company.userID}`);
-      if (!jobsRes.ok) return [];
-      
-      const jobsData = await jobsRes.json();
+      const jobsData = await JobService.getJobsByCompany(company.userID);
       return jobsData.map((job: any) => ({
-        id: job.id || job._id,
+        id: job.id,
         title: job.title
       }));
     } catch (err) {
@@ -124,71 +122,58 @@
     }
 
     try {
-      // Get all jobs owned by this company
-      const jobsRes = await fetch(`/jobs/query?companyID=${company.userID}`, {
-        credentials: 'include'
-      });
-      if (!jobsRes.ok) throw new Error('Failed to fetch company jobs');
-
-      const jobsData = await jobsRes.json();
-      if (!Array.isArray(jobsData) || jobsData.length === 0) return [];
+      // Get all jobs for this company using service
+      const jobs = await JobService.getJobsByCompany(company.userID);
+      if (!jobs || jobs.length === 0) return [];
 
       const allApplications: any[] = [];
 
-      // For each job, fetch applications
-      for (const job of jobsData) {
-        const jobID = job.id || job._id;
+      // For each job, get applications using service
+      for (const job of jobs) {
+        const jobID = job.id;
         if (!jobID) continue;
 
-        const applyRes = await fetch(`/apply?jobID=${jobID}`, {
-          credentials: 'include'
-        });
-        if (!applyRes.ok) continue;
+        try {
+          const applications = await JobApplicationService.getApplicationsByJob(jobID);
+          
+          // Filter by status if provided
+          const filtered = status
+            ? applications.filter(app => app.jobApplication?.status?.toUpperCase() === status.toUpperCase())
+            : applications;
 
-        const applyData = await applyRes.json();
-
-        // Filter by status
-        const filtered = status
-          ? applyData.filter(
-              (a: any) => a.jobApplication.status.toUpperCase() === status.toUpperCase()
-            )
-          : applyData;
-
-        for (const app of filtered) {
-          allApplications.push({
-            ...app,
-            jobTitle: job.title || 'Unknown Job',
-            jobID
-          });
+          for (const app of filtered) {
+            allApplications.push({
+              jobApplication: app.jobApplication,
+              applicant: app.applicant,
+              jobTitle: job.title || 'Unknown Job',
+              jobID
+            });
+          }
+        } catch (err) {
+          console.warn(`Failed to fetch applications for job ${jobID}:`, err);
         }
       }
 
-      // Fetch applicant info
-      const candidatePromises = allApplications.map(async (app: any) => {
-        const applicantID = app.jobApplication.applicantID;
+      if (allApplications.length === 0) return [];
 
-        const userRes = await fetch(`/users/query?id=${applicantID}`, {
-          credentials: 'include'
-        });
-        const userData = await userRes.json();
-        console.log('Fetched user data for applicant ID', applicantID, ':', userData);
-        const user = normalizeUser(userData && userData[0] ? userData[0] : {});
-        console.log('Fetched user data for applicant:', user);
+      // Map application data directly since user info is already included
+      const results = allApplications.map((app: any) => {
+        // User data is already in app.applicant
+        const user = normalizeUser(app.applicant || {});
 
-        const created = new Date(app.jobApplication.createdAt);
+        const created = new Date(app.jobApplication?.createdAt);
         const daysAgo = Math.floor((Date.now() - created.getTime()) / (1000 * 60 * 60 * 24));
 
-        const rawStatus = app.jobApplication.status || 'PENDING';
-        const displayStatus =
-          rawStatus.toUpperCase() === 'PENDING'
-            ? 'Pending'
-            : rawStatus.charAt(0) + rawStatus.slice(1).toLowerCase();
+        const rawStatus = app.jobApplication?.status || 'PENDING';
+        const displayStatus = rawStatus.toUpperCase() === 'PENDING'
+          ? 'Pending'
+          : rawStatus.charAt(0) + rawStatus.slice(1).toLowerCase();
 
         return {
-          id: app.jobApplication.id,
-          applicantID: app.jobApplication.applicantID,
-          jobID: app.jobApplication.jobID,
-          createdAt: app.jobApplication.createdAt,
+          id: app.jobApplication?.id,
+          applicantID: app.jobApplication?.applicantID,
+          jobID: app.jobApplication?.jobID,
+          createdAt: app.jobApplication?.createdAt,
           name: user.fullName,
           fullName: user.fullName,
           role: user.role,
@@ -210,7 +195,6 @@
         };
       });
 
-      const results = await Promise.all(candidatePromises);
       return results;
 
     } catch (err) {
@@ -225,22 +209,11 @@
     try {
       const candidate = candidates.find(c => c.id === candidateID);
       if (!candidate) throw new Error('Candidate not found');
-      const res = await fetch(`/apply/${candidateID}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          id: candidate.id,
-          applicantID: candidate.applicantID,
-          jobID: candidate.jobID,
-          status: newStatus.toUpperCase(),
-          createdAt: candidate.createdAt
-        })
+      
+      // Use service to update application status - only send status to avoid ObjectID conversion
+      await JobApplicationService.updateApplication(candidateID, {
+        status: newStatus.toUpperCase()
       });
-
-      if (!res.ok) throw new Error('Failed to update status');
 
       // Fetch all candidates (no filter) to keep the full list, then apply client-side filtering
       candidates = await fetchCandidates();
@@ -272,11 +245,8 @@
     await new Promise(resolve => setTimeout(resolve, 100));
     
     company = getUserInfo();
-    console.log('Company info after getUserInfo():', company);
-    console.log('Auth store state:', { isAuthenticated: isAuthenticated(), authStore });
     
     if (company) {
-      console.log('Fetching candidates for company:', company.userID);
       // Fetch jobs and candidates in parallel
       const [jobsData, candidatesData] = await Promise.all([
         fetchCompanyJobs(),
@@ -286,11 +256,8 @@
       companyJobs = jobsData;
       candidates = candidatesData;
       
-      console.log('Fetched jobs:', companyJobs);
-      console.log('Fetched candidates:', candidates);
       if (candidates.length > 0) selectedCandidate = candidates[0];
     } else {
-      console.log('No company info found - user may need to log in');
       // Try to redirect to login if not authenticated
       if (!isAuthenticated()) {
         goto('/login');

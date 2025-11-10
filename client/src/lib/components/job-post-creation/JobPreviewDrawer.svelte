@@ -44,7 +44,7 @@
 		id: 'preview',
 		title: formData.jobTitle || 'Job Title',
 		company: companyData?.companyName || 'Your Company Name',
-		logo: companyData?.avatar || companyData?.companyLogo || '',
+		logo: companyData?.companyLogo || companyData?.avatar || '',
 		location: formData.location || companyData?.headquarters || 'Bangkok, Thailand',
 		workType: formData.workArrangement || 'on-site',
 		workArrangement: formData.workType || 'full-time',
@@ -58,7 +58,7 @@
 	// Transform company data for JobDetailCard
 	const previewCompany = $derived({
 		name: companyData?.companyName || 'Your Company Name',
-		logo: companyData?.avatar || companyData?.companyLogo || '',
+		logo: companyData?.companyLogo || companyData?.avatar || '',
 		location: companyData?.headquarters || formData.location || 'Bangkok, Thailand',
 		size: companyData?.companySize || '1-10 employees',
 		industry: companyData?.industry || 'Technology',
