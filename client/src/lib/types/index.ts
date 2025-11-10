@@ -41,6 +41,14 @@ export type {
   JobApplicationFilters
 } from './jobApplication';
 
+// Note types
+export type {
+  Note,
+  CreateNoteRequest,
+  UpdateNoteRequest,
+  NoteFilters
+} from './note';
+
 // Re-export utility functions
 export { 
   transformToBackendFormat, 

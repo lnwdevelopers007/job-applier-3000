@@ -1,164 +1,296 @@
-import { apiFetch } from '$lib/utils/api';
+/**
+ * Note Service - Business logic layer for note operations
+ */
 
-const API_BASE = import.meta.env.VITE_BACKEND || 'http://localhost:8080';
-
-export interface Note {
-	id: string;
-	candidateId: string;
-	content: string;
-	createdBy: string;
-	createdByName?: string;
-	createdAt: string;
-	updatedAt: string;
-}
-
-export interface CreateNoteRequest {
-	candidateId: string;
-	content: string;
-}
-
-export interface UpdateNoteRequest {
-	content: string;
-}
+import { noteApi } from '$lib/api';
+import type { Note, CreateNoteRequest, UpdateNoteRequest, NoteFilters } from '$lib/types';
 
 export class NoteService {
-	/**
-	 * Get all notes for a candidate
-	 */
-	static async getNotesByCandidate(candidateId: string): Promise<Note[]> {
-		try {
-			// Mock data for development since API endpoint not merged yet
-			const mockNotes: Note[] = [
-				{
-					id: '1',
-					candidateId,
-					content: 'Strong technical background with React and Node.js experience. Good communication skills during the initial screening.',
-					createdBy: 'hr1',
-					createdByName: 'Sarah Johnson (HR)',
-					createdAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-					updatedAt: new Date(Date.now() - 86400000).toISOString()
-				},
-				{
-					id: '2',
-					candidateId,
-					content: 'Follow up needed - candidate mentioned availability for next week.',
-					createdBy: 'manager1',
-					createdByName: 'Mike Chen (Hiring Manager)',
-					createdAt: new Date(Date.now() - 43200000).toISOString(), // 12 hours ago
-					updatedAt: new Date(Date.now() - 43200000).toISOString()
-				}
-			];
+  /**
+   * Query notes with filters
+   */
+  static async queryNotes(filters?: NoteFilters): Promise<Note[]> {
+    try {
+      return await noteApi.query(filters);
+    } catch (error) {
+      console.error('Error querying notes:', error);
+      throw error;
+    }
+  }
 
-			// Simulate API delay
-			await new Promise(resolve => setTimeout(resolve, 300));
-			return mockNotes;
+  /**
+   * Get all notes
+   */
+  static async getAllNotes(): Promise<Note[]> {
+    try {
+      return await noteApi.getAll();
+    } catch (error) {
+      console.error('Error fetching all notes:', error);
+      throw error;
+    }
+  }
 
-			// Real implementation when API is ready:
-			// const response = await apiFetch(`${API_BASE}/notes/candidate/${candidateId}`);
-			// if (!response.ok) {
-			// 	throw new Error(`Failed to fetch notes: ${response.status}`);
-			// }
-			// return await response.json();
-		} catch (error) {
-			console.error('Error fetching candidate notes:', error);
-			throw error;
-		}
-	}
+  /**
+   * Get all notes for a specific job application
+   */
+  static async getNotesByJobApplication(jobApplicationID: string): Promise<Note[]> {
+    try {
+      return await noteApi.query({ jobApplicationID });
+    } catch (error) {
+      console.error('Error fetching job application notes:', error);
+      throw error;
+    }
+  }
 
-	/**
-	 * Create a new note for a candidate
-	 */
-	static async createNote(noteData: CreateNoteRequest): Promise<Note> {
-		try {
-			// Mock implementation
-			const newNote: Note = {
-				id: Date.now().toString(),
-				candidateId: noteData.candidateId,
-				content: noteData.content,
-				createdBy: 'current-user',
-				createdByName: 'You',
-				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString()
-			};
+  /**
+   * Get a specific note by ID
+   */
+  static async getNoteById(id: string): Promise<Note> {
+    try {
+      return await noteApi.getById(id);
+    } catch (error) {
+      console.error('Error fetching note:', error);
+      throw error;
+    }
+  }
 
-			// Simulate API delay
-			await new Promise(resolve => setTimeout(resolve, 500));
-			return newNote;
+  /**
+   * Create a new note for a job application
+   */
+  static async createNote(noteData: CreateNoteRequest): Promise<Note> {
+    try {
+      // Validate content before creating
+      const validation = this.validateNoteContent(noteData.content);
+      if (!validation.isValid) {
+        throw new Error(validation.error);
+      }
 
-			// Real implementation when API is ready:
-			// const response = await apiFetch(`${API_BASE}/notes`, {
-			// 	method: 'POST',
-			// 	headers: {
-			// 		'Content-Type': 'application/json'
-			// 	},
-			// 	body: JSON.stringify(noteData)
-			// });
-			// if (!response.ok) {
-			// 	throw new Error(`Failed to create note: ${response.status}`);
-			// }
-			// return await response.json();
-		} catch (error) {
-			console.error('Error creating note:', error);
-			throw error;
-		}
-	}
+      // Add timestamp if not provided
+      const enrichedData: CreateNoteRequest = {
+        ...noteData,
+        timestamp: noteData.timestamp || new Date().toISOString()
+      };
 
-	/**
-	 * Update an existing note
-	 */
-	static async updateNote(noteId: string, noteData: UpdateNoteRequest): Promise<Note> {
-		try {
-			// Mock implementation
-			const updatedNote: Note = {
-				id: noteId,
-				candidateId: 'mock-candidate',
-				content: noteData.content,
-				createdBy: 'current-user',
-				createdByName: 'You',
-				createdAt: new Date(Date.now() - 86400000).toISOString(),
-				updatedAt: new Date().toISOString()
-			};
+      const newNote = await noteApi.create(enrichedData);
+      console.log('Note created successfully:', newNote.id);
+      return newNote;
+    } catch (error) {
+      console.error('Error creating note:', error);
+      throw error;
+    }
+  }
 
-			// Simulate API delay
-			await new Promise(resolve => setTimeout(resolve, 400));
-			return updatedNote;
+  /**
+   * Update an existing note
+   */
+  static async updateNote(noteId: string, noteData: UpdateNoteRequest): Promise<Note> {
+    try {
+      // Validate content if it's being updated
+      if (noteData.content) {
+        const validation = this.validateNoteContent(noteData.content);
+        if (!validation.isValid) {
+          throw new Error(validation.error);
+        }
+      }
 
-			// Real implementation when API is ready:
-			// const response = await apiFetch(`${API_BASE}/notes/${noteId}`, {
-			// 	method: 'PUT',
-			// 	headers: {
-			// 		'Content-Type': 'application/json'
-			// 	},
-			// 	body: JSON.stringify(noteData)
-			// });
-			// if (!response.ok) {
-			// 	throw new Error(`Failed to update note: ${response.status}`);
-			// }
-			// return await response.json();
-		} catch (error) {
-			console.error('Error updating note:', error);
-			throw error;
-		}
-	}
+      // Update timestamp to current time
+      const updatedData: UpdateNoteRequest = {
+        ...noteData,
+        timestamp: new Date().toISOString()
+      };
 
-	/**
-	 * Delete a note
-	 */
-	static async deleteNote(noteId: string): Promise<void> {
-		try {
-			// Mock implementation - just simulate delay
-			await new Promise(resolve => setTimeout(resolve, 300));
+      const updatedNote = await noteApi.update(noteId, updatedData);
+      console.log('Note updated successfully:', noteId);
+      return updatedNote;
+    } catch (error) {
+      console.error('Error updating note:', error);
+      throw error;
+    }
+  }
 
-			// Real implementation when API is ready:
-			// const response = await apiFetch(`${API_BASE}/notes/${noteId}`, {
-			// 	method: 'DELETE'
-			// });
-			// if (!response.ok) {
-			// 	throw new Error(`Failed to delete note: ${response.status}`);
-			// }
-		} catch (error) {
-			console.error('Error deleting note:', error);
-			throw error;
-		}
-	}
+  /**
+   * Delete a note
+   */
+  static async deleteNote(noteId: string): Promise<void> {
+    try {
+      await noteApi.delete(noteId);
+      console.log('Note deleted successfully:', noteId);
+    } catch (error) {
+      console.error('Error deleting note:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Format note timestamp for display
+   */
+  static formatNoteTimestamp(timestamp: string): string {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'just now';
+    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined 
+    });
+  }
+
+  /**
+   * Validate note content
+   */
+  static validateNoteContent(content: string): { isValid: boolean; error?: string } {
+    if (!content || content.trim().length === 0) {
+      return { isValid: false, error: 'Note content cannot be empty' };
+    }
+    if (content.length > 5000) {
+      return { isValid: false, error: 'Note content cannot exceed 5000 characters' };
+    }
+    return { isValid: true };
+  }
+
+  /**
+   * Search notes by keyword
+   */
+  static async searchNotes(keyword: string, filters?: NoteFilters): Promise<Note[]> {
+    try {
+      const notes = await noteApi.query(filters);
+      const lowercaseKeyword = keyword.toLowerCase();
+      return notes.filter(note => 
+        note.content.toLowerCase().includes(lowercaseKeyword)
+      );
+    } catch (error) {
+      console.error('Error searching notes:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get notes grouped by date
+   */
+  static groupNotesByDate(notes: Note[]): Map<string, Note[]> {
+    const grouped = new Map<string, Note[]>();
+    
+    notes.forEach(note => {
+      const date = new Date(note.timestamp);
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      let key: string;
+      if (date.toDateString() === today.toDateString()) {
+        key = 'Today';
+      } else if (date.toDateString() === yesterday.toDateString()) {
+        key = 'Yesterday';
+      } else {
+        key = date.toLocaleDateString('en-US', { 
+          weekday: 'long',
+          month: 'long', 
+          day: 'numeric',
+          year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
+        });
+      }
+      
+      if (!grouped.has(key)) {
+        grouped.set(key, []);
+      }
+      grouped.get(key)!.push(note);
+    });
+    
+    return grouped;
+  }
+
+  /**
+   * Sort notes by timestamp
+   */
+  static sortNotesByTimestamp(notes: Note[], order: 'asc' | 'desc' = 'desc'): Note[] {
+    return [...notes].sort((a, b) => {
+      const timeA = new Date(a.timestamp).getTime();
+      const timeB = new Date(b.timestamp).getTime();
+      return order === 'desc' ? timeB - timeA : timeA - timeB;
+    });
+  }
+
+  /**
+   * Get the most recent note for a job application
+   */
+  static async getMostRecentNote(jobApplicationID: string): Promise<Note | null> {
+    try {
+      const notes = await this.getNotesByJobApplication(jobApplicationID);
+      if (notes.length === 0) return null;
+      
+      const sorted = this.sortNotesByTimestamp(notes, 'desc');
+      return sorted[0];
+    } catch (error) {
+      console.error('Error fetching most recent note:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Count notes for a job application
+   */
+  static async getNotesCount(jobApplicationID: string): Promise<number> {
+    try {
+      const notes = await this.getNotesByJobApplication(jobApplicationID);
+      return notes.length;
+    } catch (error) {
+      console.error('Error counting notes:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Export notes as formatted text
+   */
+  static exportNotesAsText(notes: Note[]): string {
+    const sorted = this.sortNotesByTimestamp(notes, 'asc');
+    let output = 'Job Application Notes Export\n';
+    output += '=' .repeat(50) + '\n\n';
+
+    sorted.forEach((note, index) => {
+      const date = new Date(note.timestamp);
+      output += `Note ${index + 1}\n`;
+      output += `-`.repeat(30) + '\n';
+      output += `Date: ${date.toLocaleString()}\n`;
+      output += `Content:\n${note.content}\n\n`;
+    });
+
+    return output;
+  }
+
+  /**
+   * Create a summary of all notes for a job application
+   */
+  static async getApplicationNotesSummary(jobApplicationID: string): Promise<{
+    totalNotes: number;
+    mostRecent: Note | null;
+    oldestNote: Note | null;
+  }> {
+    try {
+      const notes = await this.getNotesByJobApplication(jobApplicationID);
+      const sorted = this.sortNotesByTimestamp(notes, 'desc');
+
+      return {
+        totalNotes: notes.length,
+        mostRecent: sorted[0] || null,
+        oldestNote: sorted[sorted.length - 1] || null
+      };
+    } catch (error) {
+      console.error('Error getting notes summary:', error);
+      return {
+        totalNotes: 0,
+        mostRecent: null,
+        oldestNote: null
+      };
+    }
+  }
 }
