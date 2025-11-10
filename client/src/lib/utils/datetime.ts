@@ -137,6 +137,23 @@ export function formatDateShort(date: string | Date): string {
 }
 
 /**
+ * Formats a date into format "30 Dec 2024"
+ */
+export function formatDateCompact(date: string | Date): string {
+	const d = new Date(date);
+	
+	if (isNaN(d.getTime())) {
+		return 'Invalid Date';
+	}
+	
+	return d.toLocaleDateString('en-GB', {
+		year: 'numeric',
+		month: 'short',
+		day: 'numeric'
+	});
+}
+
+/**
  * Get the number of days between two dates
  */
 export function getDaysBetween(date1: string | Date, date2: string | Date): number {

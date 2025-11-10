@@ -76,14 +76,14 @@
 		in:scale={{ duration: 150, start: 0.95 }}
 		out:scale={{ duration: 100, start: 0.95 }}
 	>
-		<div class="py-1">
+		<div class="py-1 flex flex-col">
 			{#each items as item, index (index)}
 				<button
 					onclick={() => {
 						item.action();
 						onClose();
 					}}
-					class={`w-full text-left px-4 py-2 text-sm transition-colors hover:cursor-pointer ${
+					class={`w-full text-left px-4 py-2 text-sm transition-colors hover:cursor-pointer block ${
 						item.variant === 'danger'
 							? 'text-red-600 hover:bg-red-50'
 							: 'text-gray-700 hover:bg-gray-50'
