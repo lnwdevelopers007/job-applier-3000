@@ -1,7 +1,7 @@
 <script lang="ts">
   // client/src/lib/components/files/ApplicantFilesSection.svelte
   import FilePreviewModal from './FilePreviewModal.svelte';
-  import { FileText, Eye, Download, Loader, Loader2 } from 'lucide-svelte';
+  import { FileText, Eye, Download, Loader2 } from 'lucide-svelte';
   import { fileService, type FileMetadata } from '$lib/services/fileService';
   import { toast } from 'svelte-french-toast';
   
