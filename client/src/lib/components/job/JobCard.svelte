@@ -1,6 +1,6 @@
 <script lang="ts">
   import { MapPin, Bookmark } from 'lucide-svelte';
-  import Badge from './Badge.svelte';
+  import Badge from '../ui/Badge.svelte';
   import WorkInfoBadge from './WorkInfoBadge.svelte';
   import JobCardSkeleton from './JobCardSkeleton.svelte';
 	import { formatRelativeTime } from '$lib/utils/datetime';
