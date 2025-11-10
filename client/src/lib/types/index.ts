@@ -38,7 +38,8 @@ export type {
 // Job Application types
 export type {
   JobApplication,
-  JobApplicationFilters
+  JobApplicationFilters,
+  JobApplicationWithApplicant
 } from './jobApplication';
 
 // Note types
