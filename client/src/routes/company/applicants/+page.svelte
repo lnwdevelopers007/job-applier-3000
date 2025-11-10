@@ -1,6 +1,5 @@
  <script lang="ts">
   import { onMount } from 'svelte';
-  import ApplicantFilesSection from '$lib/components/files/ApplicantFilesSection.svelte';
   import { Search } from 'lucide-svelte';
   import { getUserInfo, isAuthenticated } from '$lib/utils/auth';
   import { authStore } from '$lib/stores/auth.svelte';
@@ -478,9 +477,8 @@
           isUpdatingStatus={isUpdatingStatus}
           candidateStatus={selectedCandidate.status}
           candidateId={selectedCandidate.id}
+          applicationId={selectedCandidate.id}
         />
-        <!-- Applicant Files Section - NEW -->
-        <ApplicantFilesSection applicationId={selectedCandidate.id} />
       {:else}
         <div class="flex items-center justify-center h-full text-gray-500">
           <p>Select a candidate to view their profile</p>

@@ -1,7 +1,7 @@
 <script lang="ts">
   // client/src/lib/components/files/ApplicantFilesSection.svelte
   import FilePreviewModal from './FilePreviewModal.svelte';
-  import { FileText, Eye, Download, Loader } from 'lucide-svelte';
+  import { FileText, Eye, Download, Loader, Loader2 } from 'lucide-svelte';
   import { fileService, type FileMetadata } from '$lib/services/fileService';
   import { toast } from 'svelte-french-toast';
   
@@ -68,32 +68,28 @@
   });
 </script>
 
-<div class="px-4 py-2 mb-2">
-  <h3 class="flex gap-1 font-semibold text-gray-800 text-lg mt-2">
-    <FileText class="mt-0.5" />
-    Documents & Portfolio
+<div class="mb-2">
+  <h3 class="flex gap-1 font-medium text-gray-800 text-md mt-2">
+    Documents
   </h3>
   
   <div class="mt-3">
     {#if isLoading}
       <div class="flex items-center justify-center py-8">
-        <Loader class="w-6 h-6 text-gray-400 animate-spin" />
+        <Loader2 class="w-6 h-6 text-gray-400 animate-spin" />
       </div>
     {:else if error}
       <div class="bg-red-50 border border-red-200 p-4 rounded-lg">
         <p class="text-sm text-red-700">{error}</p>
       </div>
     {:else if files.length === 0}
-      <div class="bg-gray-50 border border-gray-200 p-6 rounded-lg text-center">
-        <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-        </svg>
+      <div class="pt-2 text-center">
         <p class="text-sm text-gray-500">No documents uploaded by this applicant</p>
       </div>
     {:else}
       <div class="space-y-3">
         {#each files as file (file.id)}
-          <div class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg p-4 hover:bg-gray-100 transition-colors group">
+          <div class="flex items-center justify-between bg-white border border-gray-200 rounded-lg p-4 hover:bg-gray-100 transition-colors group">
             <div class="flex items-center gap-4 flex-1 min-w-0">
               <!-- Icon -->
               <div class="w-12 h-12 bg-{getCategoryColor(file.category)}-100 rounded-lg flex items-center justify-center flex-shrink-0">

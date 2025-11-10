@@ -56,6 +56,13 @@
 		sessionStorage.removeItem('pendingJobApplication');
 	}
 
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			handleApply();
+		}
+	}
+
 	function formatSalary(minSalary: number, maxSalary: number, currency: string): string {
 		const formatNumber = (num: number) => {
 			if (num >= 1000000) {
@@ -117,7 +124,12 @@
 </div>
 {:else}
 <div
-	class="relative bg-white border border-gray-200 rounded-xl p-6 hover:shadow-sm transition-all duration-200 group flex flex-col h-full"
+	class="relative bg-white border border-gray-200 rounded-xl p-6 hover:shadow-sm cursor-pointer transition-all duration-200 group flex flex-col h-full"
+	role="button"
+	tabindex="0"
+	onclick={handleApply}
+	onkeydown={handleKeydown}
+	aria-label="View job: {job?.title} at {job?.company}"
 >
 	{#if job?.badge}
 		<span
@@ -155,7 +167,7 @@
 		{/if}
 		<div class="flex-1 min-w-0">
 			<p class="text-sm font-semibold text-gray-600 mb-1">{job?.company}</p>
-			<h3 class="text-lg font-semibold text-gray-900 transition-colors">
+			<h3 class="text-lg font-semibold text-gray-900 transition-colors hover:underline">
 				{job?.title}
 			</h3>
 		</div>
@@ -198,17 +210,10 @@
 	<!-- Spacer to push footer to bottom -->
 	<div class="flex-grow"></div>
 
-	<div class="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
+	<div class="flex items-center">
 		<span class="text-xs text-gray-500 flex items-center gap-1">
-			<Clock class="w-3 h-3" />
 			{job?.postedAt}
 		</span>
-		<button
-			onclick={handleApply}
-			class="px-5 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 cursor-pointer transition-colors"
-		>
-			Apply
-		</button>
 	</div>
 </div>
 {/if}
