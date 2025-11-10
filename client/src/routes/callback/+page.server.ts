@@ -64,9 +64,10 @@ export const load: PageServerLoad = async ({ url, cookies }) => {
 
 	// Determine redirect path based on role
 	const role = decoded.role?.toLowerCase();
+	const next = url.searchParams.get('step');
 	let redirectPath = '/';
 	if (role === 'company') {
-		if (decoded.verified === false || decoded.verified === undefined) {
+		if (next === 'signup') {
 			redirectPath = '/signup/company?currentStep=2';
 		} else {
 			redirectPath = '/company/dashboard';
@@ -76,11 +77,14 @@ export const load: PageServerLoad = async ({ url, cookies }) => {
 		redirectPath = '/app/jobs';
 	}
 	if (role === 'jobseeker') {
-		if (decoded.verified === false || decoded.verified === undefined) {
+		if (next === 'signup') {
 			redirectPath = '/signup/student?currentStep=2';
 		} else {
 			redirectPath = '/app/jobs';
 		}
+	}
+	if (role === 'admin') {
+		redirectPath = '/admin/dashboard';
 	}
 
 	throw redirect(303, redirectPath);
