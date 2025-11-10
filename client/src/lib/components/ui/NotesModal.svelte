@@ -2,7 +2,7 @@
   import Modal from './Modal.svelte';
   import { NoteService } from '$lib/services/noteService';
   import type { Note } from '$lib/types';
-  import { Plus, CircleAlert, LoaderCircle, Pencil, Trash2, Save, X } from 'lucide-svelte';
+  import { Plus, CircleAlert, LoaderCircle, Pencil, Trash2 } from 'lucide-svelte';
   import toast from 'svelte-french-toast';
 
   interface Props {
@@ -173,7 +173,7 @@
     {/if}
 
     <!-- Notes List -->
-    <div class="space-y-4 max-h-62 overflow-y-auto mb-6">
+    <div class="space-y-4 h-72 overflow-y-auto">
       {#if loading}
         <div class="flex items-center justify-center py-8">
           <LoaderCircle class="animate-spin text-gray-500 w-8 h-8" />
@@ -185,7 +185,7 @@
         </div>
       {:else}
         {#each notes as note (note.id)}
-          <div class="bg-gray-100 rounded-lg p-4">
+          <div class="bg-gray-100 rounded-xl p-4">
             {#if editingNoteId === note.id}
               <!-- Edit mode -->
               <div class="space-y-2">
@@ -220,9 +220,9 @@
             {:else}
               <!-- View mode -->
               <div class="group">
-                <div class="flex items-start justify-between">
-                  <p class="text-sm text-gray-700 leading-relaxed flex-1 pr-2">{note.content}</p>
-                  <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div class="flex items-start gap-3">
+                  <p class="text-sm text-gray-700 leading-relaxed flex-1 min-w-0 whitespace-pre-wrap break-words">{note.content}</p>
+                  <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                     <button
                       class="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded"
                       onclick={() => startEditing(note)}
@@ -250,34 +250,35 @@
         {/each}
       {/if}
     </div>
+  </div>
 
-    <!-- Add Note Form -->
-    <div class="mb-6">
-      <p class="text-sm font-medium text-gray-600 mb-2">Add a note</p>
-      <div class="border border-gray-200 rounded-lg">
-        
-        <textarea
-          bind:value={newNoteContent}
-          placeholder="Enter your notes about this candidate..."
-          rows="3"
-          maxlength="1000"
-          class="w-full p-3 border-0 rounded-t-lg text-sm resize-none focus:outline-none focus:ring-1 focus:ring-gray-400"
-          disabled={submitting}
-          onkeydown={handleKeydown}
-        ></textarea>
-        <div class="flex items-center justify-between p-3 bg-gray-50 border-t border-gray-200 rounded-b-lg">
-          <span class="text-xs text-gray-500">
-            {newNoteContent.length}/1000 • Press Cmd+Enter to submit
-          </span>
-          <button
-            class="flex items-center px-3 py-1.5 text-sm bg-green-600 font-medium text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={!newNoteContent.trim() || submitting}
-            onclick={addNote}
-          >
-            <Plus class="w-4 h-4 mr-1" />
-            {submitting ? 'Adding...' : 'Add Note'}
-          </button>
-        </div>
+  <!-- Modal Footer - Add Note Form -->
+  <div class="border-t border-gray-200 p-4">
+    <div class="space-y-3">
+      <textarea
+        bind:value={newNoteContent}
+        placeholder="Add a note about this candidate..."
+        rows="3"
+        maxlength="1000"
+        class="w-full p-3 border border-gray-300 rounded-lg text-sm resize-none focus:outline-none focus:ring-1 focus:ring-gray-400"
+        disabled={submitting}
+        onkeydown={handleKeydown}
+      ></textarea>
+      <div class="flex items-center justify-between">
+        <span class="text-xs text-gray-500">
+          {newNoteContent.length}/1000
+          {#if newNoteContent.length > 0}
+            • Press Cmd+Enter to submit
+          {/if}
+        </span>
+        <button
+          class="flex items-center gap-1.5 px-4 py-2 text-sm bg-green-600 font-medium text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={!newNoteContent.trim() || submitting}
+          onclick={addNote}
+        >
+          <Plus class="w-4 h-4" />
+          {submitting ? 'Adding...' : 'Add Note'}
+        </button>
       </div>
     </div>
   </div>
