@@ -245,7 +245,7 @@
           id="portfolio"
           type="url"
           label="Portfolio"
-          placeholder="Portfolio (Optional)"
+          placeholder="Your portfolio website (Optional)"
           bind:value={portfolio}
         />
         <FormInput
@@ -253,7 +253,7 @@
           type="url"
           label="Github"
           bind:value={github}
-          placeholder="Github (Optional)"
+          placeholder="Your github link (Optional)"
         >
         </FormInput>
       </div>
