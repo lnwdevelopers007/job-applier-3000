@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { FileText, Download, BriefcaseBusiness, Globe, MapPin, StickyNote, Check, X } from 'lucide-svelte';
 	import SkillTag from '$lib/components/job/SkillTag.svelte';
+	import NotesModal from '$lib/components/ui/NotesModal.svelte';
 	
 	let { 
 		userData = {},
@@ -14,6 +15,15 @@
 		candidateStatus = '',
 		candidateId = ''
 	} = $props();
+	
+	// Notes modal state
+	let showNotesModal = $state(false);
+	
+	function handleNotesClick() {
+		showNotesModal = true;
+		// Still call the parent onNotes function if provided
+		onNotes();
+	}
 	
 	// Skills from userData
 	const skills = $derived(userData.skills && Array.isArray(userData.skills) ? userData.skills : []);
@@ -101,7 +111,7 @@
 			<div class="flex gap-2">
 				<button 
 					class="flex items-center px-3 py-1.5 text-sm bg-white font-medium rounded-md border border-gray-200 hover:bg-gray-50"
-					onclick={onNotes}
+					onclick={handleNotesClick}
 				>
 					<StickyNote class="w-4 h-4 mr-2" />Notes
 				</button>
@@ -258,3 +268,12 @@
 		{/if}
 	</div>
 </div>
+
+<!-- Notes Modal -->
+<NotesModal 
+	bind:isOpen={showNotesModal}
+	onClose={() => showNotesModal = false}
+	candidateId={candidateId}
+	candidateName={userData.fullName || userData.name || 'Unknown Candidate'}
+	candidateAvatar={userData.avatar}
+/>
