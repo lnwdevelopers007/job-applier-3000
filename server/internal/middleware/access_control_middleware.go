@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/database"
@@ -119,8 +120,12 @@ func checkRoutePermission(c *gin.Context) error {
 	
 	// If not found, try to match with pattern (e.g., /jobs/:id)
 	if !found {
-		routeKey, permission, found = matchRoutePattern(method, path)
-	}
+    matchedKey, perm, ok := matchRoutePattern(method, path)
+    if ok {
+        routeKey, permission, found = matchedKey, perm, ok
+        log.Printf("Matched route pattern: %s", routeKey)
+    }
+}
 
 	// If route not in permission map, allow (routes without restrictions)
 	if !found {
