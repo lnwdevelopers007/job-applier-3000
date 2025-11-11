@@ -93,7 +93,8 @@ var RoutePermissions = map[string]Permission{
 		AllowedRoles: []string{"admin"},
 	},
 	"DELETE:/users/:id": {
-		AllowedRoles: []string{"admin"},
+		AllowedRoles: []string{"admin", "jobSeeker", "company", "faculty"},
+		RequireOwnership: true,
 	},
 }
 
