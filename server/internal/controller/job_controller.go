@@ -31,6 +31,53 @@ func NewJobController() JobController {
 	}
 }
 
+// GetLatestPublic godoc
+// @Summary Get latest public jobs (no auth required)
+// @Description Get the latest 3 public job postings for homepage - no authentication required
+// @Tags jobs
+// @Produce  json
+// @Success 200 {array} schema.Job
+// @Failure 500 {object} map[string]string
+// @Router /jobs/public/latest [get]
+func (jc JobController) GetLatestPublic(c *gin.Context) {
+	db := database.GetDatabase()
+	collection := db.Collection(jc.baseController.collectionName)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Filter: only public jobs, not expired
+	now := time.Now()
+	filter := bson.M{
+		"visibility":          "public",
+		"postOpenDate":        bson.M{"$lte": now},
+		"applicationDeadline": bson.M{"$gte": now},
+	}
+
+	findOptions := options.Find().
+		SetSort(bson.D{{Key: "postOpenDate", Value: -1}}).
+		SetLimit(3)
+
+	cursor, err := collection.Find(ctx, filter, findOptions)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var jobs []schema.Job
+	if err := cursor.All(ctx, &jobs); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if len(jobs) == 0 {
+		c.JSON(http.StatusOK, []schema.Job{})
+		return
+	}
+
+	c.JSON(http.StatusOK, jobs)
+}
+
 // Query godoc
 // @Summary Query jobs with filters
 // @Description Get jobs by filtering fields like title, location, salary, company, etc.
