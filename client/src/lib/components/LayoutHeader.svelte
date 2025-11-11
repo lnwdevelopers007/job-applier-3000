@@ -123,6 +123,8 @@
                 goto('/company/settings');
               } else if (role === 'faculty') {
                 goto('/faculty/settings');
+              } else if (role === 'admin') {
+                goto('/app/settings');
               } else {
                 goto('/app/settings');
               }
