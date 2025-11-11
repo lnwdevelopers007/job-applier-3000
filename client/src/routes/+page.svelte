@@ -51,10 +51,11 @@
 
 	async function fetchRecentJobs() {
 		try {
-			const res = await fetch('/jobs/query/?latest=true');
+			const backendUrl = import.meta.env.VITE_BACKEND || 'http://localhost:8080';
+			const res = await fetch(`${backendUrl}/jobs/public/latest`);
 			if (res.ok) {
 				const data = await res.json();
-				
+
 				// Get the 3 most recent jobs and fetch company info for each
 				const jobPromises = data.slice(0, 3).map(async (job: {
 					id: string;
@@ -71,7 +72,7 @@
 				}) => {
 					// Fetch company name and logo
 					let [companyName, companyLogo] = await fetchCompanyNameLogo(job.companyID || '');
-					
+
 					return {
 						id: job.id,
 						company: companyName,
@@ -84,7 +85,7 @@
 						minSalary: job.minSalary || 0,
 						maxSalary: job.maxSalary || 0,
 						currency: job.currency || 'THB',
-						type: job.workType ? job.workType.charAt(0).toUpperCase() + job.workType.slice(1) : null,
+						type: job.workType ? job.workType.charAt(0).toUpperCase() + job.workType.slice(1) : '',
 						tags: job.requiredSkills 
 							? job.requiredSkills.split(',').map((skill: string) => skill.trim()).slice(0, 3)
 							: [],
@@ -92,15 +93,12 @@
 							? `Posted ${Math.floor((Date.now() - new Date(job.postOpenDate).getTime()) / (1000 * 60 * 60 * 24))} days ago`
 							: 'Recently posted',
 						badge: (() => {
-							// Show "Remote" badge for remote jobs
 							if (job.workArrangement?.toLowerCase() === 'remote') {
 								return { text: 'Remote', type: 'remote' };
 							}
-							// Show "Internship" badge for internship/casual positions
 							if (job.workType?.toLowerCase().includes('intern') || job.workType?.toLowerCase() === 'casual') {
 								return { text: 'Internship', type: 'internship' };
 							}
-							// Show "New" badge for jobs posted within last 3 days
 							if (job.postOpenDate && job.postOpenDate !== "0001-01-01T00:00:00Z") {
 								const daysAgo = Math.floor((Date.now() - new Date(job.postOpenDate).getTime()) / (1000 * 60 * 60 * 24));
 								if (daysAgo <= 3) {
@@ -112,12 +110,12 @@
 						logoStyle: 'bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600'
 					};
 				});
-				
+
 				recentJobs = await Promise.all(jobPromises);
 			}
 		} catch (error) {
 			console.error('Failed to fetch recent jobs:', error);
-			// Keep empty array on error
+			recentJobs = [];
 		} finally {
 			isLoadingJobs = false;
 		}
