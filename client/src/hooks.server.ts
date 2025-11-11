@@ -261,7 +261,7 @@ function getDefaultPathForRole(role: string): string {
 		case 'faculty':
 			return '/app/jobs';
 		case 'admin':
-			return '/admin/dashboard';
+			return '/admin/jobs';
 		case 'jobSeeker':
 		default:
 			return '/app/jobs';

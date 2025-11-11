@@ -1,48 +1,114 @@
 import { goto } from '$app/navigation';
-import { withDeadlineTime } from '$lib/utils/datetime';
+import { withDeadlineTime, formatDateCompact } from '$lib/utils/datetime';
+import { fetchCompanyNameLogo, DEFAULT_COMPANY_NAME, DEFAULT_COMPANY_LOGO } from '$lib/utils/fetcher';
+import { JobApplicationService } from './jobApplicationService';
+import { jobApi } from '$lib/api';
 import toast from 'svelte-french-toast';
+import type { 
+  Job, 
+  JobDisplay,
+  JobFilters, 
+  JobFormData, 
+  ValidationState 
+} from '$lib/types';
 
-interface JobFormData {
-  // Basic Info
-  jobTitle?: string;
-  companyID?: string;
-  location?: string;
-  workType?: string;
-  workArrangement?: string;
-  currency?: string;
-  minSalary?: number | string;
-  maxSalary?: number | string;
-  
-  // Description
-  jobDescription?: string;
-  jobSummary?: string;
-  
-  // Requirements
-  requiredSkills?: string[];
-  yearsOfExperience?: string;
-  educationLevel?: string;
-  
-  // Post Settings
-  postingOpenDate?: string;
-  postingCloseDate?: string;
-  screeningQuestions?: string;
-  emailNotifications?: boolean;
-  
-  // Application Requirements
-  applicationRequirements?: {
-    resume?: boolean;
-    coverLetter?: boolean;
-    portfolio?: boolean;
-    linkedin?: boolean;
-  };
-}
-
-interface ValidationState {
-  errors: Record<string, string>;
-  showErrors: boolean;
-}
 
 export class JobService {
+  /**
+   * Query jobs with filters - GET /jobs/query
+   */
+  static async queryJobs(filters?: JobFilters): Promise<Job[]> {
+    try {
+      return await jobApi.query(filters);
+    } catch (error) {
+      console.error('Error querying jobs:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all jobs - GET /jobs/
+   */
+  static async getAllJobs(): Promise<Job[]> {
+    try {
+      return await jobApi.getAll();
+    } catch (error) {
+      console.error('Error fetching all jobs:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get a specific job by ID - GET /jobs/:id
+   */
+  static async getJobById(id: string): Promise<Job> {
+    try {
+      return await jobApi.getById(id);
+    } catch (error) {
+      console.error('Error fetching job:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new job - POST /jobs/
+   */
+  static async createJobAPI(jobData: JobFormData): Promise<Job> {
+    try {
+      return await jobApi.create(jobData);
+    } catch (error) {
+      console.error('Error creating job:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update a job - PUT /jobs/:id
+   */
+  static async updateJobAPI(id: string, jobData: Partial<JobFormData>): Promise<Job> {
+    try {
+      return await jobApi.update(id, jobData);
+    } catch (error) {
+      console.error('Error updating job:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a job with reason - DELETE /jobs/:id
+   */
+  static async deleteJobWithReason(id: string, reason: string): Promise<void> {
+    try {
+      await jobApi.deleteWithReason(id, reason);
+    } catch (error) {
+      console.error('Error deleting job:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get jobs by company ID using query filters
+   */
+  static async getJobsByCompany(companyId: string): Promise<Job[]> {
+    try {
+      return await jobApi.getByCompanyId(companyId);
+    } catch (error) {
+      console.error('Error fetching company jobs:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get latest jobs (last 3)
+   */
+  static async getLatestJobs(): Promise<Job[]> {
+    try {
+      return this.queryJobs({ latest: true });
+    } catch (error) {
+      console.error('Error fetching latest jobs:', error);
+      throw error;
+    }
+  }
   static createEmptyFormData(userID?: string): JobFormData {
     return {
       // Basic Info
@@ -212,21 +278,8 @@ export class JobService {
       const payload = this.buildPayload(formData);
       console.log("Creating job with payload:", payload);
 
-      const res = await fetch('/jobs/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        credentials: 'include'
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        console.error('Server error body:', text);
-        throw new Error(`Failed: ${res.status} ${text}`);
-      }
-
-      const data = await res.json();
-      console.log('Job created:', data);
+      await jobApi.create(payload as unknown as JobFormData);
+      console.log('Job created successfully');
       return { success: true };
     } catch (err) {
       console.error('Error creating job:', err);
@@ -239,19 +292,8 @@ export class JobService {
       const payload = this.buildPayload(formData);
       console.log("Updating job with payload:", payload);
 
-      const res = await fetch(`/jobs/${jobId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        credentials: 'include'
-      });
-
-      if (!res.ok) {
-        throw new Error(`Failed to update job: ${res.status}`);
-      }
-
-      const updatedJob = await res.json();
-      console.log('Job updated successfully:', updatedJob);
+      await jobApi.update(jobId, payload as unknown as Partial<JobFormData>);
+      console.log('Job updated successfully');
       return { success: true };
     } catch (err) {
       console.error('Error updating job:', err);
@@ -261,13 +303,8 @@ export class JobService {
 
   static async loadJob(jobId: string): Promise<{ success: boolean; data?: JobFormData; error?: string }> {
     try {
-      const res = await fetch(`/jobs/query?id=${jobId}`, {
-        credentials: 'include'
-      });
-      if (!res.ok) throw new Error(`Failed to load job: ${res.status}`);
-      
-      const data = await res.json();
-      const job = Array.isArray(data) ? data[0] : data;
+      const jobs = await jobApi.query({ id: jobId });
+      const job = Array.isArray(jobs) ? jobs[0] : jobs;
 
       const formattedDeadline = job.applicationDeadline
         ? new Date(job.applicationDeadline).toISOString().slice(0, 10)
@@ -339,6 +376,73 @@ export class JobService {
       // Show error toast
       toast.error(result.error || 'Failed to save job. Please try again.');
       return false;
+    }
+  }
+
+  // === ENHANCED DISPLAY METHODS ===
+
+  /**
+   * Get applicant count for a specific job
+   */
+  static async getApplicantCount(jobId: string): Promise<number> {
+    try {
+      const applications = await JobApplicationService.queryApplications({ jobID: jobId });
+      return applications.length;
+    } catch (err) {
+      console.warn(`Failed to fetch applicant count for job ${jobId}:`, err);
+      return 0;
+    }
+  }
+
+  /**
+   * Transform a job from API to display format
+   */
+  static async transformJobForDisplay(job: Job): Promise<JobDisplay> {
+    // Fetch company details
+    let companyName = DEFAULT_COMPANY_NAME;
+    let companyLogo = DEFAULT_COMPANY_LOGO;
+    try {
+      const [name, logo] = await fetchCompanyNameLogo(job.companyID || '');
+      companyName = name;
+      companyLogo = logo || DEFAULT_COMPANY_LOGO;
+    } catch (err) {
+      console.warn(`Failed to fetch company for job ${job.id}:`, err);
+    }
+
+    // Get real applicant count
+    const applicantCount = await this.getApplicantCount(job.id || '');
+
+    // Determine job status
+    const now = new Date();
+    const closeDate = job.applicationDeadline ? new Date(job.applicationDeadline) : null;
+    const isExpired = closeDate && closeDate < now;
+    
+    let status: JobDisplay['status'] = 'Active';
+    if (isExpired) status = 'Closed';
+    if (job.visibility === 'draft') status = 'Draft';
+
+    return {
+      ...job,
+      company: companyName,
+      companyLogo,
+      status,
+      location: job.location || 'Remote',
+      posted: job.postOpenDate ? formatDateCompact(job.postOpenDate) : 'Unknown',
+      expires: job.applicationDeadline ? formatDateCompact(job.applicationDeadline) : 'No deadline',
+      applicants: applicantCount
+    };
+  }
+
+  /**
+   * Load jobs with enhanced display data
+   */
+  static async loadJobsForDisplay(filters?: JobFilters): Promise<JobDisplay[]> {
+    try {
+      const jobs = await this.queryJobs(filters);
+      return Promise.all(jobs.map(job => this.transformJobForDisplay(job)));
+    } catch (err) {
+      console.error('Error loading jobs for display:', err);
+      throw err;
     }
   }
 }

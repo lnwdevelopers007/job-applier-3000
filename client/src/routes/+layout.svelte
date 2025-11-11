@@ -20,13 +20,20 @@
 	const navItems = $derived(
 		!authStore.isAuthenticated ? [] :
 		authStore.user?.role === 'company' ? [
+			{ href: '/', label: 'Home' },
 			{ href: '/app/jobs', label: 'Jobs' },
 			{ href: '/company/dashboard', label: 'Dashboard' },
 			{ href: '/company/applicants', label: 'Applicants' },
 			{ href: '/company/analytics', label: 'Analytics' },
 			{ href: '/company/create', label: 'Post Job' },
 		] : authStore.user?.role === 'faculty' ? [
+			{ href: '/', label: 'Home' },
 			{ href: '/app/jobs', label: 'Jobs' },
+		] : authStore.user?.role === 'admin' ? [
+			{ href: '/', label: 'Home' },
+			{ href: '/app/jobs', label: 'Jobs' },
+			{ href: '/admin/jobs', label: 'Manage Jobs' },
+			{ href: '/admin/users', label: 'Manage Users' },
 		] : [
 			{ href: '/', label: 'Home' },
 			{ href: '/app/jobs', label: 'Jobs' },
