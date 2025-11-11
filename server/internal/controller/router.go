@@ -30,14 +30,22 @@ func NewRouter() *gin.Engine {
 		authGroup.GET("/me", middleware.AuthMiddleware(), auth.Me)
 	}
 
+	// Job controller
+	jobCtrl := NewJobController()
+
+	// Public job routes (no auth required)
+	publicJobs := router.Group("/jobs/public")
+	{
+		publicJobs.GET("/latest", jobCtrl.GetLatestPublic)
+	}
+
 	// Apply AuthMiddleware and AccessControlMiddleware to all protected routes
 	// Order matters: AuthMiddleware first, then AccessControlMiddleware
 	protected := router.Group("/")
 	protected.Use(middleware.AuthMiddleware())
 	protected.Use(middleware.AccessControlMiddleware())
 
-	// Job routes
-	jobCtrl := NewJobController()
+	// Protected job routes
 	jobs := protected.Group("/jobs")
 	{
 		jobs.GET("/query", jobCtrl.Query)
