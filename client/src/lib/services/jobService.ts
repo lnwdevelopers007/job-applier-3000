@@ -321,6 +321,7 @@ export class JobService {
         : '';
 
       // Destructure to exclude companyID from form data for editing
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { companyID, ...jobWithoutCompanyID } = job;
       
       const formattedData: JobFormData = {
