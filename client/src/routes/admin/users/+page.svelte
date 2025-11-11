@@ -4,7 +4,8 @@
 	import ConfirmActionWithReason from '$lib/components/modals/ConfirmActionWithReason.svelte';
 	import ConfirmDropdownAction from '$lib/components/modals/ConfirmDropdownAction.svelte';
 	import FilterPill from '$lib/components/forms/FilterPill.svelte';
-	import { Search } from 'lucide-svelte';
+import { Search } from 'lucide-svelte';
+import { authStore } from '$lib/stores/auth.svelte';
 
 	const USER_ACTIONS = [
 		// { label: 'View', disabled: false },
@@ -50,7 +51,7 @@
 	let searchQuery = $state('');
 	let sortBy = $state('');
 
-	let dropdowns = $derived([
+let dropdowns = $derived([
 		{
 			name: 'Roles',
 			values: VALID_ROLES,
@@ -62,6 +63,19 @@
 			defaultVal: selectedUser === null ? '' : selectedUser.verified
 		}
 	]);
+
+// Filter actions based on user - don't allow admin to ban themselves
+function getActionsForUser(user: any) {
+  const currentUserID = authStore.user?.userID;
+  const currentUserRole = authStore.user?.role;
+
+  // If viewing self and is admin, remove ban action
+  if (currentUserID === user.id && currentUserRole === 'admin') {
+    return USER_ACTIONS.filter(action => action.label !== 'Ban');
+  }
+
+  return USER_ACTIONS;
+}
 
 	async function onDeleteUser() {
 		isDeleting = true;
@@ -248,7 +262,7 @@
 	async function loadUserData() {
 		const usersFromDB = await fetchUsers();
 		for (let user of usersFromDB) {
-			user.actions = USER_ACTIONS.map((a) =>
+			user.actions = getActionsForUser(user).map((a) =>
 				a.label === 'Ban'
 					? { ...a, label: user.banned ? 'Unban' : 'Ban' }
 					: a
