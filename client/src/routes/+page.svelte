@@ -9,7 +9,7 @@
 	import { ArrowRight, Code, ChartLine, Brush, Shield, Smartphone, Cloud, Bot, Gamepad2, ChevronLeft, ChevronRight } from 'lucide-svelte';
 	import { isAuthenticated, navigateWithAuth } from '$lib/utils/auth';
 	import AuthModal from '$lib/components/ui/AuthModal.svelte';
-	import { fetchCompanyNameLogo } from '$lib/utils/fetcher';
+	import { fetchCompanyPublicInfo, DEFAULT_COMPANY_NAME, DEFAULT_COMPANY_LOGO } from '$lib/utils/fetcher';
 
 	let showAuthModal = $state(false);
 	let authModalTitle = $state('Sign in required');
@@ -56,7 +56,6 @@
 			if (res.ok) {
 				const data = await res.json();
 
-				// Get the 3 most recent jobs and fetch company info for each
 				const jobPromises = data.slice(0, 3).map(async (job: {
 					id: string;
 					title?: string;
@@ -70,8 +69,19 @@
 					postOpenDate?: string;
 					companyID?: string;
 				}) => {
-					// Fetch company name and logo
-					let [companyName, companyLogo] = await fetchCompanyNameLogo(job.companyID || '');
+					// Fetch minimal public company info (with custom logo support)
+					let companyName = DEFAULT_COMPANY_NAME;
+					let companyLogo = DEFAULT_COMPANY_LOGO;
+					
+					if (job.companyID) {
+						try {
+							const companyInfo = await fetchCompanyPublicInfo(job.companyID);
+							companyName = companyInfo.name;
+							companyLogo = companyInfo.profileImage;
+						} catch (err) {
+							console.warn('Failed to fetch company info for job', job.id, err);
+						}
+					}
 
 					return {
 						id: job.id,
