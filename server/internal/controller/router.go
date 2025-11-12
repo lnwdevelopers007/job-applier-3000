@@ -39,6 +39,12 @@ func NewRouter() *gin.Engine {
 		publicJobs.GET("/latest", jobCtrl.GetLatestPublic)
 	}
 
+	publicuserController := NewUserController()
+	publicUser := router.Group("/users/public")
+	{
+		publicUser.GET("/:id", publicuserController.GetPublicInfo)
+	}
+
 	// Apply AuthMiddleware and AccessControlMiddleware to all protected routes
 	// Order matters: AuthMiddleware first, then AccessControlMiddleware
 	protected := router.Group("/")
