@@ -2,7 +2,7 @@ package schema
 
 import (
 	"time"
-
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -22,6 +22,6 @@ type User struct {
 	Verified  bool               `bson:"verified" json:"verified"`
 	UpdatedAt time.Time          `bson:"updatedAt,omitempty" json:"updatedAt,omitempty"`
 	CreatedAt time.Time          `bson:"createdAt,omitempty" json:"createdAt,omitempty"`
-	UserInfo  any                `bson:"userInfo,omitempty" json:"userInfo,omitempty"`
+	UserInfo  bson.M             `bson:"userInfo,omitempty" json:"userInfo,omitempty"`
 	Banned    bool               `bson:"banned,omitempty" json:"banned,omitempty"`
 }
