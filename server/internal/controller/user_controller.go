@@ -190,26 +190,25 @@ func (jc UserController) RetrieveOne(c *gin.Context) {
 // @Failure      500  {object}  map[string]string
 // @Router       /users/{id}/verify [patch]
 func (jc UserController) VerifyUser(c *gin.Context) {
-    tokenStr, err := c.Cookie("access_token")
-    if err != nil {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "No auth token"})
-        return
-    }
+	tokenStr, err := c.Cookie("access_token")
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "No auth token"})
+		return
+	}
 
-    claims, err := auth.ParseJWT(tokenStr)
-    if err != nil {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-        return
-    }
+	claims, err := auth.ParseJWT(tokenStr)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
 
-    if claims.Role != "admin" {
-        c.JSON(http.StatusForbidden, gin.H{"error": "Admin only"})
-        return
-    }
+	if claims.Role != "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Admin only"})
+		return
+	}
 
-    jc.baseController.PatchOne(c)
+	jc.baseController.PatchOne(c)
 }
-
 
 // EditPermission godoc
 // @Summary      Change a user's role (admin only)
@@ -227,25 +226,83 @@ func (jc UserController) VerifyUser(c *gin.Context) {
 // @Failure      500  {object}  map[string]string
 // @Router       /users/{id}/role [patch]
 func (jc UserController) EditPermission(c *gin.Context) {
-    tokenStr, err := c.Cookie("access_token")
-    if err != nil {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "No auth token"})
-        return
-    }
+	tokenStr, err := c.Cookie("access_token")
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "No auth token"})
+		return
+	}
 
-    claims, err := auth.ParseJWT(tokenStr)
-    if err != nil {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-        return
-    }
+	claims, err := auth.ParseJWT(tokenStr)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
 
-    if claims.Role != "admin" {
-        c.JSON(http.StatusForbidden, gin.H{"error": "Admin only"})
-        return
-    }
+	if claims.Role != "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Admin only"})
+		return
+	}
 
-    jc.baseController.PatchOne(c)
+	jc.baseController.PatchOne(c)
 }
 
+// GetPublicInfo godoc
+// @Summary      Get minimal public info of a user/company
+// @Description  Returns name, role, profile image, and userInfo (custom name/logo if company)
+// @Tags         Users
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string  true  "User ID"
+// @Success      200  {object}  map[string]any
+// @Failure      400  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Router       //{id} [get]
+func (jc UserController) GetPublicInfo(c *gin.Context) {
+	id := c.Param("id")
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ID"})
+		return
+	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
+	user, err := findOne[schema.User](ctx, jc.baseController.collectionName, objID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	// Extract custom name and logo from userInfo if available
+	customName, customLogo := extractUserInfo(user.UserInfo)
+
+	resp := gin.H{
+		"name":         user.Name, // default top-level name
+		"role":         user.Role,
+		"profileImage": user.AvatarURL, // default avatar
+	}
+
+	// Override with custom info if available
+	userInfo := gin.H{}
+	if customName != "" {
+		userInfo["name"] = customName
+		resp["name"] = customName // optionally, override top-level name
+	}
+	if customLogo != "" {
+		userInfo["logo"] = customLogo
+		resp["profileImage"] = customLogo
+	}
+
+	if len(userInfo) > 0 {
+		resp["userInfo"] = userInfo
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+func extractUserInfo(info bson.M) (name string, logo string) {
+	name, _ = info["name"].(string)
+	logo, _ = info["logo"].(string)
+	return
+}
