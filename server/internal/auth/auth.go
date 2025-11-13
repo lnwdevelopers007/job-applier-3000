@@ -49,7 +49,7 @@ func OAuthCallback(c *gin.Context) {
 		return
 	}
 
-	res, err := upsertUser(user, role)
+	res, isNewUser, err := upsertUser(user, role)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -129,7 +129,11 @@ func OAuthCallback(c *gin.Context) {
 
 	// Redirect to frontend callback without token in URL
 	redirectURL := config.LoadEnv("FRONTEND") + "/callback"
-
+	if isNewUser {
+			redirectURL += "?step=signup&token=" + accessToken
+	} else {
+			redirectURL += "?step=login&token=" + accessToken
+	}
 	c.Redirect(http.StatusFound, redirectURL)
 }
 
