@@ -8,7 +8,7 @@ type JWTPayload = {
   exp?: number;
 };
 
-export const load: PageServerLoad = async ({ cookies, locals }) => {
+export const load: PageServerLoad = async ({ cookies }) => {
   console.log('=== BANNED PAGE LOAD ===');
   console.log('Has access_token:', !!cookies.get('access_token'));
   console.log('Has refresh_token:', !!cookies.get('refresh_token'));
