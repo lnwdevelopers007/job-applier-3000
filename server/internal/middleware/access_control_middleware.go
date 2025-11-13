@@ -89,9 +89,6 @@ func checkBanStatus(c *gin.Context) error {
 	}
 
 	if user.Banned {
-		// Clear cookies for banned user
-		c.SetCookie("refresh_token", "", -1, "/", c.Request.URL.Hostname(), false, true)
-		c.SetCookie("access_token", "", -1, "/", c.Request.URL.Hostname(), false, true)
 		return ErrUserBanned
 	}
 

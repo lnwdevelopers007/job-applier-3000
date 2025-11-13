@@ -46,9 +46,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 		if (decoded) {
 			// Check if user is banned FIRST before anything else
 			if (decoded.banned && path !== '/banned') {
-				// Clear cookies
-				event.cookies.delete('access_token', { path: '/' });
-				event.cookies.delete('refresh_token', { path: '/' });
 				throw redirect(303, '/banned');
 			}
 
@@ -73,8 +70,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 						
 						// Check if newly refreshed token shows user is banned
 						if (newDecoded.banned) {
-							event.cookies.delete('access_token', { path: '/' });
-							event.cookies.delete('refresh_token', { path: '/' });
 							throw redirect(303, '/banned');
 						}
 
@@ -104,8 +99,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 						// Check if refresh failed due to ban
 						const errorData = await refreshResponse.json().catch(() => ({}));
 						if (errorData.error === 'account_banned') {
-							event.cookies.delete('access_token', { path: '/' });
-							event.cookies.delete('refresh_token', { path: '/' });
 							throw redirect(303, '/banned');
 						}
 
@@ -166,8 +159,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 					
 					// Check if user is banned
 					if (newDecoded.banned) {
-						event.cookies.delete('access_token', { path: '/' });
-						event.cookies.delete('refresh_token', { path: '/' });
 						throw redirect(303, '/banned');
 					}
 
@@ -196,8 +187,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 					// Check if refresh failed due to ban
 					const errorData = await refreshResponse.json().catch(() => ({}));
 					if (errorData.error === 'account_banned') {
-						event.cookies.delete('access_token', { path: '/' });
-						event.cookies.delete('refresh_token', { path: '/' });
 						throw redirect(303, '/banned');
 					}
 
