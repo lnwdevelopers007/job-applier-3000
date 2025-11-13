@@ -54,8 +54,8 @@
       email,
       firstName: fullName,
       lastName: desiredRole,
-      studentId: linkedIn,
-      year: github
+      portfolio: portfolio,
+      github: github
     });
   }
 
@@ -92,7 +92,9 @@
         portfolio,
         github,
       }, 'jobSeeker');
-
+      payload.role = 'jobSeeker';
+      payload.email = email;
+      payload.provider = 'google'
       await userService.updateUser(userID!, payload);
       toast.success('Jobseeker details updated successfully');
       goto('/app/jobs');

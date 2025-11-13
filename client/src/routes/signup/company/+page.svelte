@@ -129,7 +129,9 @@
         headquarters,
         linkedIn: companyLinkedin,
       }, 'company');
-
+      payload.role = 'company';
+      payload.email = email;
+      payload.provider = 'google'
       await userService.updateUser(userID!, payload);
       toast.success('Company details updated successfully');
       goto('/company/dashboard');
