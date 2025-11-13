@@ -65,11 +65,39 @@ func OAuthCallback(c *gin.Context) {
 	}
 
 	if dbUser.Banned {
-		// Redirect to frontend with banned error
-		redirectURL := config.LoadEnv("FRONTEND") + "/banned"
-		c.Redirect(http.StatusFound, redirectURL)
+	// Generate tokens even for banned users so frontend can verify ban status
+	accessToken, refreshToken, err := generateTokens(user.Email, user.Name, user.AvatarURL, res)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
+
+	refreshTokenAge := config.LoadInt("REFRESH_TOKEN_AGE_DAYS") * 24 * 3600
+	
+	// Set cookies so frontend can verify the user is banned
+	c.SetCookie(
+		"refresh_token",
+		refreshToken,
+		refreshTokenAge,
+		"/", "localhost",
+		false,
+		true,
+	)
+
+	c.SetCookie(
+		"access_token",
+		accessToken,
+		3600, // 1 hour
+		"/", "localhost",
+		false,
+		true,
+	)
+
+	// Now redirect to banned page WITH cookies
+	redirectURL := config.LoadEnv("FRONTEND") + "/banned"
+	c.Redirect(http.StatusFound, redirectURL)
+	return
+}
 
 	accessToken, refreshToken, err := generateTokens(user.Email, user.Name, user.AvatarURL, res)
 	if err != nil {
