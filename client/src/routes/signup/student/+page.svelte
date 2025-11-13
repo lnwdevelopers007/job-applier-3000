@@ -32,6 +32,9 @@
   let location = '';
   let aboutMe = '';
   let dateOfBirth = '';
+  let username = '';
+  let avatar = '';
+  let uid = '';
 
   let files: FileMetadata[] = [];
   let isUploadModalOpen = false;
@@ -64,6 +67,9 @@
       const user = await userService.getCurrentUser();
       const frontendData = userService.transformToFrontendFormat(user);
       email = user.email || '';
+      uid = frontendData.userID as string;
+      username = frontendData.name as string;
+      avatar = frontendData.avatarURL as string;
       fullName = frontendData.fullName as string;
       location = frontendData.location as string;
       phone = frontendData.phone as string;
@@ -95,6 +101,9 @@
       payload.role = 'jobSeeker';
       payload.email = email;
       payload.provider = 'google'
+      payload.name = username;
+      payload.avatarURL = avatar;
+      payload.userID = uid;
       await userService.updateUser(userID!, payload);
       toast.success('Jobseeker details updated successfully');
       goto('/app/jobs');
