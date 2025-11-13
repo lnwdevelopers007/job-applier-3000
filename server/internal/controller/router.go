@@ -90,7 +90,7 @@ func NewRouter() *gin.Engine {
 		noteRoutes.GET("/query", note.Query)
 		noteRoutes.GET("/:id", note.RetrieveOne)
 		noteRoutes.POST("/", note.Create)
-		noteRoutes.PUT("/", note.Update)
+		noteRoutes.PUT("/:id", note.Update)
 		noteRoutes.DELETE("/:id", note.Delete)
 	}
 
