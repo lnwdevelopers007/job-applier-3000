@@ -31,6 +31,9 @@
   let foundedYear = '';
   let headquarters = '';
   let companyLinkedin = '';
+  let username = '';
+  let avatar = '';
+  let uid = '';
 
   let files: FileMetadata[] = [];
   let isUploadModalOpen = false;
@@ -102,6 +105,9 @@
       const user = await userService.getCurrentUser();
       const frontendData = userService.transformToFrontendFormat(user);
       email = user.email || '';
+      uid = frontendData.userID as string;
+      username = frontendData.name as string;
+      avatar = frontendData.avatarURL as string;
       companyName = frontendData.companyName as string;
       aboutCompany = frontendData.aboutCompany as string;
       industry = frontendData.industry as string;
@@ -129,7 +135,12 @@
         headquarters,
         linkedIn: companyLinkedin,
       }, 'company');
-
+      payload.role = 'company';
+      payload.email = email;
+      payload.provider = 'google'
+      payload.name = username;
+      payload.avatarURL = avatar;
+      payload.userID = uid;
       await userService.updateUser(userID!, payload);
       toast.success('Company details updated successfully');
       goto('/company/dashboard');
