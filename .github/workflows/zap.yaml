@@ -40,7 +40,7 @@ jobs:
           sleep 10
 
       - name: Run ZAP Full Scan
-        uses: zaproxy/[email protected]
+        uses: zaproxy/action-full-scan@v0.9.0
         with:
           docker_name: 'owasp/zap2docker-stable'
           target: 'http://localhost:5173'
