@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/auth"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/repository"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -47,7 +48,7 @@ func (jc UserController) Query(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	users, err := findAll[schema.User](ctx, jc.baseController.collectionName, userFilter)
+	users, err := repository.FindAll[schema.User](ctx, userFilter)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -190,26 +191,25 @@ func (jc UserController) RetrieveOne(c *gin.Context) {
 // @Failure      500  {object}  map[string]string
 // @Router       /users/{id}/verify [patch]
 func (jc UserController) VerifyUser(c *gin.Context) {
-    tokenStr, err := c.Cookie("access_token")
-    if err != nil {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "No auth token"})
-        return
-    }
+	tokenStr, err := c.Cookie("access_token")
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "No auth token"})
+		return
+	}
 
-    claims, err := auth.ParseJWT(tokenStr)
-    if err != nil {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-        return
-    }
+	claims, err := auth.ParseJWT(tokenStr)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
 
-    if claims.Role != "admin" {
-        c.JSON(http.StatusForbidden, gin.H{"error": "Admin only"})
-        return
-    }
+	if claims.Role != "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Admin only"})
+		return
+	}
 
-    jc.baseController.PatchOne(c)
+	jc.baseController.PatchOne(c)
 }
-
 
 // EditPermission godoc
 // @Summary      Change a user's role (admin only)
@@ -227,25 +227,22 @@ func (jc UserController) VerifyUser(c *gin.Context) {
 // @Failure      500  {object}  map[string]string
 // @Router       /users/{id}/role [patch]
 func (jc UserController) EditPermission(c *gin.Context) {
-    tokenStr, err := c.Cookie("access_token")
-    if err != nil {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "No auth token"})
-        return
-    }
+	tokenStr, err := c.Cookie("access_token")
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "No auth token"})
+		return
+	}
 
-    claims, err := auth.ParseJWT(tokenStr)
-    if err != nil {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-        return
-    }
+	claims, err := auth.ParseJWT(tokenStr)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
 
-    if claims.Role != "admin" {
-        c.JSON(http.StatusForbidden, gin.H{"error": "Admin only"})
-        return
-    }
+	if claims.Role != "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Admin only"})
+		return
+	}
 
-    jc.baseController.PatchOne(c)
+	jc.baseController.PatchOne(c)
 }
-
-
-
