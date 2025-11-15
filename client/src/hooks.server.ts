@@ -23,6 +23,26 @@ type JWTPayload = {
 	exp?: number;
 };
 
+// Helper function to handle user verification and setup
+function handleUserAuth(decoded: JWTPayload, event: any, path: string) {
+	// Check if user is verified (allow access to /unverified route)
+	if (!decoded.verified && path !== '/unverified' && !path.startsWith('/unverified/')) {
+		const userName = decoded.name ? encodeURIComponent(decoded.name) : '';
+		throw redirect(303, `/unverified?name=${userName}`);
+	}
+	
+	// Set user in locals
+	event.locals.user = {
+		email: decoded.email || '',
+		name: decoded.name || '',
+		avatarURL: decoded.avatarURL,
+		userID: decoded.userID || '',
+		role: (decoded.role as any) || 'jobSeeker',
+		verified: decoded.verified || false,
+		isAuthenticated: decoded.verified === true
+	};
+}
+
 export const handle: Handle = async ({ event, resolve }) => {
 	const path = event.url.pathname;
 	
@@ -71,16 +91,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 						});
 						
 						if (newDecoded) {
-							// Set user in locals
-							event.locals.user = {
-								email: newDecoded.email || '',
-								name: newDecoded.name || '',
-								avatarURL: newDecoded.avatarURL,
-								userID: newDecoded.userID || '',
-								role: (newDecoded.role as any) || 'jobSeeker',
-								verified: newDecoded.verified || false,
-								isAuthenticated: true
-							};
+							handleUserAuth(newDecoded, event, path);
 						}
 					} else {
 						// Refresh failed, clear cookies
@@ -101,16 +112,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 					}
 				}
 			} else if (!isExpired) {
-				// Token is valid, set user in locals
-				event.locals.user = {
-					email: decoded.email || '',
-					name: decoded.name || '',
-					avatarURL: decoded.avatarURL,
-					userID: decoded.userID || '',
-					role: (decoded.role as any) || 'jobSeeker',
-					verified: decoded.verified || false,
-					isAuthenticated: true
-				};
+				// Token is valid, handle user authentication
+				handleUserAuth(decoded, event, path);
 			} else {
 				// Token expired and no refresh token
 				event.cookies.delete('access_token', { path: '/' });
@@ -148,15 +151,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 					});
 					
 					if (newDecoded) {
-						event.locals.user = {
-							email: newDecoded.email || '',
-							name: newDecoded.name || '',
-							avatarURL: newDecoded.avatarURL,
-							userID: newDecoded.userID || '',
-							role: (newDecoded.role as any) || 'jobSeeker',
-							verified: newDecoded.verified || false,
-							isAuthenticated: true
-						};
+						handleUserAuth(newDecoded, event, path);
 					}
 				} else {
 					event.cookies.delete('refresh_token', { path: '/' });
@@ -174,7 +169,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	}
 
 	// Role-based access control
-	if (event.locals.user?.isAuthenticated) {
+	if (event.locals.user?.isAuthenticated && event.locals.user?.verified) {
 		const userRole = event.locals.user.role;
 		
 		// Redirect authenticated users away from login/signup to their last intended page or default
