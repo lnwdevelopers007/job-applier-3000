@@ -77,23 +77,34 @@ var RoutePermissions = map[string]Permission{
 	},
 
 	// ===== User Routes =====
+	// Only admin can list all users
 	"GET:/users/": {
 		AllowedRoles: []string{"admin"},
 	},
+	// REMOVED: GET:/users/query - was causing security issues
+	// Admin-only query endpoint
 	"GET:/users/query": {
-		AllowedRoles: []string{"admin", "company"},
-		RequireOwnership: true,
+		AllowedRoles: []string{"admin"},
 	},
+	// View specific user with role-based access control
 	"GET:/users/:id": {
-		AllowedRoles: []string{"admin","jobSeeker", "company", "faculty"},
-		RequireOwnership: true,
+		AllowedRoles:     []string{"admin", "jobSeeker", "company", "faculty"},
+		RequireOwnership: true, // Enforced with role-based viewing in checkOwnership
 	},
 	"POST:/users/": {
 		AllowedRoles: []string{"admin"},
 	},
+	// Update user - must be own profile (or admin)
 	"PUT:/users/:id": {
-		AllowedRoles: []string{"admin", "jobSeeker", "company"},
+		AllowedRoles:     []string{"admin", "jobSeeker", "company", "faculty"},
 		RequireOwnership: true,
+	},
+	// Admin actions
+	"PATCH:/users/:id/verify": {
+		AllowedRoles: []string{"admin"},
+	},
+	"PATCH:/users/:id/role": {
+		AllowedRoles: []string{"admin"},
 	},
 	"DELETE:/users/:id": {
 		AllowedRoles: []string{"admin"},
