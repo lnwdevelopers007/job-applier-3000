@@ -1,204 +1,207 @@
 <script lang="ts">
-  import { get } from 'svelte/store';
-  import { page } from '$app/stores';
-  import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
-  import { toast } from 'svelte-french-toast';
-  import { getUserInfo } from '$lib/utils/auth';
-  import { fileService, type FileMetadata } from '$lib/services/fileService';
-  import { ArrowLeft } from 'lucide-svelte';
-  import { fly } from 'svelte/transition';
-  import AuthLayout from '$lib/components/auth/AuthLayout.svelte';
-  import AuthHeader from '$lib/components/auth/AuthHeader.svelte';
-  import FormInput from '$lib/components/auth/FormInput.svelte';
-  import FormButton from '$lib/components/auth/FormButton.svelte';
-  import GoogleOAuthButton from '$lib/components/auth/GoogleOAuthButton.svelte';
-  import FileItem from '$lib/components/files/FileItem.svelte';
-  import FilePreviewModal from '$lib/components/files/FilePreviewModal.svelte';
-  import FileUploadModal from '$lib/components/files/FileUploadModal.svelte';
+	import { get } from 'svelte/store';
+	import { page } from '$app/stores';
+	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { toast } from 'svelte-french-toast';
+	import { getUserInfo } from '$lib/utils/auth';
+	import { fileService, type FileMetadata } from '$lib/services/fileService';
+	import { ArrowLeft } from 'lucide-svelte';
+	import { fly } from 'svelte/transition';
+	import AuthLayout from '$lib/components/auth/AuthLayout.svelte';
+	import AuthHeader from '$lib/components/auth/AuthHeader.svelte';
+	import FormInput from '$lib/components/auth/FormInput.svelte';
+	import FormButton from '$lib/components/auth/FormButton.svelte';
+	import GoogleOAuthButton from '$lib/components/auth/GoogleOAuthButton.svelte';
+	import FileItem from '$lib/components/files/FileItem.svelte';
+	import FilePreviewModal from '$lib/components/files/FilePreviewModal.svelte';
+	import FileUploadModal from '$lib/components/files/FileUploadModal.svelte';
 	import DeleteConfirmModal from '$lib/components/files/DeleteConfirmModal.svelte';
 	import { userService } from '$lib/services/userService';
+	import PDPAModal from '$lib/components/modals/PDPAModal.svelte';
 
+	let showPDPA = $state(false);
 
-  
-  let currentStep = 1;
-  let email = '';
-  let fullName = '';
-  let desiredRole = '';
-  let linkedIn = '';
-  let github = '';
-  let portfolio = '';
-  let phone = '';
-  let location = '';
-  let aboutMe = '';
-  let dateOfBirth = '';
-  let username = '';
-  let avatar = '';
-  let uid = '';
+	let currentStep = 1;
+	let email = '';
+	let fullName = '';
+	let desiredRole = '';
+	let linkedIn = '';
+	let github = '';
+	let portfolio = '';
+	let phone = '';
+	let location = '';
+	let aboutMe = '';
+	let dateOfBirth = '';
+	let username = '';
+	let avatar = '';
+	let uid = '';
 
-  let files: FileMetadata[] = [];
-  let isUploadModalOpen = false;
-  let selectedFile: FileMetadata | null = null;
-  let isPreviewModalOpen = false;
-  let fileToDelete: FileMetadata | null = null;
-  let isDeleteModalOpen = false;
-  let isDeleting = false;
+	let files: FileMetadata[] = [];
+	let isUploadModalOpen = false;
+	let selectedFile: FileMetadata | null = null;
+	let isPreviewModalOpen = false;
+	let fileToDelete: FileMetadata | null = null;
+	let isDeleteModalOpen = false;
+	let isDeleting = false;
 
-  let userInfo = getUserInfo();
-  let userID = userInfo?.userID || '';
-  const userRole = userInfo?.role || 'jobSeeker';
-  
-  function goBackToEmailStep() {
-    currentStep = 1;
-  }
-  
-  function handleSignup() {
-    console.log('Student signup:', {
-      email,
-      firstName: fullName,
-      lastName: desiredRole,
-      portfolio: portfolio,
-      github: github
-    });
-  }
+	let userInfo = getUserInfo();
+	let userID = userInfo?.userID || '';
+	const userRole = userInfo?.role || 'jobSeeker';
 
-  async function loadJobseekerDetails() {
-    try {
-      const user = await userService.getCurrentUser();
-      const frontendData = userService.transformToFrontendFormat(user);
-      email = user.email || '';
-      uid = frontendData.userID as string;
-      username = frontendData.name as string;
-      avatar = frontendData.avatarURL as string;
-      fullName = frontendData.fullName as string;
-      location = frontendData.location as string;
-      phone = frontendData.phone as string;
-      linkedIn = frontendData.linkedIn as string;
-      desiredRole = frontendData.desiredRole as string;
-      aboutMe = frontendData.aboutMe as string;
-      dateOfBirth = frontendData.dateOfBirth as string;
-      portfolio = frontendData.portfolio as string;
-      github = frontendData.github as string;
-      console.log(frontendData);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to load jobseeker details');
-    }
-  }
+	function goBackToEmailStep() {
+		currentStep = 1;
+	}
 
-  async function handleSubmit() {
-    try {
-      const payload = await userService.transformToBackendFormat({
-        fullName,
-        location,
-        phone,
-        linkedIn,
-        desiredRole,
-        aboutMe,
-        dateOfBirth,
-        portfolio,
-        github,
-      }, 'jobSeeker');
-      payload.role = 'jobSeeker';
-      payload.email = email;
-      payload.provider = 'google'
-      payload.name = username;
-      payload.avatarURL = avatar;
-      payload.userID = uid;
-      await userService.updateUser(userID!, payload);
-      toast.success('Jobseeker details updated successfully');
-      goto('/app/jobs');
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to update jobseeker details');
-    }
-  }
-  async function loadFiles() {
-    if (!userID) return;
-    try {
-      files = await fileService.listUserFiles(userID);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to load files');
-    }
-  }
+	function handleSignup() {
+		console.log('Student signup:', {
+			email,
+			firstName: fullName,
+			lastName: desiredRole,
+			portfolio: portfolio,
+			github: github
+		});
+	}
 
-  function handleUploadClick() {
-    isUploadModalOpen = true;
-  }
+	async function loadJobseekerDetails() {
+		try {
+			const user = await userService.getCurrentUser();
+			const frontendData = userService.transformToFrontendFormat(user);
+			email = user.email || '';
+			uid = frontendData.userID as string;
+			username = frontendData.name as string;
+			avatar = frontendData.avatarURL as string;
+			fullName = frontendData.fullName as string;
+			location = frontendData.location as string;
+			phone = frontendData.phone as string;
+			linkedIn = frontendData.linkedIn as string;
+			desiredRole = frontendData.desiredRole as string;
+			aboutMe = frontendData.aboutMe as string;
+			dateOfBirth = frontendData.dateOfBirth as string;
+			portfolio = frontendData.portfolio as string;
+			github = frontendData.github as string;
+			console.log(frontendData);
+		} catch (err) {
+			toast.error(err instanceof Error ? err.message : 'Failed to load jobseeker details');
+		}
+	}
 
-  async function handleUploadSuccess(file: FileMetadata) {
-    await loadFiles();
-    toast.success(`${fileService.getCategoryLabel(file.category)} uploaded successfully`);
-  }
+	async function handleSubmit() {
+		try {
+			const payload = await userService.transformToBackendFormat(
+				{
+					fullName,
+					location,
+					phone,
+					linkedIn,
+					desiredRole,
+					aboutMe,
+					dateOfBirth,
+					portfolio,
+					github
+				},
+				'jobSeeker'
+			);
+			payload.role = 'jobSeeker';
+			payload.email = email;
+			payload.provider = 'google';
+			payload.name = username;
+			payload.avatarURL = avatar;
+			payload.userID = uid;
+			await userService.updateUser(userID!, payload);
+			toast.success('Jobseeker details updated successfully');
+			goto('/app/jobs');
+		} catch (err) {
+			toast.error(err instanceof Error ? err.message : 'Failed to update jobseeker details');
+		}
+	}
+	async function loadFiles() {
+		if (!userID) return;
+		try {
+			files = await fileService.listUserFiles(userID);
+		} catch (err) {
+			toast.error(err instanceof Error ? err.message : 'Failed to load files');
+		}
+	}
 
-  function handlePreview(file: FileMetadata) {
-    selectedFile = file;
-    isPreviewModalOpen = true;
-  }
+	function handleUploadClick() {
+		isUploadModalOpen = true;
+	}
 
-  function handleDeleteClick(file: FileMetadata) {
-    fileToDelete = file;
-    isDeleteModalOpen = true;
-  }
-  
-  async function handleDeleteConfirm() {
-    if (!fileToDelete) return;
+	async function handleUploadSuccess(file: FileMetadata) {
+		await loadFiles();
+		toast.success(`${fileService.getCategoryLabel(file.category)} uploaded successfully`);
+	}
 
-    isDeleting = true;
-    try {
-      await fileService.deleteFile(fileToDelete.id);
-      files = files.filter(f => f.id !== fileToDelete.id);
-      toast.success('Document deleted successfully');
-      isDeleteModalOpen = false;
-      fileToDelete = null;
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to delete document');
-    } finally {
-      isDeleting = false;
-    }
-  }
-  
-  function handleDeleteCancel() {
-    fileToDelete = null;
-  }
+	function handlePreview(file: FileMetadata) {
+		selectedFile = file;
+		isPreviewModalOpen = true;
+	}
 
-  onMount(async () => {
-    const urlStep = Number(get(page).url.searchParams.get('currentStep'));
-    if (urlStep === 2) {
-        currentStep = 2;
-    }
-    if (currentStep===2) {
-        userInfo = getUserInfo();
-        userID = userInfo?.userID;
-        let retries = 0;
-        while (!userInfo && retries < 10) {
-          await new Promise(resolve => setTimeout(resolve, 50));
-          userInfo = getUserInfo();
-          userID = userInfo?.userID;
-          retries++;
-        }
-      if (!userID) {
-        console.error("Failed to load userID after login!");
-        toast.error("Unable to load user session. Try reloading the page.");
-        return;
-      }
-    }
-    if (currentStep === 2) {
-      await loadFiles();
-      await loadJobseekerDetails();
-    }
-  });
+	function handleDeleteClick(file: FileMetadata) {
+		fileToDelete = file;
+		isDeleteModalOpen = true;
+	}
 
+	async function handleDeleteConfirm() {
+		if (!fileToDelete) return;
+
+		isDeleting = true;
+		try {
+			await fileService.deleteFile(fileToDelete.id);
+			files = files.filter((f) => f.id !== fileToDelete.id);
+			toast.success('Document deleted successfully');
+			isDeleteModalOpen = false;
+			fileToDelete = null;
+		} catch (err) {
+			toast.error(err instanceof Error ? err.message : 'Failed to delete document');
+		} finally {
+			isDeleting = false;
+		}
+	}
+
+	function handleDeleteCancel() {
+		fileToDelete = null;
+	}
+
+	onMount(async () => {
+		const urlStep = Number(get(page).url.searchParams.get('currentStep'));
+		if (urlStep === 2) {
+			currentStep = 2;
+		}
+		if (currentStep === 2) {
+			userInfo = getUserInfo();
+			userID = userInfo?.userID;
+			let retries = 0;
+			while (!userInfo && retries < 10) {
+				await new Promise((resolve) => setTimeout(resolve, 50));
+				userInfo = getUserInfo();
+				userID = userInfo?.userID;
+				retries++;
+			}
+			if (!userID) {
+				console.error('Failed to load userID after login!');
+				toast.error('Unable to load user session. Try reloading the page.');
+				return;
+			}
+		}
+		if (currentStep === 2) {
+			await loadFiles();
+			await loadJobseekerDetails();
+		}
+	});
 </script>
 
 <AuthLayout backHref="/signup">
-  <AuthHeader />
-  
-  {#if currentStep === 1}
-    <div class="mb-8" in:fly={{ x: -20, duration: 200 }}>
-      <h1 class="text-3xl font-semibold text-gray-900 mb-2">Sign up</h1>
-      <p class="text-sm text-gray-500">Register as a job seekeer to start finding your dream job</p>
-    </div>
-    
-    <!-- <form onsubmit={e => { e.preventDefault(); handleEmailStep(); }} class="space-y-6">
+	<AuthHeader />
+
+	{#if currentStep === 1}
+		<div class="mb-8" in:fly={{ x: -20, duration: 200 }}>
+			<h1 class="mb-2 text-3xl font-semibold text-gray-900">Sign up</h1>
+			<p class="text-sm text-gray-500">Register as a job seekeer to start finding your dream job</p>
+		</div>
+
+		<!-- <form onsubmit={e => { e.preventDefault(); handleEmailStep(); }} class="space-y-6">
       <FormInput
         id="email"
         type="email"
@@ -212,109 +215,127 @@
     </form>
 
     <OrDivider /> -->
-    <GoogleOAuthButton text="Continue with Google" userType="jobSeeker" />
+		<GoogleOAuthButton text="Continue with Google" userType="jobSeeker" />
 
-    <p class="text-center text-sm text-gray-500 mt-8">
-      By signing up, you consent to the processing of your Personal Data as described in our 
-      <a href="/pdpa" class="text-blue-600 hover:text-blue-700 font-medium">Privacy Notice</a>
-    </p>
+		<p class="mt-8 text-center text-sm text-gray-500">
+			By using our service, you consent to the processing of your Personal Data as described in our
 
-    <p class="text-center text-sm text-gray-500 mt-8">
-      Already have an account?
-      <a href="/login" class="text-green-600 hover:text-green-700 font-medium">Log in</a>
-    </p>
-    
-  {:else}
-    <div class="mb-6" in:fly={{ x: 20, duration: 200 }}>
-      <button 
-        type="button" 
-        onclick={goBackToEmailStep}
-        class="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4 transition-colors cursor-pointer"
-      >
-        <ArrowLeft class="w-4 h-4 mr-1" />
-        <span>{email}</span>
-      </button>
-      <h1 class="text-3xl font-semibold text-gray-900 mb-2">Complete Profile</h1>
-      <p class="text-sm text-gray-500">Tell us more about yourself</p>
-    </div>
-    
-    <form onsubmit={e => { e.preventDefault(); handleSignup(); }} class="space-y-4">
-      <div class="grid grid-cols-2 gap-4">
-        <FormInput
-          id="fullname"
-          label="Full Name"
-          placeholder="Enter your name..."
-          bind:value={fullName}
-          required
-        />
-        <FormInput
-          id="desiredrole"
-          label="Desired Role"
-          placeholder="Enter your preferred role..."
-          bind:value={desiredRole}
-          required
-        />
-      </div>
-      
-      <div class="grid grid-cols-2 gap-4">
-        <FormInput
-          id="portfolio"
-          type="url"
-          label="Portfolio"
-          placeholder="Your portfolio website (Optional)"
-          bind:value={portfolio}
-        />
-        <FormInput
-          id="github"
-          type="url"
-          label="Github"
-          bind:value={github}
-          placeholder="Your github link (Optional)"
-        >
-        </FormInput>
-      </div>
+			<button
+				type="button"
+				onclick={() => (showPDPA = true)}
+				class="font-medium text-blue-600 hover:text-blue-700"
+			>
+				Privacy Notice
+			</button>
+		</p>
 
-      <div class="mt-4">
-        <button type="button" onclick={handleUploadClick} class="px-4 py-2 bg-green-600 text-white rounded">
-          Upload Files
-        </button>
+		<p class="mt-8 text-center text-sm text-gray-500">
+			Already have an account?
+			<a href="/login" class="font-medium text-green-600 hover:text-green-700">Log in</a>
+		</p>
+	{:else}
+		<div class="mb-6" in:fly={{ x: 20, duration: 200 }}>
+			<button
+				type="button"
+				onclick={goBackToEmailStep}
+				class="mb-4 flex cursor-pointer items-center text-sm text-gray-500 transition-colors hover:text-gray-700"
+			>
+				<ArrowLeft class="mr-1 h-4 w-4" />
+				<span>{email}</span>
+			</button>
+			<h1 class="mb-2 text-3xl font-semibold text-gray-900">Complete Profile</h1>
+			<p class="text-sm text-gray-500">Tell us more about yourself</p>
+		</div>
 
-        {#if files.length > 0}
-          <div class="mt-2 space-y-2">
-            {#each files as file (file.id)}
-              <FileItem {file} 
-                onPreview={() => handlePreview(file)}
-                onDelete={() => handleDeleteClick(file)}
-              />
-            {/each}
-          </div>
-        {/if}
+		<form
+			onsubmit={(e) => {
+				e.preventDefault();
+				handleSignup();
+			}}
+			class="space-y-4"
+		>
+			<div class="grid grid-cols-2 gap-4">
+				<FormInput
+					id="fullname"
+					label="Full Name"
+					placeholder="Enter your name..."
+					bind:value={fullName}
+					required
+				/>
+				<FormInput
+					id="desiredrole"
+					label="Desired Role"
+					placeholder="Enter your preferred role..."
+					bind:value={desiredRole}
+					required
+				/>
+			</div>
 
-        <FileUploadModal 
-          bind:isOpen={isUploadModalOpen} {userRole} 
-          onUploadSuccess={handleUploadSuccess} 
-        />
+			<div class="grid grid-cols-2 gap-4">
+				<FormInput
+					id="portfolio"
+					type="url"
+					label="Portfolio"
+					placeholder="Your portfolio website (Optional)"
+					bind:value={portfolio}
+				/>
+				<FormInput
+					id="github"
+					type="url"
+					label="Github"
+					bind:value={github}
+					placeholder="Your github link (Optional)"
+				></FormInput>
+			</div>
 
-        {#if selectedFile}
-          <FilePreviewModal
-            bind:isOpen={isPreviewModalOpen}
-            fileId={selectedFile.id}
-            filename={selectedFile.filename}
-          />
-        {/if}
+			<div class="mt-4">
+				<button
+					type="button"
+					onclick={handleUploadClick}
+					class="rounded bg-green-600 px-4 py-2 text-white"
+				>
+					Upload Files
+				</button>
 
-        {#if fileToDelete}
-          <DeleteConfirmModal
-            bind:isOpen={isDeleteModalOpen}
-            filename={fileToDelete.filename}
-            {isDeleting}
-            onConfirm={handleDeleteConfirm}
-            onCancel={handleDeleteCancel}
-          />
-        {/if}
-      </div>
+				{#if files.length > 0}
+					<div class="mt-2 space-y-2">
+						{#each files as file (file.id)}
+							<FileItem
+								{file}
+								onPreview={() => handlePreview(file)}
+								onDelete={() => handleDeleteClick(file)}
+							/>
+						{/each}
+					</div>
+				{/if}
 
-      <FormButton type="submit" onclick={handleSubmit}>Create Account</FormButton>
-    </form>
-  {/if}
+				<FileUploadModal
+					bind:isOpen={isUploadModalOpen}
+					{userRole}
+					onUploadSuccess={handleUploadSuccess}
+				/>
+
+				{#if selectedFile}
+					<FilePreviewModal
+						bind:isOpen={isPreviewModalOpen}
+						fileId={selectedFile.id}
+						filename={selectedFile.filename}
+					/>
+				{/if}
+
+				{#if fileToDelete}
+					<DeleteConfirmModal
+						bind:isOpen={isDeleteModalOpen}
+						filename={fileToDelete.filename}
+						{isDeleting}
+						onConfirm={handleDeleteConfirm}
+						onCancel={handleDeleteCancel}
+					/>
+				{/if}
+			</div>
+
+			<FormButton type="submit" onclick={handleSubmit}>Create Account</FormButton>
+		</form>
+	{/if}
 </AuthLayout>
+<PDPAModal bind:isVisible={showPDPA} />
