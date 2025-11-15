@@ -1,0 +1,55 @@
+name: ZAP Full DAST Scan
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  zap_full_scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22.2"
+
+      - name: Start Server
+        working-directory: server
+        run: |
+          go mod download
+          nohup go run main.go &
+          sleep 10
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 1.2.6
+
+      - name: Start Client
+        working-directory: client
+        run: |
+          bun install
+          nohup bun run dev &
+          sleep 10
+
+      - name: Run ZAP Full Scan
+        uses: zaproxy/[email protected]
+        with:
+          docker_name: 'owasp/zap2docker-stable'
+          target: 'http://localhost:5173'
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a'
+
+      - name: Upload Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zap-report
+          path: zap_report.html
