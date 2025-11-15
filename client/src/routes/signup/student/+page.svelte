@@ -20,7 +20,7 @@
 	import { userService } from '$lib/services/userService';
 	import PDPAModal from '$lib/components/modals/PDPAModal.svelte';
 
-	let showPDPA = $state(false);
+	let showPDPA = false;
 
 	let currentStep = 1;
 	let email = '';

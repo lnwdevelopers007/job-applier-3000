@@ -48,7 +48,7 @@
 	let userID = userInfo?.userID || '';
 	const userRole = userInfo?.role || 'company';
 
-	let showPDPA = $state(false);
+	let showPDPA = false;
 
 	function goBackToEmailStep() {
 		currentStep = 1;
