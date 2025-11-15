@@ -73,21 +73,19 @@ export class NoteApi {
 
   /**
    * Update a note - PUT /notes/:id
-   * Backend expects PUT /notes/:id with the updated note data
    */
   async update(id: string, noteData: UpdateNoteRequest): Promise<Note> {
-    // Ensure all required fields are present for update
     const updateData = {
-      jobApplicationID: noteData.jobApplicationID!,
       content: noteData.content!,
       timestamp: noteData.timestamp || new Date().toISOString()
     };
     
     await this.client.put<any>(`/notes/${id}`, updateData);
     
+    // Return optimistic update with preserved jobApplicationID
     const updatedNote: Note = {
-      id: id, // Keep the same ID
-      jobApplicationID: updateData.jobApplicationID,
+      id: id,
+      jobApplicationID: noteData.jobApplicationID!, // Keep original for UI
       content: updateData.content,
       timestamp: updateData.timestamp
     };
