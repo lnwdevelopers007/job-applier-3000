@@ -16,7 +16,6 @@ export const load: PageServerLoad = async ({ url, cookies }) => {
 	const token = url.searchParams.get('token');
 	const error = url.searchParams.get('error');
 
-
 	// Handle error from OAuth
 	if (error) {
 		throw redirect(303, `/login?error=${encodeURIComponent(error)}`);
@@ -35,7 +34,7 @@ export const load: PageServerLoad = async ({ url, cookies }) => {
 		console.error('Failed to decode JWT in callback:', error);
 		throw redirect(303, '/login?error=Invalid+authentication+token');
 	}
-	
+
 	if (!decoded) {
 		throw redirect(303, '/login?error=Invalid+authentication+token');
 	}
@@ -51,8 +50,10 @@ export const load: PageServerLoad = async ({ url, cookies }) => {
 	// 	throw redirect(303, `/unverified?name=${userName}`);
 	// }
 
-	const jwtExpiresIn = decoded.exp ? Math.max(0, decoded.exp - Math.floor(Date.now() / 1000)) : 60 * 60 * 24;
-	
+	const jwtExpiresIn = decoded.exp
+		? Math.max(0, decoded.exp - Math.floor(Date.now() / 1000))
+		: 60 * 60 * 24;
+
 	cookies.set('access_token', token, {
 		path: '/',
 		httpOnly: true,
@@ -63,14 +64,29 @@ export const load: PageServerLoad = async ({ url, cookies }) => {
 
 	// Determine redirect path based on role
 	const role = decoded.role?.toLowerCase();
+	const next = url.searchParams.get('step');
 	let redirectPath = '/';
-
 	if (role === 'company') {
-		redirectPath = '/company/dashboard';
-	} else if (role === 'faculty') {
+		if (next === 'signup') {
+			redirectPath = '/signup/company?currentStep=2';
+		} else {
+			redirectPath = '/company/dashboard';
+		}
+	}
+	if (role === 'faculty') {
 		redirectPath = '/app/jobs';
-	} else if (role === 'jobseeker') {
-		redirectPath = '/app/jobs';
+	} else if (role === 'admin') {
+		redirectPath = '/admin/jobs';
+	}
+	if (role === 'jobseeker') {
+		if (next === 'signup') {
+			redirectPath = '/signup/student?currentStep=2';
+		} else {
+			redirectPath = '/app/jobs';
+		}
+	}
+	if (role === 'admin') {
+		redirectPath = '/admin/dashboard';
 	}
 
 	throw redirect(303, redirectPath);

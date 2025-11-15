@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Badge from './Badge.svelte';
+  import Badge from '../ui/Badge.svelte';
   
   type BadgeVariant = 'primary' | 'secondary' | 'warning' | 'danger' | 'success' | 'info' | 'purple' | 'indigo' | 'pink' | 'teal' | 'orange' | 'cyan' | 'lime' | 'rose';
 
