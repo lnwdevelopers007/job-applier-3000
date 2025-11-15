@@ -233,6 +233,18 @@ export class JobService {
       if (!formData.jobDescription?.trim()) {
         errors.jobDescription = 'Job description is required';
       }
+      
+      // Job Summary validation
+      if (!formData.jobSummary?.trim()) {
+        errors.jobSummary = 'Job summary is required';
+      }
+    }
+    
+    if (step === 3) {
+      // Requirements validation
+      if (!formData.requiredSkills || formData.requiredSkills.length === 0) {
+        errors.requiredSkills = 'At least one required skill is required';
+      }
     }
     
     if (step === 4) {

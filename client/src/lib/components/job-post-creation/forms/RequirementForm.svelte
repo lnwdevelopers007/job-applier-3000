@@ -1,11 +1,18 @@
 <script>
+  import { AlertCircle } from 'lucide-svelte';
+  
   let { 
-    formData = $bindable()
-    // validationErrors = {},
-    // showValidationErrors = false
+    formData = $bindable(),
+    validationErrors = {},
+    showValidationErrors = false
   } = $props();
   
   let skillInput = $state('');
+  
+  // Track if user has started typing to hide error  
+  let hideRequiredSkillsError = $state(false);
+  // Track hover state for error icon
+  let isRequiredSkillsErrorHovered = $state(false);
   
   if (!formData.requiredSkills) {
     formData.requiredSkills = [];
@@ -18,12 +25,26 @@
         formData.requiredSkills = [...formData.requiredSkills, skillInput.trim()];
       }
       skillInput = '';
+      // Hide error when adding skills
+      hideRequiredSkillsError = true;
     }
   }
   
   function removeSkill(skill) {
     formData.requiredSkills = formData.requiredSkills.filter(s => s !== skill);
   }
+  
+  // Hide error when user starts typing
+  function handleSkillInput() {
+    hideRequiredSkillsError = true;
+  }
+  
+  // Reset hideError when new validation occurs
+  $effect(() => {
+    if (showValidationErrors && validationErrors.requiredSkills) {
+      hideRequiredSkillsError = false;
+    }
+  });
 </script>
 
 <div class="space-y-6">
@@ -71,7 +92,7 @@
   <!-- Required Skills & Technologies -->
   <div>
     <label for="requiredSkills" class="block text-sm font-medium text-gray-700 mb-2">
-      Required Skills & Technologies
+      Required Skills & Technologies <span class="text-red-500">*</span>
     </label>
     <div class="relative">
       <input
@@ -79,9 +100,32 @@
         type="text"
         bind:value={skillInput}
         onkeydown={addSkill}
+        oninput={handleSkillInput}
         placeholder="Type a skill and press Enter to add"
-        class="w-full text-sm px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-gray-400"
+        class="w-full text-sm px-3 py-2 border {showValidationErrors && validationErrors.requiredSkills && !hideRequiredSkillsError ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-gray-400"
       />
+      
+      {#if showValidationErrors && validationErrors.requiredSkills && !hideRequiredSkillsError}
+        <!-- Error icon positioned at right with hover detection -->
+        <div 
+          class="absolute top-2 right-2"
+          onmouseenter={() => isRequiredSkillsErrorHovered = true}
+          onmouseleave={() => isRequiredSkillsErrorHovered = false}
+          role="img"
+          aria-label="Error"
+        >
+          <AlertCircle class="w-5 h-5 text-white cursor-help" fill="red" />
+        </div>
+        
+        <!-- Floating error tooltip - only show on hover -->
+        {#if isRequiredSkillsErrorHovered}
+          <div class="absolute z-50 right-0 top-2 -translate-y-full -mt-2 px-3 py-2 bg-red-500 text-white text-xs rounded-md shadow-sm whitespace-nowrap transition-opacity duration-200">
+            <!-- Arrow pointing down to the alert icon -->
+            <div class="absolute -bottom-1 right-4 w-2 h-2 bg-red-500 transform rotate-45"></div>
+            {validationErrors.requiredSkills}
+          </div>
+        {/if}
+      {/if}
       
       <!-- Skill Tags -->
       {#if formData.requiredSkills && formData.requiredSkills.length > 0}
