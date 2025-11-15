@@ -123,7 +123,7 @@
     deleteConfirmOpen = true;
   }
 
-  async function handleDeleteConfirm(_reason: string) {
+  async function handleDeleteConfirm() {
     if (!noteToDelete) return;
 
     try {
