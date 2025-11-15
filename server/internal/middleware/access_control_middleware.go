@@ -30,7 +30,9 @@ func AccessControlMiddleware() gin.HandlerFunc {
 		// Skip for public routes (auth routes)
 		if strings.HasPrefix(c.Request.URL.Path, "/auth/") || 
 		   strings.HasPrefix(c.Request.URL.Path, "/health") ||
-		   strings.HasPrefix(c.Request.URL.Path, "/swagger/") {
+		   strings.HasPrefix(c.Request.URL.Path, "/swagger/") ||
+		   strings.HasPrefix(c.Request.URL.Path, "/jobs/public/") ||
+		   strings.HasPrefix(c.Request.URL.Path, "/users/public/") {
 			c.Next()
 			return
 		}
@@ -117,12 +119,12 @@ func checkRoutePermission(c *gin.Context) error {
 	
 	// If not found, try to match with pattern (e.g., /jobs/:id)
 	if !found {
-    matchedKey, perm, ok := matchRoutePattern(method, path)
-    if ok {
-        routeKey, permission, found = matchedKey, perm, ok
-        log.Printf("Matched route pattern: %s", routeKey)
-    }
-}
+		matchedKey, perm, ok := matchRoutePattern(method, path)
+		if ok {
+			routeKey, permission, found = matchedKey, perm, ok
+			log.Printf("Matched route pattern: %s", routeKey)
+		}
+	}
 
 	// If route not in permission map, allow (routes without restrictions)
 	if !found {
@@ -202,7 +204,41 @@ func checkOwnership(c *gin.Context, role, path string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	// Determine resource type and check ownership
+	// ===== USER ROUTES - SPECIAL HANDLING =====
+	if strings.HasPrefix(path, "/users/") && !strings.Contains(path, "query") && !strings.Contains(path, "verify") && !strings.Contains(path, "role") {
+		targetUserID := extractIDFromPath(path, "/users/")
+		
+		// Check if viewing/editing own profile
+		if targetUserID == userIDStr {
+			return nil // Always allow accessing own profile
+		}
+
+		// For GET requests (viewing other users), check role-based permissions
+		if c.Request.Method == "GET" {
+			targetObjID, err := primitive.ObjectIDFromHex(targetUserID)
+			if err != nil {
+				return ErrInvalidResourceID
+			}
+
+			// Get target user's role from database
+			var targetUser schema.User
+			err = db.Collection("users").FindOne(ctx, bson.M{"_id": targetObjID}).Decode(&targetUser)
+			if err != nil {
+				return ErrResourceNotFound
+			}
+
+			// Check if viewer can see target user based on roles
+			if !canViewUserRole(role, targetUser.Role) {
+				return ErrNotResourceOwner
+			}
+			return nil // Allowed to view
+		}
+
+		// For PUT/PATCH/DELETE, must be own profile (non-admin)
+		return ErrNotResourceOwner
+	}
+
+	// ===== JOB ROUTES =====
 	if strings.HasPrefix(path, "/jobs/") && !strings.Contains(path, "query") {
 		// Job ownership check
 		jobID := extractIDFromPath(path, "/jobs/")
@@ -221,7 +257,7 @@ func checkOwnership(c *gin.Context, role, path string) error {
 			return ErrNotResourceOwner
 		}
 	} else if strings.HasPrefix(path, "/apply/") && !strings.Contains(path, "query") {
-		// Application ownership check
+		// ===== APPLICATION ROUTES =====
 		appID := extractIDFromPath(path, "/apply/")
 		appObjID, err := primitive.ObjectIDFromHex(appID)
 		if err != nil {
@@ -250,7 +286,7 @@ func checkOwnership(c *gin.Context, role, path string) error {
 			}
 		}
 	} else if strings.HasPrefix(path, "/files/") {
-		// File ownership check
+		// ===== FILE ROUTES =====
 		if strings.Contains(path, "/files/user/") {
 			// /files/user/:userId - check if accessing own files
 			targetUserID := extractIDFromPath(path, "/files/user/")
@@ -281,6 +317,33 @@ func checkOwnership(c *gin.Context, role, path string) error {
 	}
 
 	return nil
+}
+
+// canViewUserRole checks if the viewer can see a target user's profile
+// This implements the role-based viewing matrix for user profiles
+func canViewUserRole(viewerRole string, targetRole string) bool {
+	// Admin can view everyone (already handled before this function)
+	if viewerRole == "admin" {
+		return true
+	}
+
+	// Job Seeker can view: company profiles only (NOT other job seekers, faculty, or admin)
+	if viewerRole == "jobSeeker" {
+		return targetRole == "company"
+	}
+
+	// Company can view: job seeker profiles only (NOT other companies, faculty, or admin)
+	if viewerRole == "company" {
+		return targetRole == "jobSeeker"
+	}
+
+	// Faculty can only view: their own profile (handled by ownership check)
+	if viewerRole == "faculty" {
+		return false
+	}
+
+	// Default: deny
+	return false
 }
 
 // extractIDFromPath extracts the ID from a path like /jobs/123abc
