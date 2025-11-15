@@ -32,7 +32,7 @@ func addProvider(c *gin.Context) {
 // upsertUser update or insert user into the database.
 // "role" can only have 3 values: company, jobSeeker, login.
 // Due to me being too lazy to catch every edge cases,
-func upsertUser(user goth.User, role string) (any, error) {
+func upsertUser(user goth.User, role string) (any, bool, error) {
 	db := database.GetDatabase()
 	usersCollection := db.Collection("users")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -43,22 +43,33 @@ func upsertUser(user goth.User, role string) (any, error) {
 	// Check if user already exists
 	var existingUser schema.User
 	err := usersCollection.FindOne(ctx, filter).Decode(&existingUser)
+	isNewUser := false
 	if err != nil && err != mongo.ErrNoDocuments {
-		return nil, fmt.Errorf("failed to query existing user: %w", err)
+		return nil, false, fmt.Errorf("failed to query existing user: %w", err)
+	}
+
+	if err == mongo.ErrNoDocuments {
+		isNewUser = true
+	}
+
+	if !isNewUser {
+		if role != existingUser.Role && role != "login" {
+			return "", false, fmt.Errorf("please go log in")
+		}
 	}
 
 	// If the user does not exist and is trying to login, throw error.
 	if role == "login" {
 		if existingUser.ID.IsZero() {
-			return nil, fmt.Errorf("please register first before using our service")
+			return nil, false, fmt.Errorf("please register first before using our service")
 		}
 	}
 
 	// if the user existed as role A and s/he clicks sign up again and click role B,
 	// throw the error and tell to use login instead
 	if !existingUser.ID.IsZero() {
-		if role != existingUser.Role && role != "login" {
-			return nil, fmt.Errorf("please go log in")
+		if !isNewUser && role != existingUser.Role && role != "login" {
+			return nil, false, fmt.Errorf("please go log in")
 		}
 	}
 
@@ -81,13 +92,13 @@ func upsertUser(user goth.User, role string) (any, error) {
 
 	res, err := usersCollection.UpdateOne(ctx, filter, update, opts)
 	if err != nil {
-		return nil, fmt.Errorf("failed to upsert user: %w", err)
+		return nil, false, fmt.Errorf("failed to upsert user: %w", err)
 	}
 	if res.UpsertedID != nil {
-		return res.UpsertedID, nil
+		return res.UpsertedID, true, nil
 	}
 
-	return existingUser.ID, nil
+	return existingUser.ID, isNewUser, nil
 }
 
 // find user
@@ -112,8 +123,6 @@ func findUser(userID any) (schema.User, error) {
 		return schema.User{}, fmt.Errorf("unsupported userID type: %T", v)
 	}
 
-	// Now query with ObjectID
-	fmt.Println(oid)
 	var registeredUser schema.User
 	filter := bson.M{"_id": oid}
 	if err := users.FindOne(ctx, filter).Decode(&registeredUser); err != nil {

@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"regexp"
 	"testing"
 	"time"
@@ -26,6 +27,7 @@ var globalApplicantID string
 // more info: https://pkg.go.dev/testing#hdr-Main
 func TestMain(m *testing.M) {
 	db := database.GetDatabase()
+	os.Setenv("ENABLE_AUTH", "false")
 
 	collections := []string{
 		"job_applications",
@@ -96,53 +98,10 @@ func createMockCollections(db *mongo.Database, names []string) error {
 	return nil
 }
 
-func rawJobApplication(applicantID primitive.ObjectID, jobID primitive.ObjectID) map[string]any {
-	now := time.Now().UTC().Truncate(time.Second)
-	return map[string]any{
-		"applicantID": applicantID,
-		"jobID":       jobID,
-		"status":      "waiting for approval",
-		"createdAt":   now,
-	}
-}
-
 // TODO: add more fields in here if we decided to enforce required fields in user schema.
 func rawUser(name string) map[string]any {
 	return map[string]any{
 		"name": name,
-	}
-}
-
-func rawJob(title string) map[string]any {
-	now := time.Now().UTC().Truncate(time.Second)
-	return map[string]any{
-		// basic info
-		"title":           title,
-		"companyID":       primitive.NewObjectID().Hex(),
-		"location":        "Kivotos",
-		"workType":        "onsite",
-		"workArrangement": "full-time",
-		"currency":        "THB",
-		"minSalary":       2000.34,
-		"maxSalary":       300000.213213,
-
-		// description
-		"jobDescription": "long",
-		"jobSummary":     "longer",
-
-		// requirements
-		"requiredSkills":  "none",
-		"experienceLevel": "a lot",
-		"education":       "maybe",
-		"niceToHave":      "noting",
-
-		// post settings
-		"postOpenDate":        now,
-		"applicationDeadline": now,
-		"numberOfPositions":   1,
-		"visibility":          "public",
-		"emailNotifications":  false,
-		"autoReject":          false,
 	}
 }
 
@@ -166,15 +125,4 @@ func createUser(router *gin.Engine, r *regexp.Regexp, username string) string {
 	userIDMatches := r.FindStringSubmatch(w.Body.String())
 	userID := userIDMatches[1]
 	return userID
-}
-
-func createJobApplication(router *gin.Engine, userID string, jobID string) (*httptest.ResponseRecorder, *http.Request) {
-	w := httptest.NewRecorder()
-	objID, _ := primitive.ObjectIDFromHex(userID)
-	jobIDReal, _ := primitive.ObjectIDFromHex(jobID)
-	body, _ := json.Marshal(rawJobApplication(objID, jobIDReal))
-	req, _ := http.NewRequest("POST", "/apply/", bytes.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	router.ServeHTTP(w, req)
-	return w, req
 }
