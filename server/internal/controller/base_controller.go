@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/database"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/repository"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
@@ -28,7 +27,7 @@ type BaseController[Schema schema.CollectionEntity] struct {
 func (controller BaseController[Schema]) Create(c *gin.Context) {
 
 	var raw Schema
-	if err := c.ShouldBindBodyWith(&raw, binding.JSON); err != nil {
+	if err := c.ShouldBindBodyWithJSON(&raw); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -71,7 +70,7 @@ func (controller BaseController[Schema]) Update(c *gin.Context) {
 
 	// Use map to only update fields that are actually provided in the request
 	var updateFields map[string]any
-	if err := c.ShouldBindJSON(&updateFields); err != nil {
+	if err := c.ShouldBindBodyWithJSON(&updateFields); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -167,7 +166,7 @@ func (controller BaseController[Schema]) PatchOne(c *gin.Context) {
 	}
 
 	var body map[string]interface{}
-	if err := c.ShouldBindJSON(&body); err != nil {
+	if err := c.ShouldBindBodyWithJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON body"})
 		return
 	}

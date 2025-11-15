@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/repository"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
 	"go.mongodb.org/mongo-driver/bson"
@@ -63,7 +62,7 @@ func (nc NoteController) validateNoteOwner(c *gin.Context) (shouldReturn bool) {
 	}
 
 	var raw schema.Note
-	if err := c.ShouldBindBodyWith(&raw, binding.JSON); err != nil {
+	if err := c.ShouldBindBodyWithJSON(&raw); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Incorrect Note Schema"})
 		return true
 	}

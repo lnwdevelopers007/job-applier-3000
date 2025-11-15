@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/email"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/repository"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
@@ -173,7 +172,7 @@ func (jc JobApplicationController) Create(c *gin.Context) {
 
 	if companyEmail != "" {
 		var raw schema.JobApplication
-		if err := c.ShouldBindBodyWith(&raw, binding.JSON); err == nil {
+		if err := c.ShouldBindBodyWithJSON(&raw); err == nil {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 
@@ -213,7 +212,7 @@ func (jc JobApplicationController) Create(c *gin.Context) {
 // shouldNotifyCompany determines whether company should be notified when an applicant applied for a job or not.
 func (jc JobApplicationController) shouldNotifyCompany(c *gin.Context) (companyEmail string, err bool) {
 	var raw schema.JobApplication
-	if err := c.ShouldBindBodyWith(&raw, binding.JSON); err != nil {
+	if err := c.ShouldBindBodyWithJSON(&raw); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return "", true
 	}
