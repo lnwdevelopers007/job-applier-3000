@@ -215,6 +215,11 @@
     <GoogleOAuthButton text="Continue with Google" userType="jobSeeker" />
 
     <p class="text-center text-sm text-gray-500 mt-8">
+      By signing up, you consent to the processing of your Personal Data as described in our 
+      <a href="/pdpa" class="text-blue-600 hover:text-blue-700 font-medium">Privacy Notice</a>
+    </p>
+
+    <p class="text-center text-sm text-gray-500 mt-8">
       Already have an account?
       <a href="/login" class="text-green-600 hover:text-green-700 font-medium">Log in</a>
     </p>
