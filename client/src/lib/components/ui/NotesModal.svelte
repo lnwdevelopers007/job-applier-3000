@@ -1,8 +1,9 @@
 <script lang="ts">
   import Modal from './Modal.svelte';
+  import DeleteModal from './DeleteModal.svelte';
   import { NoteService } from '$lib/services/noteService';
   import type { Note } from '$lib/types';
-  import { Plus, CircleAlert, LoaderCircle, Pencil, Trash2 } from 'lucide-svelte';
+  import { Plus, LoaderCircle, Pencil, Trash2 } from 'lucide-svelte';
   import toast from 'svelte-french-toast';
 
   interface Props {
@@ -25,24 +26,27 @@
   let newNoteContent = $state('');
   let loading = $state(false);
   let submitting = $state(false);
-  let error = $state<string | null>(null);
   
   // Editing state
   let editingNoteId = $state<string | null>(null);
   let editContent = $state('');
   let updating = $state(false);
+  
+  // Delete confirmation state
+  let deleteConfirmOpen = $state(false);
+  let noteToDelete = $state<Note | null>(null);
+  let isDeleting = $state(false);
 
   async function loadNotes() {
     if (!jobApplicationId) return;
     
     try {
       loading = true;
-      error = null;
       const result = await NoteService.getNotesByJobApplication(jobApplicationId);
       notes = result || []; // Ensure notes is always an array
     } catch (err) {
       console.error('Failed to load notes:', err);
-      error = 'Failed to load notes. Please try again.';
+      toast.error('Failed to load notes. Please try again.');
       notes = []; // Set to empty array on error
     } finally {
       loading = false;
@@ -84,10 +88,17 @@
   async function saveEdit(noteId: string) {
     if (!editContent.trim()) return;
 
+    // Find the original note to preserve its jobApplicationID format
+    const originalNote = notes.find(note => note.id === noteId);
+    if (!originalNote) {
+      toast.error('Note not found');
+      return;
+    }
+
     try {
       updating = true;
       const updatedNote = await NoteService.updateNote(noteId, {
-        jobApplicationID: jobApplicationId,
+        jobApplicationID: originalNote.jobApplicationID, // Preserve original format
         content: editContent.trim()
       });
       
@@ -107,28 +118,36 @@
     }
   }
 
-  async function deleteNote(noteId: string) {
-    if (!confirm('Are you sure you want to delete this note?')) return;
+  function confirmDeleteNote(note: Note) {
+    noteToDelete = note;
+    deleteConfirmOpen = true;
+  }
+
+  async function handleDeleteConfirm(_reason: string) {
+    if (!noteToDelete) return;
 
     try {
-      // Find the note to get its complete data for backend validation
-      const noteToDelete = notes.find(note => note.id === noteId);
-      if (!noteToDelete) {
-        throw new Error('Note not found');
-      }
-      
-      await NoteService.deleteNote(noteId, noteToDelete);
-      notes = notes.filter(note => note.id !== noteId);
+      isDeleting = true;
+      await NoteService.deleteNote(noteToDelete.id!, noteToDelete);
+      notes = notes.filter(note => note.id !== noteToDelete!.id);
       toast.success('Note deleted successfully');
+      deleteConfirmOpen = false;
+      noteToDelete = null;
     } catch (err) {
       console.error('Failed to delete note:', err);
       toast.error('Failed to delete note. Please try again.');
+    } finally {
+      isDeleting = false;
     }
+  }
+
+  function cancelDelete() {
+    deleteConfirmOpen = false;
+    noteToDelete = null;
   }
 
   function handleClose() {
     newNoteContent = '';
-    error = null;
     onClose();
   }
 
@@ -173,13 +192,6 @@
       </div>
     </div>
 
-    <!-- Error State -->
-    {#if error}
-      <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
-        <CircleAlert class="w-4 h-4 text-red-500" />
-        <span class="text-sm text-red-700">{error}</span>
-      </div>
-    {/if}
 
     <!-- Notes List -->
     <div class="space-y-4 h-72 overflow-y-auto">
@@ -241,7 +253,7 @@
                     </button>
                     <button
                       class="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
-                      onclick={() => note.id && deleteNote(note.id)}
+                      onclick={() => confirmDeleteNote(note)}
                       title="Delete note"
                     >
                       <Trash2 class="w-4 h-4" />
@@ -292,3 +304,18 @@
     </div>
   </div>
 </Modal>
+
+<!-- Delete Confirmation Modal -->
+{#if deleteConfirmOpen && noteToDelete}
+  <DeleteModal
+    bind:isOpen={deleteConfirmOpen}
+    onClose={cancelDelete}
+    onConfirm={handleDeleteConfirm}
+    title="Delete Note"
+    itemName={noteToDelete.content.slice(0, 50) + (noteToDelete.content.length > 50 ? '...' : '')}
+    description="Are you sure you want to delete this note? This action cannot be undone."
+    reasonLabel=""
+    confirmButtonText="Delete Note"
+    {isDeleting}
+  />
+{/if}
