@@ -7,9 +7,64 @@ import (
 	"net/http/httptest"
 	"regexp"
 	"testing"
+	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+func rawJob(title string, companyID ...string) map[string]any {
+	now := time.Now().UTC().Truncate(time.Second)
+	data := map[string]any{
+		// basic info
+		"title":           title,
+		"companyID":       primitive.NewObjectID().Hex(),
+		"location":        "Kivotos",
+		"workType":        "onsite",
+		"workArrangement": "full-time",
+		"currency":        "THB",
+		"minSalary":       2000.34,
+		"maxSalary":       300000.213213,
+
+		// description
+		"jobDescription": "long",
+		"jobSummary":     "longer",
+
+		// requirements
+		"requiredSkills":  "none",
+		"experienceLevel": "a lot",
+		"education":       "maybe",
+		"niceToHave":      "noting",
+
+		// post settings
+		"postOpenDate":        now,
+		"applicationDeadline": now,
+		"numberOfPositions":   1,
+		"visibility":          "public",
+		"emailNotifications":  false,
+		"autoReject":          false,
+	}
+	if len(companyID) > 0 && companyID[0] != "" {
+		data["companyID"] = companyID[0]
+	}
+	return data
+}
+
+func createJob(router *gin.Engine, r *regexp.Regexp, companyID ...string) string {
+	w := httptest.NewRecorder()
+
+	body, _ := json.Marshal(rawJob("Job for Job Application Creation Test", companyID...))
+
+	req, _ := http.NewRequest("POST", "/jobs/", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	router.ServeHTTP(w, req)
+
+	jobIDMatches := r.FindStringSubmatch(w.Body.String())
+	jobID := jobIDMatches[1]
+	return jobID
+}
 
 func TestRetrieveAllJobs(t *testing.T) {
 	router := getTestRouter()
@@ -99,7 +154,7 @@ func TestUpdateJob(t *testing.T) {
 	// Perform the request
 	router.ServeHTTP(w2, req)
 	assert.Contains(t, w2.Body.String(), "updated")
-	assert.Equal(t, w2.Code, http.StatusOK)
+	assert.Equal(t, http.StatusOK, w2.Code)
 	// t.Log(w2.Body.String())
 
 }

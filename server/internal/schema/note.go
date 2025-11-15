@@ -12,3 +12,7 @@ type Note struct {
 	Content          string             `bson:"content" json:"content" binding:"required"`
 	Timestamp        time.Time          `bson:"timestamp" json:"timestamp" binding:"required"`
 }
+
+func (n Note) GetCollectionName() string {
+	return "notes"
+}

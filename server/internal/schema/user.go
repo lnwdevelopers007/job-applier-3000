@@ -25,3 +25,7 @@ type User struct {
 	UserInfo  any                `bson:"userInfo,omitempty" json:"userInfo,omitempty"`
 	Ban       bool               `bson:"ban,omitempty" json:"ban,omitempty"`
 }
+
+func (u User) GetCollectionName() string {
+	return "users"
+}

@@ -2,6 +2,7 @@ package schema
 
 import (
 	"time"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -9,7 +10,7 @@ type FileCategory string
 
 const (
 	CategoryResume        FileCategory = "resume"
-	CategoryTranscript   FileCategory = "transcript"
+	CategoryTranscript    FileCategory = "transcript"
 	CategoryCertification FileCategory = "certification"
 	CategoryVerification  FileCategory = "verification"
 )
@@ -24,4 +25,8 @@ type File struct {
 	Size          int64              `bson:"size" json:"size" binding:"required"`
 	Category      FileCategory       `bson:"category" json:"category" binding:"required"`
 	UploadDate    time.Time          `bson:"uploadDate" json:"uploadDate"`
+}
+
+func (f File) GetCollectionName() string {
+	return "files"
 }
