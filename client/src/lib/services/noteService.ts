@@ -111,9 +111,9 @@ export class NoteService {
   /**
    * Delete a note
    */
-  static async deleteNote(noteId: string): Promise<void> {
+  static async deleteNote(noteId: string, noteData?: Note): Promise<void> {
     try {
-      await noteApi.delete(noteId);
+      await noteApi.delete(noteId, noteData);
       console.log('Note deleted successfully:', noteId);
     } catch (error) {
       console.error('Error deleting note:', error);

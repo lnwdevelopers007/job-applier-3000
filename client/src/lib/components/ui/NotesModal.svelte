@@ -38,10 +38,12 @@
     try {
       loading = true;
       error = null;
-      notes = await NoteService.getNotesByJobApplication(jobApplicationId);
+      const result = await NoteService.getNotesByJobApplication(jobApplicationId);
+      notes = result || []; // Ensure notes is always an array
     } catch (err) {
       console.error('Failed to load notes:', err);
       error = 'Failed to load notes. Please try again.';
+      notes = []; // Set to empty array on error
     } finally {
       loading = false;
     }
@@ -85,6 +87,7 @@
     try {
       updating = true;
       const updatedNote = await NoteService.updateNote(noteId, {
+        jobApplicationID: jobApplicationId,
         content: editContent.trim()
       });
       
@@ -108,7 +111,13 @@
     if (!confirm('Are you sure you want to delete this note?')) return;
 
     try {
-      await NoteService.deleteNote(noteId);
+      // Find the note to get its complete data for backend validation
+      const noteToDelete = notes.find(note => note.id === noteId);
+      if (!noteToDelete) {
+        throw new Error('Note not found');
+      }
+      
+      await NoteService.deleteNote(noteId, noteToDelete);
       notes = notes.filter(note => note.id !== noteId);
       toast.success('Note deleted successfully');
     } catch (err) {
