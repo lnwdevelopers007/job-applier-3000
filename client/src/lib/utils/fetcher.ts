@@ -25,6 +25,10 @@ export async function fetchUsers(params?: string) {
   return fetchData('users', params)
 }
 
+/**
+ * Fetch company name and logo (with custom logo support)
+ * @deprecated Use fetchCompanyPublicInfo instead - it now handles custom logos automatically
+ */
 export async function fetchCompanyNameLogo(companyID: any) {
   let companyName = DEFAULT_COMPANY_NAME
   let companyLogo = DEFAULT_COMPANY_LOGO
@@ -34,11 +38,12 @@ export async function fetchCompanyNameLogo(companyID: any) {
   }
 
   try {
-    const companyData = await fetchUser(companyID);
-    [companyName, companyLogo] = getCompanyInfo(companyData);
+    const companyData = await fetchCompanyPublicInfo(companyID);
+    companyName = companyData.name || DEFAULT_COMPANY_NAME;
+    companyLogo = companyData.profileImage || DEFAULT_COMPANY_LOGO;
   } catch (err) {
     // Only log warning for non-404 errors to reduce noise
-    if (err instanceof Error && !err.message.includes('Company not found')) {
+    if (err instanceof Error && !err.message.includes('not found')) {
       console.warn(`Failed to load company info for ID ${companyID}:`, err);
     }
   }
@@ -46,12 +51,39 @@ export async function fetchCompanyNameLogo(companyID: any) {
   return [companyName, companyLogo];
 }
 
-function getCompanyInfo(company: any) {
+/**
+ * Fetch public company information (name, role, logo)
+ * This endpoint now automatically returns custom logo from userInfo if available,
+ * falling back to avatarURL if not set
+ */
+export async function fetchCompanyPublicInfo(userID: string): Promise<{
+  name: string;
+  role: string;
+  profileImage: string;
+  userInfo: {
+    name: string;
+    logo: string;
+  };
+}> {
+  // Use relative URL to go through Vite proxy
+  const res = await fetch(`/users/public/${userID}`);
 
-  const infoArray = company.userInfo || [];
-  const info = Object.fromEntries(infoArray.map((item: any) => [item.Key, item.Value]));
+  if (!res.ok) {
+    throw new Error(`Failed to fetch public user info for ${userID}`);
+  }
 
-  const companyName: string = info.name || company.name || DEFAULT_COMPANY_NAME;
-  const companyLogo: string = info.logo || company.avatarURL || DEFAULT_COMPANY_LOGO;
-  return [companyName, companyLogo]
+  const data = await res.json();
+
+  // Combine top-level and nested userInfo for maximum compatibility
+  const userInfo = {
+    name: data.userInfo?.name || "",
+    logo: data.userInfo?.logo || "",
+  };
+
+  return {
+    name: data.name || userInfo.name || DEFAULT_COMPANY_NAME,
+    role: data.role || "company",
+    profileImage: data.profileImage || userInfo.logo || DEFAULT_COMPANY_LOGO,
+    userInfo,
+  };
 }

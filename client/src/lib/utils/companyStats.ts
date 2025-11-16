@@ -1,5 +1,3 @@
-import { isAuthenticated } from '$lib/utils/auth';
-
 interface CompanyStats {
 	activeJobs: number;
 	totalApplicants: number;
@@ -14,10 +12,11 @@ interface CompanyStats {
 }
 
 export async function getCompanyAnalytics(companyID: string): Promise<CompanyStats> {
-	if (!isAuthenticated()) throw new Error('Not authenticated');
 	if (!companyID) throw new Error('Invalid companyID');
 
-	const jobsRes = await fetch(`/jobs/query?companyID=${companyID}`);
+	const jobsRes = await fetch(`/jobs/query?companyID=${companyID}`, {
+		credentials: 'include'
+	});
 	if (!jobsRes.ok) throw new Error('Failed to fetch company jobs');
 	const jobs = await jobsRes.json();
 
@@ -54,14 +53,22 @@ export async function getCompanyAnalytics(companyID: string): Promise<CompanySta
 		const jobID = job.id || job._id;
 		if (!jobID) continue;
 
-		const applyRes = await fetch(`/apply?jobID=${jobID}`);
-		if (!applyRes.ok) continue;
+		const applyRes = await fetch(`/apply/query?jobID=${jobID}`, {
+			credentials: 'include'
+		});
+		if (!applyRes.ok) {
+			console.warn(`Failed to fetch applications for job ${jobID}: ${applyRes.status}`);
+			continue;
+		}
 		const applications = await applyRes.json();
-		if (!Array.isArray(applications)) continue;
+		if (!Array.isArray(applications)) {
+			console.warn(`Invalid applications response for job ${jobID}`);
+			continue;
+		}
 
 		for (const app of applications) {
 			const createdAt = new Date(app.jobApplication?.createdAt || app.createdAt);
-			const status = app.jobApplication?.status?.toLowerCase();
+			const status = (app.jobApplication?.status || app.status || 'pending').toLowerCase();
 
 			// Lifetime metrics
 			total.totalApplicants++;

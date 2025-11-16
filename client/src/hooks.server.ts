@@ -10,7 +10,8 @@ const publicRoutes = [
 	'/signup/student', 
 	'/signup/company',
 	'/callback',
-	'/unverified'
+	'/unverified',
+	'/banned'
 ];
 
 type JWTPayload = {
@@ -20,6 +21,7 @@ type JWTPayload = {
 	userID?: string;
 	role?: string;
 	verified?: boolean;
+	banned?: boolean;
 	exp?: number;
 };
 
@@ -42,6 +44,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 		
 		if (decoded) {
+			// Check if user is banned FIRST before anything else
+			if (decoded.banned && path !== '/banned') {
+				throw redirect(303, '/banned');
+			}
+
 			// Check if token is expired
 			const isExpired = decoded.exp && decoded.exp * 1000 < Date.now();
 			
@@ -60,6 +67,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 					if (refreshResponse.ok) {
 						const data = await refreshResponse.json();
 						const newDecoded = jwtDecode<JWTPayload>(data.access_token);
+						
+						// Check if newly refreshed token shows user is banned
+						if (newDecoded.banned) {
+							throw redirect(303, '/banned');
+						}
+
 						const jwtExpiresIn = newDecoded.exp ? Math.max(0, newDecoded.exp - Math.floor(Date.now() / 1000)) : 60 * 60 * 24;
 						
 						event.cookies.set('access_token', data.access_token, {
@@ -83,6 +96,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 							};
 						}
 					} else {
+						// Check if refresh failed due to ban
+						const errorData = await refreshResponse.json().catch(() => ({}));
+						if (errorData.error === 'account_banned') {
+							throw redirect(303, '/banned');
+						}
+
 						// Refresh failed, clear cookies
 						event.cookies.delete('access_token', { path: '/' });
 						event.cookies.delete('refresh_token', { path: '/' });
@@ -137,6 +156,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 				if (refreshResponse.ok) {
 					const data = await refreshResponse.json();
 					const newDecoded = jwtDecode<JWTPayload>(data.access_token);
+					
+					// Check if user is banned
+					if (newDecoded.banned) {
+						throw redirect(303, '/banned');
+					}
+
 					const refreshExpiresIn = newDecoded.exp ? Math.max(0, newDecoded.exp - Math.floor(Date.now() / 1000)) : 60 * 60 * 24;
 					
 					event.cookies.set('access_token', data.access_token, {
@@ -159,6 +184,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 						};
 					}
 				} else {
+					// Check if refresh failed due to ban
+					const errorData = await refreshResponse.json().catch(() => ({}));
+					if (errorData.error === 'account_banned') {
+						throw redirect(303, '/banned');
+					}
+
 					event.cookies.delete('refresh_token', { path: '/' });
 					throw redirect(303, `/login?returnUrl=${encodeURIComponent(path)}`);
 				}
