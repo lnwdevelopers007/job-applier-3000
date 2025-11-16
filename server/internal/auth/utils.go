@@ -52,24 +52,15 @@ func upsertUser(user goth.User, role string) (any, bool, error) {
 		isNewUser = true
 	}
 
-	if !isNewUser {
-		if role != existingUser.Role && role != "login" {
-			return "", false, fmt.Errorf("please go log in")
-		}
-	}
+	// Previously error checking for role change signup.
+	// if !isNewUser && role != existingUser.Role && role != "login" {
+	// 		return nil, false, fmt.Errorf("please go log in")
+	// }
 
 	// If the user does not exist and is trying to login, throw error.
 	if role == "login" {
 		if existingUser.ID.IsZero() {
 			return nil, false, fmt.Errorf("please register first before using our service")
-		}
-	}
-
-	// if the user existed as role A and s/he clicks sign up again and click role B,
-	// throw the error and tell to use login instead
-	if !existingUser.ID.IsZero() {
-		if !isNewUser && role != existingUser.Role && role != "login" {
-			return nil, false, fmt.Errorf("please go log in")
 		}
 	}
 
