@@ -12,13 +12,13 @@
 	import FloatingJobHeader from '$lib/components/job/FloatingJobHeader.svelte';
 	import {
 		fetchJob,
-		fetchUser,
-		fetchCompanyNameLogo,
 		DEFAULT_COMPANY_LOGO
 	} from '$lib/utils/fetcher';
 	import { isAuthenticated, getUserInfo } from '$lib/utils/auth';
-	import { formatDateDMY } from '$lib/utils/datetime';
+	import { formatDateDMY, formatRelativeTime, formatDateShort } from '$lib/utils/datetime';
 	import { bookmarkService } from '$lib/services/bookmarkService';
+	import { JobService } from '$lib/services/jobService';
+	import { UserService } from '$lib/services/userService';
 
 	let { data }: { data: { jobId: string } } = $props();
 
@@ -58,31 +58,6 @@
 		}
 	});
 
-	function getRelativeTime(dateString: string): string {
-		if (!dateString || dateString === 'Unknown') return 'Unknown';
-
-		const date = new Date(dateString);
-		const now = new Date();
-		const diffTime = Math.abs(now.getTime() - date.getTime());
-		const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-		if (date > now) {
-			// Future date (for deadline)
-			if (diffDays === 0) return 'Today';
-			if (diffDays === 1) return 'Tomorrow';
-			if (diffDays < 7) return `In ${diffDays} days`;
-			if (diffDays < 30) return `In ${Math.floor(diffDays / 7)} weeks`;
-			return date.toLocaleDateString();
-		} else {
-			// Past date (for posted)
-			if (diffDays === 0) return 'Today';
-			if (diffDays === 1) return 'Yesterday';
-			if (diffDays < 7) return `${diffDays} days ago`;
-			if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-			if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-			return date.toLocaleDateString();
-		}
-	}
 
 	function formatSalary(min: number | null, max: number | null, currency: string): string {
 		if (!min && !max) return '';
@@ -112,18 +87,20 @@
 				userInfo = getUserInfo();
 			}
 
-			const jobData = await fetchJob(data.jobId);
+			// Use JobService to get the job data
+			const jobData = await JobService.getJobById(data.jobId);
+			const displayJob = await JobService.transformJobForDisplay(jobData);
 
 			job = {
-				id: jobData.id,
-				title: jobData.title,
-				company: '',
-				companyId: jobData.companyID,
+				id: jobData.id || '',
+				title: jobData.title || '',
+				company: displayJob.company || 'Unknown Company',
+				companyId: jobData.companyID || '',
 				location: jobData.location || 'N/A',
-				workType: jobData.workType || 'onsite', // onsite/remote/hybrid
-				workArrangement: jobData.workArrangement || 'full-time', // full-time/part-time/contract
+				workType: jobData.workType || 'onsite',
+				workArrangement: jobData.workArrangement || 'full-time',
 				salary: formatSalary(jobData.minSalary, jobData.maxSalary, jobData.currency || 'THB'),
-				posted: jobData.postOpenDate ? getRelativeTime(jobData.postOpenDate) : 'Unknown',
+				posted: jobData.postOpenDate ? formatRelativeTime(jobData.postOpenDate) : 'Unknown',
 				postedDate: jobData.postOpenDate || null,
 				closeDate: jobData.applicationDeadline
 					? formatDateDMY(jobData.applicationDeadline)
@@ -133,50 +110,36 @@
 				skills: jobData.requiredSkills
 					? jobData.requiredSkills.split(',').map((skill: string) => skill.trim())
 					: [],
-				logo: DEFAULT_COMPANY_LOGO
+				logo: displayJob.companyLogo || DEFAULT_COMPANY_LOGO
 			};
 
 			if (jobData.companyID) {
 				try {
-					const [companyName, companyLogo] = await fetchCompanyNameLogo(jobData.companyID);
-					job.company = companyName;
-					job.logo = companyLogo;
+					// Use UserService to get company details
+					const user = await UserService.getUserById(jobData.companyID);
+					const companyInfo = user.userInfo as any;
 
-					try {
-						const companyData = await fetchUser(jobData.companyID);
-						const infoArray = companyData.userInfo || [];
-						const info = Object.fromEntries(infoArray.map((item: any) => [item.Key, item.Value]));
-
-						company = {
-							name: companyName,
-							logo: companyLogo,
-							industry: info.industry || 'Software Development',
-							employees: info.size || '1000+ employees',
-							description: info.aboutUs || 'Company information not available.'
-						};
-					} catch (companyErr) {
-						console.warn('Failed to fetch detailed company info:', companyErr);
-						// Set basic company info even if detailed fetch fails
-						company = {
-							name: companyName,
-							logo: companyLogo,
-							industry: 'Software Development',
-							employees: '1000+ employees',
-							description: 'Company information not available.'
-						};
-					}
+					company = {
+						name: displayJob.company || 'Unknown Company',
+						logo: displayJob.companyLogo || DEFAULT_COMPANY_LOGO,
+						industry: companyInfo?.industry || 'Software Development',
+						employees: companyInfo?.size || '1000+ employees',
+						description: companyInfo?.aboutUs || 'Company information not available.'
+					};
 
 					await loadSimilarJobs();
 					await loadOtherCompanyJobs(jobData.companyID);
 				} catch (companyErr) {
-					console.warn('Failed to fetch company name/logo:', companyErr);
-					// Use default values if company fetch fails
-					job.company = 'Unknown Company';
-					job.logo = DEFAULT_COMPANY_LOGO;
+					console.warn('Failed to fetch company info:', companyErr);
+					// Set basic company info from display job
+					company = {
+						name: displayJob.company || 'Unknown Company',
+						logo: displayJob.companyLogo || DEFAULT_COMPANY_LOGO,
+						industry: 'Software Development',
+						employees: '1000+ employees',
+						description: 'Company information not available.'
+					};
 				}
-			} else {
-				job.company = 'Unknown Company';
-				job.logo = DEFAULT_COMPANY_LOGO;
 			}
 		} catch (err) {
 			console.error('Error loading job:', err);
@@ -188,122 +151,83 @@
 
 	async function loadSimilarJobs() {
 		try {
-			// Fetch all jobs first
-			const res = await fetch('/jobs/query');
-			if (res.ok) {
-				const data = await res.json();
+			// Use JobService to get all jobs
+			const allJobs = await JobService.getAllJobs();
+			if (!allJobs || allJobs.length === 0) return;
 
-				// Filter out current job and calculate similarity scores
-				const otherJobs = data.filter((j: any) => j.id !== job?.id);
-				const jobsWithScores = otherJobs.map((jobData: any) => {
-					let score = 0;
+			// Filter out current job and calculate similarity scores
+			const otherJobs = allJobs.filter((j: any) => j.id !== job?.id);
+			const jobsWithScores = otherJobs.map((jobData: any) => {
+				let score = 0;
 
-					// Score based on title similarity (keyword matching)
-					if (job?.title && jobData.title) {
-						const currentTitle = job.title.toLowerCase();
-						const otherTitle = jobData.title.toLowerCase();
+				// Score based on title similarity
+				if (job?.title && jobData.title) {
+					const currentTitle = job.title.toLowerCase();
+					const otherTitle = jobData.title.toLowerCase();
+					const commonWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'];
+					const currentKeywords = currentTitle.split(/\s+/).filter((word: string) => word.length > 2 && !commonWords.includes(word));
+					const otherKeywords = otherTitle.split(/\s+/).filter((word: string) => word.length > 2 && !commonWords.includes(word));
 
-						// Extract keywords from titles (remove common words)
-						const commonWords = [
-							'the',
-							'a',
-							'an',
-							'and',
-							'or',
-							'but',
-							'in',
-							'on',
-							'at',
-							'to',
-							'for',
-							'of',
-							'with',
-							'by'
-						];
-						const currentKeywords = currentTitle
-							.split(/\s+/)
-							.filter((word: string) => word.length > 2 && !commonWords.includes(word));
-						const otherKeywords = otherTitle
-							.split(/\s+/)
-							.filter((word: string) => word.length > 2 && !commonWords.includes(word));
+					const matchingKeywords = currentKeywords.filter((keyword: string) =>
+						otherKeywords.some((otherKeyword: string) => otherKeyword.includes(keyword) || keyword.includes(otherKeyword))
+					);
+					score += (matchingKeywords.length / Math.max(currentKeywords.length, 1)) * 3;
+				}
 
-						// Calculate keyword overlap
-						const matchingKeywords = currentKeywords.filter((keyword: string) =>
-							otherKeywords.some(
-								(otherKeyword: string) =>
-									otherKeyword.includes(keyword) || keyword.includes(otherKeyword)
-							)
-						);
-						score += (matchingKeywords.length / Math.max(currentKeywords.length, 1)) * 3;
+				// Score based on skills similarity
+				if (job?.skills && jobData.requiredSkills) {
+					const currentSkills = job.skills.map((s: string) => s.toLowerCase().trim());
+					const otherSkills = jobData.requiredSkills.split(',').map((s: string) => s.toLowerCase().trim());
+
+					const matchingSkills = currentSkills.filter((skill: string) =>
+						otherSkills.some((otherSkill: string) => otherSkill.includes(skill) || skill.includes(otherSkill))
+					);
+					score += (matchingSkills.length / Math.max(currentSkills.length, 1)) * 2;
+				}
+
+				// Minor bonus for same work type
+				if (job?.workType && jobData.workType === job.workType) {
+					score += 0.5;
+				}
+
+				return { ...jobData, similarityScore: score };
+			});
+
+			// Sort by similarity score and take top 3
+			const filteredJobs = jobsWithScores
+				.sort((a: any, b: any) => b.similarityScore - a.similarityScore)
+				.slice(0, 3);
+
+			// Transform jobs to display format using JobService
+			similarJobs = await Promise.all(
+				filteredJobs.map(async (jobData: any) => {
+					try {
+						const displayJob = await JobService.transformJobForDisplay(jobData);
+						return {
+							id: jobData.id,
+							title: jobData.title,
+							company: displayJob.company,
+							location: jobData.location || 'N/A',
+							logo: displayJob.companyLogo,
+							workType: jobData.workType || 'FULL-TIME',
+							workArrangement: jobData.workArrangement || 'ON-SITE',
+							posted: jobData.postOpenDate ? formatDateShort(jobData.postOpenDate) : 'Unknown'
+						};
+					} catch (err) {
+						console.warn(`Failed to transform similar job ${jobData.id}:`, err);
+						return {
+							id: jobData.id,
+							title: jobData.title,
+							company: 'Unknown Company',
+							location: jobData.location || 'N/A',
+							logo: DEFAULT_COMPANY_LOGO,
+							workType: jobData.workType || 'FULL-TIME',
+							workArrangement: jobData.workArrangement || 'ON-SITE',
+							posted: jobData.postOpenDate ? formatDateShort(jobData.postOpenDate) : 'Unknown'
+						};
 					}
-
-					// Score based on skills similarity
-					if (job?.skills && jobData.requiredSkills) {
-						const currentSkills = job.skills.map((s: string) => s.toLowerCase().trim());
-						const otherSkills = jobData.requiredSkills
-							.split(',')
-							.map((s: string) => s.toLowerCase().trim());
-
-						const matchingSkills = currentSkills.filter((skill: string) =>
-							otherSkills.some(
-								(otherSkill: string) => otherSkill.includes(skill) || skill.includes(otherSkill)
-							)
-						);
-						score += (matchingSkills.length / Math.max(currentSkills.length, 1)) * 2;
-					}
-
-					// Minor bonus for same work type
-					if (job?.workType && jobData.workType === job.workType) {
-						score += 0.5;
-					}
-
-					return { ...jobData, similarityScore: score };
-				});
-
-				// Sort by similarity score and take top 3
-				const filteredJobs = jobsWithScores
-					.sort((a: any, b: any) => b.similarityScore - a.similarityScore)
-					.slice(0, 3);
-
-				similarJobs = await Promise.all(
-					filteredJobs.map(async (jobData: any) => {
-						try {
-							const [companyName, companyLogo] = await fetchCompanyNameLogo(
-								jobData.companyID || ''
-							);
-							return {
-								id: jobData.id,
-								title: jobData.title,
-								company: companyName,
-								location: jobData.location || 'N/A',
-								logo: companyLogo,
-								workType: jobData.workType || 'FULL-TIME',
-								workArrangement: jobData.workArrangement || 'ON-SITE',
-								posted: jobData.postOpenDate
-									? new Date(jobData.postOpenDate).toLocaleDateString()
-									: 'Unknown'
-							};
-						} catch (err) {
-							// Only log for non-404 company errors
-							if (err instanceof Error && !err.message.includes('Company not found')) {
-								console.warn(`Failed to fetch company info for similar job ${jobData.id}:`, err);
-							}
-							return {
-								id: jobData.id,
-								title: jobData.title,
-								company: 'Unknown Company',
-								location: jobData.location || 'N/A',
-								logo: DEFAULT_COMPANY_LOGO,
-								workType: jobData.workType || 'FULL-TIME',
-								workArrangement: jobData.workArrangement || 'ON-SITE',
-								posted: jobData.postOpenDate
-									? new Date(jobData.postOpenDate).toLocaleDateString()
-									: 'Unknown'
-							};
-						}
-					})
-				);
-			}
+				})
+			);
 		} catch (err) {
 			console.error('Error loading similar jobs:', err);
 		}
@@ -311,53 +235,41 @@
 
 	async function loadOtherCompanyJobs(companyId: string) {
 		try {
-			const res = await fetch(`/jobs/query?companyID=${companyId}`);
-			if (res.ok) {
-				const data = await res.json();
-				const filteredJobs = data.filter((j: any) => j.id !== job?.id).slice(0, 2);
+			// Use JobService to query jobs with company filter
+			const companyJobs = await JobService.queryJobs({ companyID: companyId });
+			if (!companyJobs || companyJobs.length === 0) return;
 
-				otherCompanyJobs = await Promise.all(
-					filteredJobs.map(async (jobData: any) => {
-						try {
-							const [companyName, companyLogo] = await fetchCompanyNameLogo(
-								jobData.companyID || ''
-							);
-							return {
-								id: jobData.id,
-								title: jobData.title,
-								company: companyName,
-								location: jobData.location || 'N/A',
-								logo: companyLogo,
-								workType: jobData.workType || 'FULL-TIME',
-								workArrangement: jobData.workArrangement || 'ON-SITE',
-								posted: jobData.postOpenDate
-									? new Date(jobData.postOpenDate).toLocaleDateString()
-									: 'Unknown'
-							};
-						} catch (err) {
-							// Only log for non-404 company errors
-							if (err instanceof Error && !err.message.includes('Company not found')) {
-								console.warn(
-									`Failed to fetch company info for other company job ${jobData.id}:`,
-									err
-								);
-							}
-							return {
-								id: jobData.id,
-								title: jobData.title,
-								company: 'Unknown Company',
-								location: jobData.location || 'N/A',
-								logo: DEFAULT_COMPANY_LOGO,
-								workType: jobData.workType || 'FULL-TIME',
-								workArrangement: jobData.workArrangement || 'ON-SITE',
-								posted: jobData.postOpenDate
-									? new Date(jobData.postOpenDate).toLocaleDateString()
-									: 'Unknown'
-							};
-						}
-					})
-				);
-			}
+			const filteredJobs = companyJobs.filter((j: any) => j.id !== job?.id).slice(0, 2);
+
+			otherCompanyJobs = await Promise.all(
+				filteredJobs.map(async (jobData: any) => {
+					try {
+						const displayJob = await JobService.transformJobForDisplay(jobData);
+						return {
+							id: jobData.id,
+							title: jobData.title,
+							company: displayJob.company,
+							location: jobData.location || 'N/A',
+							logo: displayJob.companyLogo,
+							workType: jobData.workType || 'FULL-TIME',
+							workArrangement: jobData.workArrangement || 'ON-SITE',
+							posted: jobData.postOpenDate ? formatDateShort(jobData.postOpenDate) : 'Unknown'
+						};
+					} catch (err) {
+						console.warn(`Failed to transform other company job ${jobData.id}:`, err);
+						return {
+							id: jobData.id,
+							title: jobData.title,
+							company: 'Unknown Company',
+							location: jobData.location || 'N/A',
+							logo: DEFAULT_COMPANY_LOGO,
+							workType: jobData.workType || 'FULL-TIME',
+							workArrangement: jobData.workArrangement || 'ON-SITE',
+							posted: jobData.postOpenDate ? formatDateShort(jobData.postOpenDate) : 'Unknown'
+						};
+					}
+				})
+			);
 		} catch (err) {
 			console.error('Error loading other company jobs:', err);
 		}
@@ -375,12 +287,6 @@
 		}
 	}
 
-	async function toggleJobBookmark(jobId: string) {
-		const user = getUserInfo();
-		if (user?.userID) {
-			await bookmarkService.toggleBookmark(jobId, user.userID);
-		}
-	}
 
 	function handleShare() {
 		if (navigator.share) {
@@ -574,7 +480,6 @@
 										<JobCard
 											job={similarJob}
 											onclick={() => navigateToJob(similarJob.id)}
-											onBookmark={() => toggleJobBookmark(similarJob.id)}
 										/>
 									{/each}
 								</div>
@@ -592,7 +497,6 @@
 										<JobCard
 											job={otherJob}
 											onclick={() => navigateToJob(otherJob.id)}
-											onBookmark={() => toggleJobBookmark(otherJob.id)}
 										/>
 									{/each}
 								</div>
