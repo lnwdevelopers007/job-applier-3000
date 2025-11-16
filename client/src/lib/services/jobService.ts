@@ -245,6 +245,14 @@ export class JobService {
       if (!formData.requiredSkills || formData.requiredSkills.length === 0) {
         errors.requiredSkills = 'At least one required skill is required';
       }
+      
+      if (!formData.yearsOfExperience) {
+        errors.yearsOfExperience = 'Years of experience is required';
+      }
+      
+      if (!formData.educationLevel) {
+        errors.educationLevel = 'Education level is required';
+      }
     }
     
     if (step === 4) {
