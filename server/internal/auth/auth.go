@@ -1,10 +1,10 @@
 package auth
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 	"strconv"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/sessions"
@@ -42,7 +42,6 @@ func init() {
 func OAuthCallback(c *gin.Context) {
 	addProvider(c)
 	role := c.Query("state")
-	fmt.Println(role)
 	user, err := gothic.CompleteUserAuth(c.Writer, c.Request)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
@@ -130,9 +129,9 @@ func OAuthCallback(c *gin.Context) {
 	// Redirect to frontend callback without token in URL
 	redirectURL := config.LoadEnv("FRONTEND") + "/callback"
 	if isNewUser {
-			redirectURL += "?step=signup&token=" + accessToken
+		redirectURL += "?step=signup&token=" + accessToken
 	} else {
-			redirectURL += "?step=login&token=" + accessToken
+		redirectURL += "?step=login&token=" + accessToken
 	}
 	c.Redirect(http.StatusFound, redirectURL)
 }

@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -26,6 +27,11 @@ func generateTokens(email, name, avatarURL string, userID any) (accessToken, ref
 		"banned":    user.Banned,
 	}
 	accessToken, err = jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString(jwtSecret)
+
+	if !config.LoadBoolean("IS_PROD") {
+		fmt.Println(accessToken)
+	}
+
 	if err != nil {
 		return
 	}

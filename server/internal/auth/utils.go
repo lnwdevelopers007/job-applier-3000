@@ -123,8 +123,6 @@ func findUser(userID any) (schema.User, error) {
 		return schema.User{}, fmt.Errorf("unsupported userID type: %T", v)
 	}
 
-	// Now query with ObjectID
-	fmt.Println(oid)
 	var registeredUser schema.User
 	filter := bson.M{"_id": oid}
 	if err := users.FindOne(ctx, filter).Decode(&registeredUser); err != nil {

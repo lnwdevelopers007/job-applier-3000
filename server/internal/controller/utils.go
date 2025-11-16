@@ -2,12 +2,13 @@ package controller
 
 import (
 	"context"
+	"net/http"
 
-	"github.com/lnwdevelopers007/job-applier-3000/server/internal/database"
+	"github.com/gin-gonic/gin"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/repository"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // extractUnique extracts unique values from a field of a given slice (list) of structs
@@ -25,8 +26,8 @@ func extractUnique[Schema any, ValueType comparable](items []Schema, getValue fu
 	return uniqueSlice
 }
 
-// getUsersFromID returns a map of users from a slice of IDs.
-func getUsersFromID(
+// getUsersFromIDs returns a map of users from a slice of IDs.
+func getUsersFromIDs(
 	ctx context.Context,
 	userIDs []primitive.ObjectID,
 ) (
@@ -34,7 +35,7 @@ func getUsersFromID(
 	error,
 ) {
 	filter := bson.M{"_id": bson.M{"$in": userIDs}}
-	result, err := findAll[schema.User](ctx, "users", filter)
+	result, err := repository.FindAll[schema.User](ctx, filter)
 
 	// Create a map of job seekers for easy lookup
 	resultMap := make(map[primitive.ObjectID]schema.User)
@@ -45,51 +46,46 @@ func getUsersFromID(
 	return resultMap, err
 }
 
-// findAll finds all document which matched the filter from a collection.
-// note: opts is an optional parameter.
-func findAll[Schema any](
-	ctx context.Context,
-	collectionName string,
-	filter bson.M,
-	opts ...*options.FindOptions,
-) ([]Schema, error) {
-	collection := database.GetDatabase().Collection(collectionName)
-	cursor, err := collection.Find(ctx, filter, opts...)
-	if err != nil {
-		return nil, err
+// getUserFromMiddleware returns user injected from the middleware, which gets the user from jwt.
+func getUserFromMiddleware(c *gin.Context) (userID primitive.ObjectID, role string, err error) {
+	userIDStr, exists := c.Get("userID")
+	if !exists {
+		err = http.ErrNotSupported
+		return
 	}
 
-	var result []Schema
-	if err := cursor.All(ctx, &result); err != nil {
-		return nil, err
+	userID, err = primitive.ObjectIDFromHex(userIDStr.(string))
+	if err != nil {
+		return
 	}
-	return result, nil
+
+	roleVal, _ := c.Get("role")
+	role, _ = roleVal.(string)
+	return userID, role, nil
 }
 
-func findOne[Schema any](
-	ctx context.Context,
-	collectionName string,
-	objID primitive.ObjectID,
-) (Schema, error) {
-	collection := database.GetDatabase().Collection(collectionName)
-	var result Schema
-	err := collection.FindOne(ctx, bson.M{"_id": objID}).Decode(&result)
-	if err != nil {
-		var thing Schema
-		return thing, err
+// getFakeUser generates a new userID from void.
+func getFakeUser(c *gin.Context) (userID primitive.ObjectID, role string, err error) {
+	userIDStr, exists := c.Get("userID")
+	if !exists {
+		userID = primitive.NewObjectID()
+		role = "jobSeeker"
+		err = nil
+		return
 	}
-	return result, nil
-}
 
-func deleteMany[Schema any](
-	ctx context.Context,
-	collectionName string,
-	filter any,
-) error {
-	db := database.GetDatabase()
-	collection := db.Collection(collectionName)
+	userID, err = primitive.ObjectIDFromHex(userIDStr.(string))
+	if err != nil {
+		userID = primitive.NewObjectID()
+	}
 
-	_, err := collection.DeleteMany(ctx, filter)
-	return err
+	roleVal, _ := c.Get("role")
+	role, _ = roleVal.(string)
+	if role == "" {
+		role = "jobSeeker"
+	}
+	err = nil
+
+	return userID, role, nil
 
 }

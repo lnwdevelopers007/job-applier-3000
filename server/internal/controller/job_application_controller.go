@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/email"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/repository"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -54,7 +54,7 @@ func (jc JobApplicationController) Query(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	findOpts := options.Find().SetSort(bson.D{{Key: "createdAt", Value: -1}})
-	applications, err := findAll[schema.JobApplication](ctx, jc.baseController.collectionName, jobApplicationFilter, findOpts)
+	applications, err := repository.FindAll[schema.JobApplication](ctx, jobApplicationFilter, findOpts)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -72,7 +72,7 @@ func (jc JobApplicationController) Query(c *gin.Context) {
 	)
 
 	// query users
-	userMap, err := getUsersFromID(
+	userMap, err := getUsersFromIDs(
 		ctx,
 		userIDs,
 	)
@@ -188,43 +188,61 @@ func jobApplicationFilter(c *gin.Context) (bson.M, bool) {
 // @Failure      500  {object} map[string]string
 // @Router       /apply/ [post]
 func (jc JobApplicationController) Create(c *gin.Context) {
-  companyEmail, err := jc.shouldNotifyCompany(c)
-  if err {
-    return
-  }
-  jc.baseController.Create(c)
+	companyEmail, err := jc.shouldNotifyCompany(c)
+	if err {
+		return
+	}
+	jc.baseController.Create(c)
 
-  if companyEmail != "" {
-    var raw schema.JobApplication
-    if err := c.ShouldBindBodyWith(&raw, binding.JSON); err == nil {
-      ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-      defer cancel()
+	if companyEmail != "" {
+		var raw schema.JobApplication
+		if err := c.ShouldBindBodyWithJSON(&raw); err == nil {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
 
-      applicant, _ := findOne[schema.User](ctx, "users", raw.ApplicantID)
-      job, _ := findOne[schema.Job](ctx, "jobs", raw.JobID)
+			applicantID := raw.ApplicantID
+			jobID := raw.JobID
 
-      subject := "New applicant applied to your job"
-      body := fmt.Sprintf(
-        "Hello,\n\n%s has applied to your job \"%s\".\n\nPlease review the application in your applicant board.\n\nBest regards,\nJob Applier 3000",
-        applicant.Name,
-        job.Title,
-      )
+			var validApplicantID, validJobID primitive.ObjectID
+			var convErr error
+			// Validate applicant ID
+			validApplicantID, convErr = primitive.ObjectIDFromHex(applicantID.Hex())
+			if convErr != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ApplicantID format"})
+				return
+			}
+			// Validate job ID
+			validJobID, convErr = primitive.ObjectIDFromHex(jobID.Hex())
+			if convErr != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JobID format"})
+				return
+			}
 
-      email.Send(companyEmail, subject, body)
-    }
-  }
+			applicant, _ := repository.FindOne[schema.User](ctx, validApplicantID)
+			job, _ := repository.FindOne[schema.Job](ctx, validJobID)
+
+			subject := "New applicant applied to your job"
+			body := fmt.Sprintf(
+				"Hello,\n\n%s has applied to your job \"%s\".\n\nPlease review the application in your applicant board.\n\nBest regards,\nJob Applier 3000",
+				applicant.Name,
+				job.Title,
+			)
+
+			email.Send(companyEmail, subject, body)
+		}
+	}
 }
 
 // shouldNotifyCompany determines whether company should be notified when an applicant applied for a job or not.
 func (jc JobApplicationController) shouldNotifyCompany(c *gin.Context) (companyEmail string, err bool) {
 	var raw schema.JobApplication
-	if err := c.ShouldBindBodyWith(&raw, binding.JSON); err != nil {
+	if err := c.ShouldBindBodyWithJSON(&raw); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return "", true
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	job, jobErr := findOne[schema.Job](ctx, "jobs", raw.JobID)
+	job, jobErr := repository.FindOne[schema.Job](ctx, raw.JobID)
 	if jobErr != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": jobErr.Error()})
 		return "", true
@@ -232,7 +250,7 @@ func (jc JobApplicationController) shouldNotifyCompany(c *gin.Context) (companyE
 	if !job.EmailNotifications {
 		return "", false
 	}
-	company, companyErr := findOne[schema.User](ctx, "users", job.CompanyID)
+	company, companyErr := repository.FindOne[schema.User](ctx, job.CompanyID)
 	if companyErr != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": companyErr.Error()})
 		return "", true
@@ -253,69 +271,69 @@ func (jc JobApplicationController) shouldNotifyCompany(c *gin.Context) (companyE
 // @Failure      500  {object} map[string]string
 // @Router       /apply/{id} [put]
 func (jc JobApplicationController) Update(c *gin.Context) {
-  id := c.Param("id")
-  objID, err := primitive.ObjectIDFromHex(id)
-  if err != nil {
-    c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
-    return
-  }
+	id := c.Param("id")
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		return
+	}
 
-  jc.baseController.Update(c)
+	jc.baseController.Update(c)
 
-  ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-  defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-  updatedApp, err := findOne[schema.JobApplication](ctx, jc.baseController.collectionName, objID)
-  if err != nil {
-    fmt.Println("Failed to fetch updated application for notification:", err)
-    return
-  }
+	updatedApp, err := repository.FindOne[schema.JobApplication](ctx, objID)
+	if err != nil {
+		fmt.Println("Failed to fetch updated application for notification:", err)
+		return
+	}
 
-  jc.notifyApplicantOnStatusChange(ctx, updatedApp)
+	jc.notifyApplicantOnStatusChange(ctx, updatedApp)
 }
 
 // notifyApplicantOnStatusChange notifies the applicant when their application status changes
 func (jc JobApplicationController) notifyApplicantOnStatusChange(ctx context.Context, app schema.JobApplication) {
-  applicant, err := findOne[schema.User](ctx, "users", app.ApplicantID)
-  if err != nil {
-    fmt.Println("Failed to fetch applicant for notification:", err)
-    return
-  }
+	applicant, err := repository.FindOne[schema.User](ctx, app.ApplicantID)
+	if err != nil {
+		fmt.Println("Failed to fetch applicant for notification:", err)
+		return
+	}
 
-  job, err := findOne[schema.Job](ctx, "jobs", app.JobID)
-  if err != nil {
-    fmt.Println("Failed to fetch job for notification:", err)
-    return
-  }
+	job, err := repository.FindOne[schema.Job](ctx, app.JobID)
+	if err != nil {
+		fmt.Println("Failed to fetch job for notification:", err)
+		return
+	}
 
-  var subject, body string
+	var subject, body string
 
-  switch app.Status {
-  case "ACCEPTED":
-    subject = "Congratulations! Your job application has been accepted"
-    body = fmt.Sprintf(
-      "Hello %s,\n\nWe are pleased to inform you that your application for the job \"%s\" has been ACCEPTED.\n\nOur team will contact you soon with the next steps.\n\nBest regards,\nJob Applier 3000",
-      applicant.Name,
-      job.Title,
-    )
-  case "REJECTED":
-    subject = "Update on your job application"
-    body = fmt.Sprintf(
-      "Hello %s,\n\nWe regret to inform you that your application for the job \"%s\" has been REJECTED.\n\nWe appreciate your interest and encourage you to apply for future opportunities.\n\nBest regards,\nJob Applier 3000",
-      applicant.Name,
-      job.Title,
-    )
-  default:
-    subject = "Your job application status has been updated"
-    body = fmt.Sprintf(
-      "Hello %s,\n\nThe status of your application for the job \"%s\" has been updated to: %s\n\nBest regards,\nJob Applier 3000",
-      applicant.Name,
-      job.Title,
-      app.Status,
-    )
-  }
+	switch app.Status {
+	case "ACCEPTED":
+		subject = "Congratulations! Your job application has been accepted"
+		body = fmt.Sprintf(
+			"Hello %s,\n\nWe are pleased to inform you that your application for the job \"%s\" has been ACCEPTED.\n\nOur team will contact you soon with the next steps.\n\nBest regards,\nJob Applier 3000",
+			applicant.Name,
+			job.Title,
+		)
+	case "REJECTED":
+		subject = "Update on your job application"
+		body = fmt.Sprintf(
+			"Hello %s,\n\nWe regret to inform you that your application for the job \"%s\" has been REJECTED.\n\nWe appreciate your interest and encourage you to apply for future opportunities.\n\nBest regards,\nJob Applier 3000",
+			applicant.Name,
+			job.Title,
+		)
+	default:
+		subject = "Your job application status has been updated"
+		body = fmt.Sprintf(
+			"Hello %s,\n\nThe status of your application for the job \"%s\" has been updated to: %s\n\nBest regards,\nJob Applier 3000",
+			applicant.Name,
+			job.Title,
+			app.Status,
+		)
+	}
 
-  email.Send(applicant.Email, subject, body)
+	email.Send(applicant.Email, subject, body)
 }
 
 // Delete godoc
