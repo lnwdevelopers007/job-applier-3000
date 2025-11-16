@@ -16,12 +16,12 @@ import (
 )
 
 type FileController struct {
-	baseController BaseController[schema.File]
+	baseController BaseController[schema.File, schema.File]
 }
 
 func NewFileController() FileController {
 	return FileController{
-		baseController: BaseController[schema.File]{
+		baseController: BaseController[schema.File, schema.File]{
 			collectionName: "files",
 			displayName:    "File",
 		},

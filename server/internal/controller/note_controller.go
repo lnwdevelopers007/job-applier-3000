@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/dto"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/repository"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
 	"go.mongodb.org/mongo-driver/bson"
@@ -15,12 +16,12 @@ import (
 )
 
 type NoteController struct {
-	baseController BaseController[schema.Note]
+	baseController BaseController[schema.Note, dto.Note]
 }
 
 func NewNoteController() NoteController {
 	return NoteController{
-		baseController: BaseController[schema.Note]{
+		baseController: BaseController[schema.Note, dto.Note]{
 			collectionName: "notes",
 			displayName:    "Note",
 		},

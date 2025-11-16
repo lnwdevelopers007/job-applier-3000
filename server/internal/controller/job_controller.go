@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/dto"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/email"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/repository"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
@@ -18,13 +19,13 @@ import (
 
 // JobController is a custom controller for JobSchema
 type JobController struct {
-	baseController BaseController[schema.Job]
+	baseController BaseController[schema.Job, dto.Job]
 }
 
 // NewJobController initializes a JobController
 func NewJobController() JobController {
 	return JobController{
-		baseController: BaseController[schema.Job]{
+		baseController: BaseController[schema.Job, dto.Job]{
 			collectionName: "jobs",
 			displayName:    "Job",
 		},

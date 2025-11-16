@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/auth"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/dto"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/repository"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
 	"go.mongodb.org/mongo-driver/bson"
@@ -15,12 +16,12 @@ import (
 )
 
 type UserController struct {
-	baseController BaseController[schema.User]
+	baseController BaseController[schema.User, dto.User]
 }
 
 func NewUserController() UserController {
 	return UserController{
-		baseController: BaseController[schema.User]{
+		baseController: BaseController[schema.User, dto.User]{
 			collectionName: "users",
 			displayName:    "User",
 		},
