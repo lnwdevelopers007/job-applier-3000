@@ -1,5 +1,3 @@
-import { isAuthenticated } from '$lib/utils/auth';
-
 export interface JobseekerStats {
 	totalApplications: number;
 	inReview: number;
@@ -29,15 +27,42 @@ function emptyStats(): JobseekerStats {
 }
 
 export async function getJobseekerStats(userID: string): Promise<JobseekerStats> {
-	if (!isAuthenticated()) throw new Error('Not authenticated');
-	if (!userID) throw new Error('Invalid userID');
+	// Remove authentication check - let the backend handle it
+	if (!userID) {
+		console.error('getJobseekerStats: Invalid userID');
+		throw new Error('Invalid userID');
+	}
 
 	try {
-		const res = await fetch(`/apply?applicantID=${userID}`);
-		if (!res.ok) throw new Error('Failed to fetch applications');
+		const res = await fetch(`/apply/query?applicantID=${userID}`, {
+			credentials: 'include'
+		});
+		
+		if (!res.ok) {
+			// Handle authentication errors specifically
+			if (res.status === 401) {
+				console.error('Not authenticated - redirecting to login');
+				// Optionally redirect to login page
+				// window.location.href = '/auth/google';
+				throw new Error('Not authenticated');
+			}
+			
+			console.error(`Failed to fetch applications: ${res.status} ${res.statusText}`);
+			const errorText = await res.text();
+			console.error('Error response:', errorText);
+			throw new Error(`Failed to fetch applications: ${res.status}`);
+		}
 
 		const applications = await res.json();
-		if (!Array.isArray(applications) || applications.length === 0) return emptyStats();
+		
+		if (!Array.isArray(applications)) {
+			console.error('Expected array but got:', typeof applications);
+			return emptyStats();
+		}
+		
+		if (applications.length === 0) {
+			return emptyStats();
+		}
 
 		const now = new Date();
 
@@ -62,7 +87,7 @@ export async function getJobseekerStats(userID: string): Promise<JobseekerStats>
 
 		for (const app of applications) {
 			const createdAt = new Date(app.jobApplication?.createdAt || app.createdAt);
-			const status = app.jobApplication?.status?.toLowerCase() || 'pending';
+			const status = (app.jobApplication?.status || app.status || 'pending').toLowerCase();
 
 			totalApplications++;
 			if (status === 'pending') inReview++;

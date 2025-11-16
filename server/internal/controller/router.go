@@ -30,8 +30,29 @@ func NewRouter() *gin.Engine {
 		authGroup.GET("/me", middleware.AuthMiddleware(), auth.Me)
 	}
 
-	jobs := router.Group("/jobs")
+	// Job controller
 	jobCtrl := NewJobController()
+
+	// Public job routes (no auth required)
+	publicJobs := router.Group("/jobs/public")
+	{
+		publicJobs.GET("/latest", jobCtrl.GetLatestPublic)
+	}
+
+	publicuserController := NewUserController()
+	publicUser := router.Group("/users/public")
+	{
+		publicUser.GET("/:id", publicuserController.GetPublicInfo)
+	}
+
+	// Apply AuthMiddleware and AccessControlMiddleware to all protected routes
+	// Order matters: AuthMiddleware first, then AccessControlMiddleware
+	protected := router.Group("/")
+	protected.Use(middleware.AuthMiddleware())
+	protected.Use(middleware.AccessControlMiddleware())
+
+	// Protected job routes
+	jobs := protected.Group("/jobs")
 	{
 		jobs.GET("/query", jobCtrl.Query)
 		jobs.GET("/", jobCtrl.RetrieveAll)
@@ -41,19 +62,20 @@ func NewRouter() *gin.Engine {
 		jobs.GET("/:id", jobCtrl.RetrieveOne)
 	}
 
+	// Job application routes
 	applicationController := NewJobApplicationController()
-	applyRoutes := router.Group("/apply")
+	applyRoutes := protected.Group("/apply")
 	{
 		applyRoutes.GET("/query", applicationController.Query)
-		applyRoutes.GET("/", applicationController.Query)
 		applyRoutes.POST("/", applicationController.Create)
 		applyRoutes.PUT("/:id", applicationController.Update)
 		applyRoutes.DELETE("/:id", applicationController.Delete)
 		applyRoutes.GET("/:id", applicationController.RetrieveOne)
 	}
 
+	// User routes (admin only)
 	userController := NewUserController()
-	userRoutes := router.Group("/users")
+	userRoutes := protected.Group("/users")
 	{
 		userRoutes.GET("/query", userController.Query)
 		userRoutes.GET("/", userController.RetrieveAll)
@@ -65,9 +87,9 @@ func NewRouter() *gin.Engine {
 		userRoutes.PATCH("/:id/role", userController.EditPermission)
 	}
 
+	// File routes
 	file := NewFileController()
-	fileRoutes := router.Group("/files")
-	fileRoutes.Use(middleware.AuthMiddleware())
+	fileRoutes := protected.Group("/files")
 	{
 		fileRoutes.POST("/upload", file.Upload)
 		fileRoutes.GET("/download/:id", file.Download)
@@ -77,10 +99,23 @@ func NewRouter() *gin.Engine {
 		fileRoutes.GET("/application/:applicationId/download/:fileId", file.DownloadApplicantFile)
 	}
 
+	// Public routes (no auth required)
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"ok": true})
 	})
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	note := NewNoteController()
+	noteRoutes := router.Group("/notes")
+	noteRoutes.Use(middleware.AuthMiddleware())
+	{
+		noteRoutes.GET("/", note.Query)
+		noteRoutes.GET("/query", note.Query)
+		noteRoutes.GET("/:id", note.RetrieveOne)
+		noteRoutes.POST("/", note.Create)
+		noteRoutes.PUT("/:id", note.Update)
+		noteRoutes.DELETE("/:id", note.Delete)
+	}
 
 	return router
 }

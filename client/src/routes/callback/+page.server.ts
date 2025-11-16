@@ -86,7 +86,7 @@ export const load: PageServerLoad = async ({ url, cookies }) => {
 		}
 	}
 	if (role === 'admin') {
-		redirectPath = '/admin/dashboard';
+		redirectPath = '/admin/jobs';
 	}
 
 	throw redirect(303, redirectPath);

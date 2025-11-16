@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -23,8 +24,14 @@ func generateTokens(email, name, avatarURL string, userID any) (accessToken, ref
 		"exp":       time.Now().Add(15 * time.Minute).Unix(),
 		"role":      user.Role,
 		"verified":  user.Verified,
+		"banned":    user.Banned,
 	}
 	accessToken, err = jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString(jwtSecret)
+
+	if !config.LoadBoolean("IS_PROD") {
+		fmt.Println(accessToken)
+	}
+
 	if err != nil {
 		return
 	}
@@ -40,6 +47,7 @@ func generateTokens(email, name, avatarURL string, userID any) (accessToken, ref
 		"exp":       time.Now().Add(expDays * 24 * time.Hour).Unix(),
 		"role":      user.Role,
 		"verified":  user.Verified,
+		"banned":    user.Banned,
 	}
 	refreshToken, err = jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString(jwtSecret)
 

@@ -4,9 +4,9 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"time"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/database"
@@ -27,49 +27,16 @@ func NewFileController() FileController {
 		},
 	}
 }
+
 // getUserFromContext extracts user info from context (set by auth middleware)
+// if enableAuth = false in .env, it'll create a mock userID instead.
 func getUserFromContext(c *gin.Context) (userID primitive.ObjectID, role string, err error) {
 	enableAuth, _ := strconv.ParseBool(os.Getenv("ENABLE_AUTH"))
 
 	if enableAuth {
-		// Get from context (set by auth middleware)
-		userIDStr, exists := c.Get("userID")
-		if !exists {
-			err = http.ErrNotSupported
-			return
-		}
-
-		userID, err = primitive.ObjectIDFromHex(userIDStr.(string))
-		if err != nil {
-			return
-		}
-
-		roleVal, _ := c.Get("role")
-		role, _ = roleVal.(string)
-	} else {
-		// When auth disabled, use context from middleware (simulated headers)
-		userIDStr, exists := c.Get("userID")
-		if !exists {
-			userID = primitive.NewObjectID()
-			role = "jobSeeker"
-			err = nil
-			return
-		}
-
-		userID, err = primitive.ObjectIDFromHex(userIDStr.(string))
-		if err != nil {
-			userID = primitive.NewObjectID()
-		}
-
-		roleVal, _ := c.Get("role")
-		role, _ = roleVal.(string)
-		if role == "" {
-			role = "jobSeeker"
-		}
-		err = nil
+		return getUserFromMiddleware(c)
 	}
-
-	return
+	return getFakeUser(c)
 }
 
 // Upload godoc
@@ -263,11 +230,11 @@ func (fc FileController) ListByUser(c *gin.Context) {
 	// Check if requesting user is trying to access their own files
 	enableAuth, _ := strconv.ParseBool(os.Getenv("ENABLE_AUTH"))
 	if enableAuth && objectID != requestingUserID {
-    c.JSON(http.StatusForbidden, gin.H{
-        "error": "you can only access your own files",
-    })
-    return
-}
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "you can only access your own files",
+		})
+		return
+	}
 
 	db := database.GetDatabase()
 	collection := db.Collection(fc.baseController.collectionName)
