@@ -6,6 +6,7 @@
   import { getUserInfo } from '$lib/utils/auth';
   import { toast } from 'svelte-french-toast';
   import { fileService, type FileMetadata } from '$lib/services/fileService';
+  import { JobApplicationService } from '$lib/services/jobApplicationService';
   
   interface Job {
     id: string;
@@ -69,51 +70,24 @@
         return;
       }
       
-      // Check if already applied
-      const queryParams = new URLSearchParams({ 
-        applicantID: userId,
-        jobID: job.id 
-      });
-      
-      const checkResponse = await fetch(`/apply/query?${queryParams.toString()}`, {
-        credentials: 'include'
-      });
-      
-      if (checkResponse.ok) {
-        const applications = await checkResponse.json();
-        if (applications.length > 0) {
-          toast.error('You have already applied to this job');
-          return;
-        }
+      // Check if already applied using the service
+      const hasApplied = await JobApplicationService.hasUserAppliedToJob(userId, job.id);
+      if (hasApplied) {
+        toast.error('You have already applied to this job');
+        return;
       }
 
-      // Prepare application data
+      // Prepare application data  
       const applicationData = {
         applicantID: userId,
         jobID: job.id,
         status: 'PENDING',
-        createdAt: new Date().toISOString(),
-        documents: documents.map(doc => doc.id)
+        createdAt: new Date().toISOString()
       };
       
-      // Submit application
-      const response = await fetch('/apply', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(applicationData)
-      });
       
-      if (!response.ok) {
-        if (response.status === 409) {
-          toast.error('You have already applied to this job');
-        } else {
-          throw new Error(`Failed to apply: ${response.status}`);
-        }
-        return;
-      }
+      // Submit application using the service
+      await JobApplicationService.createApplication(applicationData);
       
       // Show success toast and close modal
       toast.success(`Successfully applied to ${job.title}`);
@@ -171,7 +145,7 @@
       {:else if documents.length === 0}
         <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-md">
           <p class="text-sm text-yellow-800 mb-2">
-            ⚠️ You haven't uploaded any documents yet.
+            You haven't uploaded any documents yet.
           </p>
           <p class="text-sm text-yellow-700 mb-3">
             While you can still apply, uploading documents will improve your chances.

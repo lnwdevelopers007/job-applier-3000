@@ -9,14 +9,13 @@
 	import { get } from 'svelte/store';
 	import { isAuthenticated, getUserInfo } from '$lib/utils/auth';
 	import {
-		fetchUser,
-		fetchCompanyNameLogo,
 		DEFAULT_COMPANY_LOGO,
 		DEFAULT_COMPANY_NAME
 	} from '$lib/utils/fetcher';
-	import { formatDateShort } from '$lib/utils/datetime';
 	import { bookmarkService } from '$lib/services/bookmarkService';
-	import type { JobUI, UserInfo, JobCompanyInfo } from '$lib/types';
+	import { JobService } from '$lib/services/jobService';
+	import { UserService } from '$lib/services/userService';
+	import type { JobUI, UserInfo, JobCompanyInfo, Job, JobFilters, CompanyInfo } from '$lib/types';
 
 	let jobs = $state<JobUI[]>([]);
 	let filteredJobs = $state<JobUI[]>([]);
@@ -29,7 +28,6 @@
 	let userInfo = $state<UserInfo | null>(null);
 	let companyInfo = $state<JobCompanyInfo | null>(null);
 	let isLoggedIn = $state(false);
-	let appliedJobs = $state(new Set<string>());
 
 	let showApplyModal = $state(false);
 	let jobToApply = $state<JobUI | null>(null);
@@ -55,6 +53,7 @@
 		});
 		return unsubscribe;
 	});
+
 
 	let activeFilters = $state<{
 		workType: string;
@@ -91,39 +90,23 @@
 		{ value: 'title', label: 'Title A-Z' }
 	];
 
-	async function fetchAppliedJobs() {
-		if (!isLoggedIn || !userInfo?.userID) return;
-
-		try {
-			const res = await fetch(`/apply/query?applicantID=${userInfo.userID}`, {
-				credentials: 'include'
-			});
-			if (!res.ok) throw new Error('Failed to fetch applied jobs');
-
-			const data = await res.json();
-			appliedJobs = new Set(data.map((app: any) => app.jobApplication.jobID));
-		} catch (err) {
-			console.error('Error fetching applied jobs:', err);
-			appliedJobs = new Set();
-		}
-	}
 
 	async function fetchCompanyInfo(companyID: string) {
 		try {
-			const raw = await fetchUser(companyID);
-			const infoArray = raw.userInfo || [];
-			const info = Object.fromEntries(infoArray.map((item: any) => [item.Key, item.Value]));
-
+			const user = await UserService.getUserById(companyID);
+			const company = user.userInfo as CompanyInfo;
+			
+			// Transform user data to company info format
 			companyInfo = {
-				name: info.name || raw.name || DEFAULT_COMPANY_NAME,
-				logo: info.logo || raw.avatarURL || DEFAULT_COMPANY_LOGO,
-				location: info.headquarters || 'N/A',
-				website: info.website || '',
-				aboutUs: info.aboutUs || '',
-				industry: info.industry || '',
-				size: info.size || '',
-				foundedYear: info.foundedYear || '',
-				linkedIn: info.linkedIn || ''
+				name: company?.name || user.name || DEFAULT_COMPANY_NAME,
+				logo: company?.logo || user.avatarURL || DEFAULT_COMPANY_LOGO,
+				location: company?.headquarters || 'N/A',
+				website: company?.website || '',
+				aboutUs: company?.aboutUs || '',
+				industry: company?.industry || '',
+				size: company?.size || '',
+				foundedYear: company?.foundedYear || '',
+				linkedIn: company?.linkedIn || ''
 			};
 		} catch (err) {
 			console.error('Error fetching company info:', err);
@@ -134,63 +117,60 @@
 	async function fetchJobs(query = '', filters: typeof activeFilters = activeFilters, sort = '') {
 		try {
 			isLoading = true;
-			const params = new URLSearchParams();
-			if (query) params.set('title', query);
-
-			if (filters.workType) {
-				params.set('workType', filters.workType);
+			
+			// Build filters object for JobService
+			const jobFilters: JobFilters = {};
+			if (query) jobFilters.title = query;
+			if (filters.workType) jobFilters.workType = filters.workType;
+			if (filters.postTime) jobFilters.postOpenDate = filters.postTime;
+			if (filters.arrangement) jobFilters.workArrangement = filters.arrangement;
+			if (sort && (sort === 'dateDesc' || sort === 'dateAsc' || sort === 'title')) {
+				jobFilters.sort = sort;
 			}
 
-			if (filters.postTime) {
-				params.set('postOpenDate', filters.postTime);
-			}
-
-			if (filters.arrangement) {
-				params.set('workArrangement', filters.arrangement);
-			}
-
-			if (sort) params.set('sort', sort);
-			const res = await fetch(`/jobs/query?${params.toString()}`);
-
-			if (res.status === 404) {
+			// Use JobService to fetch and transform jobs
+			const rawJobs = await JobService.queryJobs(jobFilters);
+			
+			if (!rawJobs || rawJobs.length === 0) {
 				jobs = [];
 				filteredJobs = [];
 				selectedJob = null;
 				return;
 			}
 
-			if (!res.ok) throw new Error(`Failed to load jobs: ${res.status}`);
-			const data = await res.json();
+			// Transform jobs to UI format
+			const transformedJobs = await Promise.all(
+				rawJobs.map(async (job: Job): Promise<JobUI> => {
+					const displayJob = await JobService.transformJobForDisplay(job);
+					console.log('Debug fetchJobs - Raw job object:', job);
+					console.log('Debug fetchJobs - Job ID being used:', job.id);
+					
+					return {
+						id: job.id || '',
+						title: job.title || '',
+						company: displayJob.company || 'Unknown Company',
+						companyID: job.companyID || '',
+						location: job.location || 'N/A',
+						workType: job.workType || 'Full-time',
+						workArrangement: job.workArrangement || 'On-site',
+						tags: job.requiredSkills
+							? job.requiredSkills.split(',').map((skill: string) => skill.trim())
+							: [],
+						posted: displayJob.posted || 'Unknown',
+						closeDate: displayJob.expires || 'Unknown',
+						description: job.jobDescription || 'No description provided.',
+						logo: displayJob.companyLogo || DEFAULT_COMPANY_LOGO,
+						salary:
+							job.minSalary && job.maxSalary
+								? `${job.currency || 'THB'} ${job.minSalary.toLocaleString()}-${job.maxSalary.toLocaleString()}`
+								: undefined
+					};
+				})
+			);
 
-			const jobPromises = data.map(async (job: any) => {
-				// fetch company name and logo.
-				let [companyName, companyLogo] = await fetchCompanyNameLogo(job.companyID || '');
-
-				return {
-					id: job.id,
-					title: job.title,
-					company: companyName,
-					companyID: job.companyID,
-					location: job.location || 'N/A',
-					workType: job.workType || 'Full-time',
-					workArrangement: job.workArrangement || 'On-site',
-					tags: job.requiredSkills
-						? job.requiredSkills.split(',').map((skill: string) => skill.trim())
-						: [],
-					posted: job.postOpenDate ? formatDateShort(job.postOpenDate) : 'Unknown',
-					closeDate: job.applicationDeadline ? formatDateShort(job.applicationDeadline) : 'Unknown',
-					description: job.jobDescription || 'No description provided.',
-					logo: companyLogo,
-					salary:
-						job.minSalary && job.maxSalary
-							? `${job.currency || 'THB'} ${job.minSalary.toLocaleString()}-${job.maxSalary.toLocaleString()}`
-							: undefined
-				};
-			});
-
-			jobs = await Promise.all(jobPromises);
-			filteredJobs = jobs;
-			selectedJob = jobs[0] || null;
+			jobs = transformedJobs;
+			filteredJobs = transformedJobs;
+			selectedJob = transformedJobs[0] || null;
 			currentPage = 1;
 		} catch (err) {
 			console.error('Error fetching jobs:', err);
@@ -212,15 +192,25 @@
 	}
 
 	onMount(() => {
-		isLoggedIn = isAuthenticated();
-		if (isLoggedIn) {
-			userInfo = getUserInfo();
-			fetchAppliedJobs();
-			// Initialize bookmark service with user ID
-			if (userInfo?.userID) {
-				bookmarkService.initializeBookmarks(userInfo.userID);
+		async function initializeApp() {
+			isLoggedIn = isAuthenticated();
+			if (isLoggedIn) {
+				userInfo = getUserInfo();
+				// Initialize bookmark service with user ID
+				if (userInfo?.userID) {
+					bookmarkService.initializeBookmarks(userInfo.userID);
+				}
+			}
+
+			const currentState = get(jobSearchStore);
+			if (!currentState.shouldFetch) {
+				// Only fetch jobs after applied jobs are loaded
+				fetchJobs();
 			}
 		}
+
+		// Start initialization
+		initializeApp();
 
 		const unsubscribe = jobSearchStore.subscribe((state) => {
 			if (state.shouldFetch) {
@@ -230,11 +220,6 @@
 				});
 			}
 		});
-
-		const currentState = get(jobSearchStore);
-		if (!currentState.shouldFetch) {
-			fetchJobs();
-		}
 
 		return () => {
 			unsubscribe();
@@ -305,7 +290,7 @@
 		</div>
 
 		<div class="grid w-full grid-cols-3 gap-6">
-			<!-- Jobs List -->
+			<!-- Jobls List -->
 			<section class="col-span-1 flex h-[calc(100vh-280px)] flex-col">
 				<div class="min-h-0 flex-1 overflow-y-auto p-2">
 					<div class="space-y-3">
@@ -392,7 +377,6 @@
 								}
 							}}
 							isBookmarked={selectedJobBookmarked}
-							isApplied={appliedJobs.has(selectedJob.id)}
 						/>
 					</div>
 				{:else}

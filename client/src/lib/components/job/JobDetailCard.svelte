@@ -138,7 +138,7 @@
 		<!-- Action Buttons -->
 		<div class="flex gap-2">
 			<ApplyButton
-				{isApplied}
+				jobId={job.id}
 				closeDate={job.closeDate}
 				posted={job.posted}
 				onClick={() => onApply(job)}

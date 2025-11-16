@@ -1,6 +1,11 @@
 <script lang="ts">
+	import { JobApplicationService } from '$lib/services/jobApplicationService';
+	import { getUserInfo } from '$lib/utils/auth';
+	import { onMount } from 'svelte';
+
 	interface Props {
 		isApplied?: boolean;
+		jobId?: string;
 		closeDateRaw?: string | null;
 		postedDate?: string | null;
 		closeDate?: string;
@@ -13,6 +18,7 @@
 	
 	let {
 		isApplied = false,
+		jobId,
 		closeDateRaw = null,
 		postedDate = null,
 		closeDate = '',
@@ -22,6 +28,41 @@
 		size = 'md',
 		fullWidth = false
 	}: Props = $props();
+	
+	let actualIsApplied = $state(isApplied);
+	let isCheckingStatus = $state(false);
+	
+	// If jobId is provided, check the applied status directly
+	async function checkApplicationStatus() {
+		if (!jobId) {
+			actualIsApplied = isApplied;
+			return;
+		}
+		
+		try {
+			isCheckingStatus = true;
+			const user = getUserInfo();
+			if (!user?.userID) {
+				actualIsApplied = false;
+			} else {
+				actualIsApplied = await JobApplicationService.hasUserAppliedToJob(user.userID, jobId);
+			}
+		} catch (error) {
+			console.error('Error checking application status:', error);
+			actualIsApplied = isApplied; // fallback to prop value
+		} finally {
+			isCheckingStatus = false;
+		}
+	}
+	
+	// Check on mount and when jobId changes
+	onMount(() => {
+		checkApplicationStatus();
+	});
+	
+	$effect(() => {
+		checkApplicationStatus();
+	});
 	
 	const isClosed = $derived(() => {
 		if (closeDateRaw) return new Date(closeDateRaw) < new Date();
@@ -46,7 +87,9 @@
 	);
 </script>
 
-{#if isApplied}
+{#if isCheckingStatus}
+	<!-- pass -->
+{:else if actualIsApplied}
 	<button
 		disabled
 		class="{baseClasses} bg-green-700 text-white cursor-not-allowed"

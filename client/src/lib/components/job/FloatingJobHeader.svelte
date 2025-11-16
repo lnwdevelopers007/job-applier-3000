@@ -43,7 +43,7 @@
 				</div>
 				<div class="flex items-center gap-2">
 					<ApplyButton
-						{isApplied}
+						jobId={job.id}
 						closeDateRaw={job.closeDateRaw}
 						postedDate={job.postedDate}
 						onClick={onApply}

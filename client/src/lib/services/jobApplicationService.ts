@@ -4,8 +4,49 @@
 
 import { jobApplicationApi } from '$lib/api';
 import type { JobApplication, JobApplicationFilters } from '$lib/types';
+import { writable, get } from 'svelte/store';
+
+// Reactive store for applied job IDs
+const appliedJobsStore = writable<Set<string>>(new Set());
 
 export class JobApplicationService {
+  private static subscribers = new Set<(appliedJobs: Set<string>) => void>();
+
+  /**
+   * Initialize applied jobs for a user
+   */
+  static async initializeAppliedJobs(userId: string): Promise<void> {
+    if (!userId) return;
+    
+    try {
+      const applications = await this.getApplicationsByApplicant(userId);
+      const jobIds = new Set(applications.map(app => app.jobID));
+      appliedJobsStore.set(jobIds);
+      this.notifySubscribers(jobIds);
+    } catch (error) {
+      console.error('Error initializing applied jobs:', error);
+      appliedJobsStore.set(new Set());
+    }
+  }
+
+  /**
+   * Subscribe to applied jobs changes
+   */
+  static subscribe(callback: (appliedJobs: Set<string>) => void): () => void {
+    this.subscribers.add(callback);
+    // Immediately call with current value
+    callback(get(appliedJobsStore));
+    
+    // Return unsubscribe function
+    return () => {
+      this.subscribers.delete(callback);
+    };
+  }
+
+  private static notifySubscribers(appliedJobs: Set<string>) {
+    this.subscribers.forEach(callback => callback(appliedJobs));
+  }
+
   /**
    * Query job applications with filters - GET /apply/query
    */
@@ -47,10 +88,41 @@ export class JobApplicationService {
    */
   static async createApplication(applicationData: Partial<JobApplication>): Promise<JobApplication> {
     try {
-      return await jobApplicationApi.create(applicationData);
+      const result = await jobApplicationApi.create(applicationData);
+      
+      // Update the local store immediately for instant UI update
+      if (applicationData.jobID) {
+        const currentAppliedJobs = get(appliedJobsStore);
+        const newAppliedJobs = new Set([...currentAppliedJobs, applicationData.jobID]);
+        appliedJobsStore.set(newAppliedJobs);
+        this.notifySubscribers(newAppliedJobs);
+        
+        // Refresh from server to ensure consistency
+        if (applicationData.applicantID) {
+          this.refreshAppliedJobs(applicationData.applicantID);
+        }
+      }
+      
+      return result;
     } catch (error) {
       console.error('Error creating application:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Refresh applied jobs from server
+   */
+  static async refreshAppliedJobs(userId: string): Promise<void> {
+    if (!userId) return;
+    
+    try {
+      const applications = await this.getApplicationsByApplicant(userId);
+      const jobIds = new Set(applications.map(app => app.jobID));
+      appliedJobsStore.set(jobIds);
+      this.notifySubscribers(jobIds);
+    } catch (error) {
+      console.error('Error refreshing applied jobs:', error);
     }
   }
 

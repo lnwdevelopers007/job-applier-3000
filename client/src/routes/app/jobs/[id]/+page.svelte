@@ -29,7 +29,6 @@
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 	let isBookmarked = $state(false);
-	let appliedJobs = $state(new Set<string>());
 	let userInfo: any = null;
 	let showFloatingCard = $state(false);
 	let applyButtonRef = $state<HTMLElement | undefined>();
@@ -102,34 +101,15 @@
 		return '';
 	}
 
-	async function fetchAppliedJobs() {
-		if (!userInfo?.userID) return;
-
-		try {
-			const res = await fetch(`/apply/query?applicantID=${userInfo.userID}`, {
-				credentials: 'include'
-			});
-			if (!res.ok) throw new Error('Failed to fetch applied jobs');
-
-			const data = await res.json();
-			appliedJobs = new Set(data.map((app: any) => app.jobApplication.jobID));
-		} catch (err) {
-			console.error('Error fetching applied jobs:', err);
-			appliedJobs = new Set();
-		}
-	}
 
 	async function loadJobData() {
 		try {
 			loading = true;
 			error = null;
 
-			// Check authentication and fetch applied jobs first
+			// Check authentication
 			if (isAuthenticated()) {
 				userInfo = getUserInfo();
-				if (userInfo?.userID) {
-					await fetchAppliedJobs();
-				}
 			}
 
 			const jobData = await fetchJob(data.jobId);
@@ -577,7 +557,7 @@
 								Application deadline: {job.closeDate || 'Open until filled'}
 							</div>
 							<ApplyButton
-								isApplied={appliedJobs.has(job.id)}
+								jobId={job.id}
 								closeDateRaw={job.closeDateRaw}
 								postedDate={job.postedDate}
 								onClick={handleApplyClick}
@@ -637,7 +617,6 @@
 	onBookmark={toggleBookmark}
 	onShare={handleShare}
 	{isBookmarked}
-	isApplied={job && appliedJobs.has(job.id)}
 />
 
 <!-- Apply Modal -->
