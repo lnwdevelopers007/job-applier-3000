@@ -269,7 +269,7 @@ func (jc UserController) GetPublicInfo(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	user, err := findOne[schema.User](ctx, jc.baseController.collectionName, objID)
+	user, err := repository.FindOne[schema.User](ctx, objID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
 		return
