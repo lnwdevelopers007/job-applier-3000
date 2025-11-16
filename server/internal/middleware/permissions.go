@@ -81,10 +81,10 @@ var RoutePermissions = map[string]Permission{
 	"GET:/users/": {
 		AllowedRoles: []string{"admin"},
 	},
-	// REMOVED: GET:/users/query - was causing security issues
-	// Admin-only query endpoint
+	// Query endpoint - with role-based viewing enforcement
 	"GET:/users/query": {
-		AllowedRoles: []string{"admin"},
+		AllowedRoles:     []string{"admin", "jobSeeker", "company", "faculty"},
+		RequireOwnership: true, // Will check role-based viewing in checkOwnership
 	},
 	// View specific user with role-based access control
 	"GET:/users/:id": {
