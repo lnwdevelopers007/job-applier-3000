@@ -8,8 +8,6 @@
   import { fileService, type FileMetadata } from '$lib/services/fileService';
   import { ArrowLeft } from 'lucide-svelte';
   import { fly } from 'svelte/transition';
-  import AuthLayout from '$lib/components/auth/AuthLayout.svelte';
-  import AuthHeader from '$lib/components/auth/AuthHeader.svelte';
   import FormInput from '$lib/components/auth/FormInput.svelte';
   import FormButton from '$lib/components/auth/FormButton.svelte';
   import GoogleOAuthButton from '$lib/components/auth/GoogleOAuthButton.svelte';
@@ -18,6 +16,9 @@
   import FileUploadModal from '$lib/components/files/FileUploadModal.svelte';
 	import DeleteConfirmModal from '$lib/components/files/DeleteConfirmModal.svelte';
 	import { userService } from '$lib/services/userService';
+  import seekerDashboard from '$lib/assets/seeker-dashboard.png';
+  import AuthLayout from '$lib/components/auth/AuthLayout.svelte';
+  import AuthHeader from '$lib/components/auth/AuthHeader.svelte';
 
 
   
@@ -190,6 +191,24 @@
 </script>
 
 <AuthLayout backHref="/signup">
+  <div slot="left-side" class="h-full flex flex-col justify-between p-12 overflow-hidden">
+    <div class="max-w-2xl pt-20 px-20">
+      <p class="text-gray-700 text-2xl leading-relaxed mb-6">
+        Launch your career with Job Applier 3000! Connect with top companies looking for talented CPE students and alumni like you
+      </p>
+      <p class="text-2xl font-semibold text-gray-900">Your dream job is just a click away!</p>
+    </div>
+
+    <div class="flex justify-start">
+      <div class="w-full max-w-4xl -ml-18 -mb-18">
+        <div class="bg-white rounded-3xl border-5 border-black overflow-hidden">
+          <!-- Jobs listing image -->
+          <img src={seekerDashboard} alt="Seeker dashboard preview" class="w-full h-160 object-cover" />
+        </div>
+      </div>
+    </div>
+  </div>
+
   <AuthHeader />
   
   {#if currentStep === 1}
@@ -198,20 +217,6 @@
       <p class="text-sm text-gray-500">Register as a job seekeer to start finding your dream job</p>
     </div>
     
-    <!-- <form onsubmit={e => { e.preventDefault(); handleEmailStep(); }} class="space-y-6">
-      <FormInput
-        id="email"
-        type="email"
-        label="Email"
-        placeholder="Enter email..."
-        bind:value={email}
-        required
-      />
-      
-      <FormButton type="submit">Continue with Email</FormButton>
-    </form>
-
-    <OrDivider /> -->
     <GoogleOAuthButton text="Continue with Google" userType="jobSeeker" />
 
     <p class="text-center text-sm text-gray-500 mt-8">

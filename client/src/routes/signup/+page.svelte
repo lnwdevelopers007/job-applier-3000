@@ -2,6 +2,11 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { isAuthenticated } from '$lib/utils/auth';
+  import jobsListingImage from '$lib/assets/job-listing.png';
+  import logo1 from '$lib/assets/logos/logoipsum-223.png';
+  import logo2 from '$lib/assets/logos/logoipsum-411.png';
+  import logo3 from '$lib/assets/logos/logoipsum-361.png';
+  import avatar1 from '$lib/assets/logos/avatar-1.jpeg';
   
   onMount(() => {
     if (isAuthenticated()) {
@@ -12,7 +17,7 @@
 
 <div class="min-h-screen flex flex-col lg:flex-row">
   <!-- Left Side - Sign up section -->
-  <div class="w-full lg:w-3/6 flex items-center justify-center p-8">
+  <div class="w-full lg:w-3/6 flex items-center justify-center p-8 min-h-screen lg:min-h-0">
     <div class="w-full max-w-lg">
       <div class="text-center mb-8">
         <h2 class="text-2xl font-semibold text-gray-800 mb-2">Sign up</h2>
@@ -30,10 +35,13 @@
             <div class="flex-shrink-0">
               <div class="flex -space-x-2">
                 <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center border-2 border-white">
+                  <img src={avatar1} alt="Company logo" class="w-8 h-auto object-contain rounded-full" />
                 </div>
                 <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center border-2 border-white">
+                  <img src={logo2} alt="Company logo" class="w-5 h-5 object-contain" />
                 </div>
                 <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center border-2 border-white">
+                  <img src={logo3} alt="Company logo" class="w-5 h-5 object-contain" />
                 </div>
               </div>
             </div>
@@ -50,10 +58,13 @@
             <div class="flex-shrink-0">
               <div class="flex -space-x-2">
                 <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center border-2 border-white">
+                  <img src={logo3} alt="Company logo" class="w-5 h-5 object-contain" />
                 </div>
                 <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center border-2 border-white">
+                  <img src={logo1} alt="Company logo" class="w-5 h-5 object-contain" />
                 </div>
                 <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center border-2 border-white">
+                  <img src={logo2} alt="Company logo" class="w-5 h-5 object-contain" />
                 </div>
               </div>
             </div>
@@ -74,8 +85,8 @@
     </div>
   </div>
 
-  <!-- Right Side -->
-  <div class="w-full lg:w-3/5 bg-gradient-to-br from-green-50 to-blue-50 relative overflow-hidden border-white">
+  <!-- Right Side (Hidden on mobile) -->
+  <div class="hidden lg:block w-full lg:w-3/5 bg-gradient-to-br from-green-50 to-blue-50 relative overflow-hidden border-white">
     <div class="h-full flex flex-col justify-between p-12">
       <div class="max-w-2xl pt-20 px-20">
         <p class="text-gray-700 text-2xl leading-relaxed mb-6">
@@ -87,12 +98,8 @@
       <div class="flex justify-end">
         <div class="w-full max-w-4xl -mr-18 -mb-18">
           <div class="bg-white rounded-3xl border-5 border-black overflow-hidden">
-            <!-- Image placeholder -->
-            <div class="w-full h-160 bg-gray-200 flex items-center justify-center">
-              <div class="text-center">
-                <p class="text-gray-500 text-lg">Dashboard Image</p>
-              </div>
-            </div>
+            <!-- Jobs listing image -->
+            <img src={jobsListingImage} alt="Jobs listing dashboard preview" class="w-full h-160 object-cover" />
           </div>
         </div>
       </div>
