@@ -67,7 +67,6 @@ func NewRouter() *gin.Engine {
 	applyRoutes := protected.Group("/apply")
 	{
 		applyRoutes.GET("/query", applicationController.Query)
-		applyRoutes.GET("/", applicationController.Query)
 		applyRoutes.POST("/", applicationController.Create)
 		applyRoutes.PUT("/:id", applicationController.Update)
 		applyRoutes.DELETE("/:id", applicationController.Delete)

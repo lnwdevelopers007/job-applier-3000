@@ -8,12 +8,7 @@
 	import { jobSearchStore } from '$lib/stores/jobSearch';
 	import { get } from 'svelte/store';
 	import { isAuthenticated, getUserInfo } from '$lib/utils/auth';
-	import {
-		fetchUser,
-		fetchCompanyNameLogo,
-		DEFAULT_COMPANY_LOGO,
-		DEFAULT_COMPANY_NAME
-	} from '$lib/utils/fetcher';
+	import { fetchCompanyNameLogo } from '$lib/utils/fetcher';
 	import { formatDateShort } from '$lib/utils/datetime';
 	import { bookmarkService } from '$lib/services/bookmarkService';
 	import type { JobUI, UserInfo, JobCompanyInfo } from '$lib/types';
@@ -109,27 +104,66 @@
 	}
 
 	async function fetchCompanyInfo(companyID: string) {
-		try {
-			const raw = await fetchUser(companyID);
-			const infoArray = raw.userInfo || [];
-			const info = Object.fromEntries(infoArray.map((item: any) => [item.Key, item.Value]));
+    try {
+        const response = await fetch(`/users/query?id=${companyID}`, {
+            credentials: 'include'
+        });
 
-			companyInfo = {
-				name: info.name || raw.name || DEFAULT_COMPANY_NAME,
-				logo: info.logo || raw.avatarURL || DEFAULT_COMPANY_LOGO,
-				location: info.headquarters || 'N/A',
-				website: info.website || '',
-				aboutUs: info.aboutUs || '',
-				industry: info.industry || '',
-				size: info.size || '',
-				foundedYear: info.foundedYear || '',
-				linkedIn: info.linkedIn || ''
-			};
-		} catch (err) {
-			console.error('Error fetching company info:', err);
-			companyInfo = null;
-		}
-	}
+        if (!response.ok) {
+            console.error(`Failed to fetch company ${companyID}: ${response.status}`);
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Fetched company data:', data);
+
+        // Validate response is an array
+        if (!Array.isArray(data)) {
+            console.error('Expected array but got:', typeof data, data);
+            throw new Error('Invalid response format');
+        }
+
+        if (data.length === 0) {
+            console.warn(`No company found with ID ${companyID}`);
+            throw new Error('Company not found');
+        }
+
+        const company = data[0];
+        
+        // Safety check for userInfo
+        const infoArray = Array.isArray(company.userInfo) ? company.userInfo : [];
+        const info = Object.fromEntries(infoArray.map((i: any) => [i.Key, i.Value]));
+
+        return {
+            id: company.id || company._id,
+            name: info.companyName || company.name || 'Unknown Company',
+            email: company.email || '',
+            avatarURL: company.avatarURL || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
+            description: info.companyDescription || info.aboutUs || '',
+            location: info.location || '-',
+            website: info.website || '',
+            industry: info.industry || '',
+            size: info.companySize || '',
+            founded: info.foundedYear || ''
+        };
+    } catch (error) {
+        console.error(`Error fetching company ${companyID}:`, error);
+        
+        // Return placeholder company
+        return {
+            id: companyID,
+            name: 'Unknown Company',
+            email: '-',
+            avatarURL: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
+            description: '',
+            location: '-',
+            website: '',
+            industry: '',
+            size: '',
+            founded: ''
+        };
+    }
+}
 
 	async function fetchJobs(query = '', filters: typeof activeFilters = activeFilters, sort = '') {
 		try {
@@ -150,7 +184,9 @@
 			}
 
 			if (sort) params.set('sort', sort);
-			const res = await fetch(`/jobs/query?${params.toString()}`);
+			const res = await fetch(`/jobs/query?${params.toString()}`, {
+				credentials: 'include'
+			});
 
 			if (res.status === 404) {
 				jobs = [];

@@ -205,8 +205,21 @@ func checkOwnership(c *gin.Context, role, path string) error {
 	defer cancel()
 
 	// ===== USER ROUTES - SPECIAL HANDLING =====
-	if strings.HasPrefix(path, "/users/") && !strings.Contains(path, "query") && !strings.Contains(path, "verify") && !strings.Contains(path, "role") {
-		targetUserID := extractIDFromPath(path, "/users/")
+	if strings.HasPrefix(path, "/users/") && !strings.Contains(path, "verify") && !strings.Contains(path, "role") {
+		var targetUserID string
+		
+		// Handle /users/query?id=xxx
+		if strings.Contains(path, "/users/query") {
+			targetUserID = c.Query("id")
+			if targetUserID == "" {
+				// If no ID in query, this might be listing users - let it through for now
+				// Admin role check already passed if we got here
+				return nil
+			}
+		} else {
+			// Handle /users/:id
+			targetUserID = extractIDFromPath(path, "/users/")
+		}
 		
 		// Check if viewing/editing own profile
 		if targetUserID == userIDStr {
@@ -332,14 +345,15 @@ func canViewUserRole(viewerRole string, targetRole string) bool {
 		return targetRole == "company"
 	}
 
-	// Company can view: job seeker profiles only (NOT other companies, faculty, or admin)
+	// Company can view: job seeker profiles AND other company profiles (for job postings)
+	// BUT NOT faculty or admin
 	if viewerRole == "company" {
-		return targetRole == "jobSeeker"
+		return targetRole == "jobSeeker" || targetRole == "company"
 	}
 
-	// Faculty can only view: their own profile (handled by ownership check)
+	// Faculty can view: company profiles (for job browsing)
 	if viewerRole == "faculty" {
-		return false
+		return targetRole == "company"
 	}
 
 	// Default: deny
