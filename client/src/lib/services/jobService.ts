@@ -19,7 +19,12 @@ export class JobService {
    */
   static async queryJobs(filters?: JobFilters): Promise<Job[]> {
     try {
-      return await jobApi.query(filters);
+      // Add default sorting to newest first if no sort is specified
+      const filtersWithSort = {
+        ...filters,
+        sort: filters?.sort || 'dateDesc'
+      };
+      return await jobApi.query(filtersWithSort);
     } catch (error) {
       console.error('Error querying jobs:', error);
       throw error;
@@ -31,7 +36,11 @@ export class JobService {
    */
   static async getAllJobs(): Promise<Job[]> {
     try {
-      return await jobApi.getAll();
+      return (await jobApi.getAll()).sort((a, b) => {
+        const dateA = new Date(a.postOpenDate || '').getTime();
+        const dateB = new Date(b.postOpenDate || '').getTime();
+        return dateB - dateA;
+      });
     } catch (error) {
       console.error('Error fetching all jobs:', error);
       throw error;
