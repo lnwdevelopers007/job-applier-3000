@@ -90,9 +90,15 @@
         };
     }
 
-    // Handle userInfo array - add safety check
-    const infoArray = Array.isArray(user.userInfo) ? user.userInfo : [];
-    const info = Object.fromEntries(infoArray.map((i: any) => [i.Key, i.Value]));
+    // Handle userInfo - check if it's array or object format
+    let info: any = {};
+    if (Array.isArray(user.userInfo)) {
+      // Array format: [{ Key: "...", Value: "..." }, ...]
+      info = Object.fromEntries(user.userInfo.map((i: any) => [i.Key, i.Value]));
+    } else if (user.userInfo && typeof user.userInfo === 'object') {
+      // Object format: { "key": "value", ... }
+      info = user.userInfo;
+    }
     
     // Parse skills from comma-separated string
     const skillsString = info.skills || '';
