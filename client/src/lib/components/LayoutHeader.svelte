@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
-  import { LogOut, Settings } from 'lucide-svelte';
+  import { LogOut, Settings, Menu, X } from 'lucide-svelte';
   import { scale } from 'svelte/transition';
   import userAvatar from '$lib/assets/user.png';
   import { authStore } from '$lib/stores/auth.svelte';
@@ -18,6 +18,7 @@
   } = $props();
 
   let isDropdownOpen = $state(false);
+  let isMobileMenuOpen = $state(false);
   let dropdownRef = $state<HTMLDivElement>();
 
   // Format role display
@@ -38,6 +39,10 @@
     isDropdownOpen = !isDropdownOpen;
   }
 
+  function toggleMobileMenu() {
+    isMobileMenuOpen = !isMobileMenuOpen;
+  }
+
   function handleLogout() {
     authStore.logout();
   }
@@ -48,6 +53,11 @@
       isDropdownOpen = false;
     }
   }
+
+  // Close mobile menu when route changes
+  $effect(() => {
+    isMobileMenuOpen = false;
+  });
 
   $effect(() => {
     if (isDropdownOpen) {
@@ -60,9 +70,10 @@
 </script>
 
 <header class="absolute top-0 left-0 right-0 z-20 w-full backdrop-blur-md">
-  <div class="grid grid-cols-3 items-center py-3 px-6 max-w-7xl mx-auto">
+  <div class="flex items-center justify-between py-3 px-4 sm:px-6 max-w-7xl mx-auto">
+    <!-- Logo -->
     <button 
-      class="flex items-start space-x-1 group cursor-pointer justify-self-start"
+      class="flex items-center space-x-1 group cursor-pointer"
       onclick={() => goto('/')}
       onkeydown={(e) => e.key === 'Enter' && goto('/')}
       aria-label="Go to home page"
@@ -71,8 +82,9 @@
       <h2 class="text-lg font-semibold text-green-700">3000</h2>
     </button>
 
+    <!-- Desktop Navigation -->
     {#if navItems.length > 0 && authStore.isAuthenticated}
-      <nav class="hidden md:flex items-center space-x-6 justify-self-center">
+      <nav class="hidden md:flex items-center space-x-6">
         {#each navItems as item (item.href)}
           <a 
             href={item.href} 
@@ -82,12 +94,11 @@
           </a>
         {/each}
       </nav>
-    {:else}
-      <div></div>
     {/if}
       
-    <div class="justify-self-end">
-    {#if authStore.isAuthenticated}
+    <!-- Right side actions -->
+    <div class="flex items-center gap-2">
+      {#if authStore.isAuthenticated}
       <div class="relative" bind:this={dropdownRef}>
       <button
         onclick={toggleDropdown}
@@ -147,23 +158,90 @@
         </div>
       </div>
       {/if}
-      </div>
-    {:else}
-      <div class="flex items-center space-x-3">
-        <a
-          href="/login"
-          class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+        </div>
+      {:else}
+        <div class="hidden sm:flex items-center space-x-3">
+          <a
+            href="/login"
+            class="px-3 sm:px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+          >
+            Log in
+          </a>
+          <a
+            href="/signup"
+            class="px-3 sm:px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors"
+          >
+            Sign up
+          </a>
+        </div>
+      {/if}
+      
+      <!-- Mobile menu button -->
+      {#if navItems.length > 0 && authStore.isAuthenticated}
+        <button
+          onclick={toggleMobileMenu}
+          class="md:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 focus:outline-none"
+          aria-label="Toggle mobile menu"
         >
-          Log in
-        </a>
-        <a
-          href="/signup"
-          class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors"
+          {#if isMobileMenuOpen}
+            <X class="h-5 w-5" />
+          {:else}
+            <Menu class="h-5 w-5" />
+          {/if}
+        </button>
+      {:else if !authStore.isAuthenticated}
+        <button
+          onclick={toggleMobileMenu}
+          class="sm:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 focus:outline-none"
+          aria-label="Toggle mobile menu"
         >
-          Sign up
-        </a>
-      </div>
-    {/if}
+          {#if isMobileMenuOpen}
+            <X class="h-5 w-5" />
+          {:else}
+            <Menu class="h-5 w-5" />
+          {/if}
+        </button>
+      {/if}
+    </div>
   </div>
-  </div>
+  
+  <!-- Mobile Navigation Menu -->
+  {#if isMobileMenuOpen}
+    <div 
+      class="md:hidden bg-white border-t border-gray-200 shadow-lg"
+      in:scale={{ duration: 150, start: 0.95, opacity: 0 }}
+      out:scale={{ duration: 100, start: 0.98, opacity: 0 }}
+    >
+      {#if authStore.isAuthenticated && navItems.length > 0}
+        <nav class="px-4 py-2 space-y-1">
+          {#each navItems as item (item.href)}
+            <a 
+              href={item.href} 
+              class="block px-3 py-2 text-sm font-medium rounded-md {$page.url.pathname === item.href ? 'bg-green-50 text-green-700' : 'text-gray-700 hover:bg-gray-50'}"
+              onclick={() => isMobileMenuOpen = false}
+            >
+              {item.label}
+            </a>
+          {/each}
+        </nav>
+      {:else if !authStore.isAuthenticated}
+        <div class="sm:hidden px-4 py-3 space-y-2">
+          <a
+            href="/login"
+            class="block w-full px-4 py-2 text-center text-sm font-medium text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            onclick={() => isMobileMenuOpen = false}
+          >
+            Log in
+          </a>
+          <a
+            href="/signup"
+            class="block w-full px-4 py-2 text-center bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors"
+            onclick={() => isMobileMenuOpen = false}
+          >
+            Sign up
+          </a>
+        </div>
+      {/if}
+    </div>
+  {/if}
 </header>
