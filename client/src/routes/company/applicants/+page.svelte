@@ -1,5 +1,6 @@
  <script lang="ts">
   import { onMount } from 'svelte';
+  import { page } from '$app/stores';
   import ApplicantFilesSection from '$lib/components/files/ApplicantFilesSection.svelte';
   import { Search } from 'lucide-svelte';
   import { getUserInfo, isAuthenticated } from '$lib/utils/auth';
@@ -367,9 +368,26 @@
       companyJobs = jobsData;
       candidates = candidatesData;
       
+      // Check if a jobId was provided in the URL
+      const jobId = $page.url.searchParams.get('jobId');
+      if (jobId && jobsData.length > 0) {
+        // Find the job with matching ID and set the filter
+        const matchingJob = jobsData.find(job => job.id === jobId);
+        if (matchingJob) {
+          selectedJobFilter = matchingJob.title;
+          console.log('Applied job filter:', matchingJob.title);
+        }
+      }
+      
       console.log('Fetched jobs:', companyJobs);
       console.log('Fetched candidates:', candidates);
-      if (candidates.length > 0) selectedCandidate = candidates[0];
+      
+      // Select first candidate from filtered results
+      if (filteredCandidates.length > 0) {
+        selectedCandidate = filteredCandidates[0];
+      } else if (candidates.length > 0) {
+        selectedCandidate = candidates[0];
+      }
     } else {
       console.log('No company info found - user may need to log in');
       // Try to redirect to login if not authenticated

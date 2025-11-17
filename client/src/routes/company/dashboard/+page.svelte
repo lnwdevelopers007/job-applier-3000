@@ -1,17 +1,22 @@
-<script>
+<script lang="ts">
 	import { goto } from '$app/navigation';
-	import ConfirmActionWithReason from '$lib/components/modals/ConfirmActionWithReason.svelte';
-	import TableWithAction from '$lib/components/table/TableWithAction.svelte';
 	import { authStore } from '$lib/stores/auth.svelte';
 	import { apiFetch } from '$lib/utils/api';
 	import { getCompanyAnalytics } from '$lib/utils/companyStats';
+	import { formatDateDMY } from '$lib/utils/datetime';
+	import { Search } from 'lucide-svelte';
+	import DataTable from '$lib/components/tables/DataTable.svelte';
+	import { createCompanyJobColumns, type CompanyJobDisplay } from '$lib/components/tables/columns/companyJobColumns';
+	import DeleteModal from '$lib/components/ui/DeleteModal.svelte';
 
-	let jobs = $state([]);
+	let jobs = $state<CompanyJobDisplay[]>([]);
+	let loading = $state(true);
+	let searchQuery = $state('');
+	let statusFilter = $state('all');
 
 	// Modal states
 	let showDeleteModal = $state(false);
-	let deleteReason = $state('');
-	let jobToDelete = $state(null);
+	let jobToDelete = $state<CompanyJobDisplay | null>(null);
 	let deleting = $state(false);
 	let stats = $state({
 		activeJobs: 0,
@@ -26,39 +31,50 @@
 		}
 	});
 
-	async function handleAction(action, job) {
-		if (action.label === 'Edit') {
-			goto(`/company/edit/${job.id}`);
-		}
-		if (action.label === 'View') {
-			goto(`/app/jobs/${job.id}`);
-		}
-		if (action.label === 'Delete') {
-			jobToDelete = job;
-			deleteReason = '';
-			showDeleteModal = true;
-		}
+	const statusOptions = [
+		{ value: 'all', label: 'All Status' },
+		{ value: 'active', label: 'Active' },
+		{ value: 'closed', label: 'Closed' }
+	];
+
+	function handleView(job: CompanyJobDisplay) {
+		goto(`/app/jobs/${job.id}`);
 	}
 
-	async function confirmDelete() {
+	function handleEdit(job: CompanyJobDisplay) {
+		goto(`/company/edit/${job.id}`);
+	}
+
+	function handleDelete(job: CompanyJobDisplay) {
+		jobToDelete = job;
+		showDeleteModal = true;
+	}
+
+	function handleViewApplicants(job: CompanyJobDisplay) {
+		// Navigate to applicants page with job filter
+		goto(`/company/applicants?jobId=${job.id}`);
+	}
+
+	async function confirmDelete(reason: string) {
 		if (!jobToDelete) return;
 		deleting = true;
 		try {
 			const res = await apiFetch(`/jobs/${jobToDelete.id}`, {
 				method: 'DELETE',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ reason: deleteReason })
+				body: JSON.stringify({ reason })
 			});
 
 			if (!res.ok) throw new Error(`Failed to delete job: ${res.status}`);
 
 			jobs = jobs.filter((j) => j.id !== jobToDelete.id);
-		} catch (err) {
-			console.error(err);
-		} finally {
-			deleting = false;
 			showDeleteModal = false;
 			jobToDelete = null;
+		} catch (err) {
+			console.error(err);
+			throw err;
+		} finally {
+			deleting = false;
 		}
 	}
 
@@ -71,6 +87,7 @@
 
 	async function loadCompanyData() {
 		try {
+			loading = true;
 			const user = authStore.user;
 			if (!user?.userID) {
 				goto('/login');
@@ -115,16 +132,10 @@
 						title: job.title,
 						status: status || 'Active',
 						applicants: applicantCount,
-						views: job.views || 0,
-						posted: job.postOpenDate ? new Date(job.postOpenDate).toLocaleDateString() : 'None',
+						posted: job.postOpenDate ? formatDateDMY(job.postOpenDate) : 'None',
 						expires: job.applicationDeadline
-							? new Date(job.applicationDeadline).toLocaleDateString()
-							: 'None',
-						actions: [
-							{ label: 'View', disabled: false },
-							{ label: 'Edit', disabled: false },
-							{ label: 'Delete', disabled: false }
-						]
+							? formatDateDMY(job.applicationDeadline)
+							: 'None'
 					};
 				})
 			);
@@ -132,87 +143,144 @@
 			jobs = jobWithCounts;
 		} catch {
 			jobs = [];
+		} finally {
+			loading = false;
 		}
+	}
+
+	const columns = $derived(
+		createCompanyJobColumns({
+			onView: handleView,
+			onEdit: handleEdit,
+			onDelete: handleDelete,
+			onViewApplicants: handleViewApplicants
+		})
+	);
+
+	const filteredJobs = $derived(
+		jobs.filter((job) => {
+			const matchesSearch =
+				!searchQuery ||
+				job.title.toLowerCase().includes(searchQuery.toLowerCase());
+
+			const matchesStatus =
+				statusFilter === 'all' ||
+				job.status.toLowerCase() === statusFilter;
+
+			return matchesSearch && matchesStatus;
+		})
+	);
+
+	function handleSearch(event: Event) {
+		searchQuery = (event.target as HTMLInputElement).value;
+	}
+
+	function handleStatusFilter(event: Event) {
+		statusFilter = (event.target as HTMLSelectElement).value;
 	}
 </script>
 
-<div>
-	<h1 class="mb-1 text-2xl font-semibold text-gray-900">Company Dashboard</h1>
-	<p class="mb-6 text-base text-gray-600">
-		Welcome back, company HR Team. Here's what’s happening with your recruitment.
-	</p>
+<div class="">
+	<div class="mb-8">
+		<h1 class="text-2xl font-semibold text-gray-900">Company Dashboard</h1>
+		<p class="mt-2 text-gray-600">Welcome back! Here's what's happening with your recruitment.</p>
+	</div>
 
 	<!-- Summary cards -->
-	<div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-		<div class="rounded-lg bg-white p-4 shadow">
-			<h2 class="text-gray-600">Active Jobs</h2>
-			<p class="text-2xl font-medium text-gray-800">{stats.activeJobs}</p>
-			<p class={stats.trend.activeJobs >= 0 ? 'text-sm text-green-500' : 'text-sm text-red-500'}>
+	<div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+		<!-- Active Jobs -->
+		<div class="rounded-xl border border-gray-200 bg-white p-4">
+			<h2 class="mb-2 text-sm text-gray-500">Active Jobs</h2>
+			<p class="text-2xl font-medium text-gray-900">{stats.activeJobs}</p>
+			<p class={`mt-1 text-sm ${stats.trend.activeJobs >= 0 ? 'text-green-600' : 'text-red-600'}`}>
 				{stats.trend.activeJobs >= 0 ? '↑' : '↓'}
-				{Math.abs(stats.trend.activeJobs)} from lastmonth
+				{Math.abs(stats.trend.activeJobs)} from last month
 			</p>
 		</div>
 
-		<div class="rounded-lg bg-white p-4 shadow">
-			<h2 class="text-gray-600">Total Applicants</h2>
-			<p class="text-2xl font-medium text-gray-800">{stats.totalApplicants}</p>
-			<p
-				class={stats.trend.totalApplicants >= 0 ? 'text-sm text-green-500' : 'text-sm text-red-500'}
-			>
+		<!-- Total Applicants -->
+		<div class="rounded-xl border border-gray-200 bg-white p-4">
+			<h2 class="mb-2 text-sm text-gray-500">Total Applicants</h2>
+			<p class="text-2xl font-medium text-gray-900">{stats.totalApplicants}</p>
+			<p class={`mt-1 text-sm ${stats.trend.totalApplicants >= 0 ? 'text-green-600' : 'text-red-600'}`}>
 				{stats.trend.totalApplicants >= 0 ? '↑' : '↓'}
 				{Math.abs(stats.trend.totalApplicants)} from last month
 			</p>
 		</div>
 
-		<div class="rounded-lg bg-white p-4 shadow">
-			<h2 class="text-gray-600">Pending Review</h2>
-			<p class="text-2xl font-medium text-gray-800">{stats.pendingReview}</p>
-			<p class={stats.trend.pendingReview >= 0 ? 'text-sm text-green-500' : 'text-sm text-red-500'}>
+		<!-- Pending Review -->
+		<div class="rounded-xl border border-gray-200 bg-white p-4">
+			<h2 class="mb-2 text-sm text-gray-500">Pending Review</h2>
+			<p class="text-2xl font-medium text-gray-900">{stats.pendingReview}</p>
+			<p class={`mt-1 text-sm ${stats.trend.pendingReview >= 0 ? 'text-green-600' : 'text-red-600'}`}>
 				{stats.trend.pendingReview >= 0 ? '↑' : '↓'}
 				{Math.abs(stats.trend.pendingReview)} new today
 			</p>
 		</div>
 
-		<div class="rounded-lg bg-white p-4 shadow">
-			<h2 class="text-gray-600">Offers Accepted</h2>
-			<p class="text-2xl font-medium text-gray-800">{stats.offersAccepted}</p>
-			<p
-				class={stats.trend.offersAccepted >= 0 ? 'text-sm text-green-500' : 'text-sm text-red-500'}
-			>
+		<!-- Offers Accepted -->
+		<div class="rounded-xl border border-gray-200 bg-white p-4">
+			<h2 class="mb-2 text-sm text-gray-500">Offers Accepted</h2>
+			<p class="text-2xl font-medium text-gray-900">{stats.offersAccepted}</p>
+			<p class={`mt-1 text-sm ${stats.trend.offersAccepted >= 0 ? 'text-green-600' : 'text-red-600'}`}>
 				{stats.trend.offersAccepted >= 0 ? '↑' : '↓'}
 				{Math.abs(stats.trend.offersAccepted)} from last month
 			</p>
 		</div>
 	</div>
 
-	<!-- Buttons -->
-	<div class="mt-8 flex space-x-4">
-		<button
-			class="border-1 rounded border-gray-400 bg-gray-100 px-4 py-2 font-medium text-gray-700 hover:bg-gray-300 focus:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
-		>
-			Posted Jobs
-		</button>
-		<button
-			class="border-1 rounded border-gray-400 bg-gray-100 px-4 py-2 font-medium text-gray-700 hover:bg-gray-300 focus:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
-		>
-			Recent Applicants
-		</button>
-	</div>
+	<!-- Jobs Table -->
+	<div class="mb-8">
+		<div class="mb-6 flex items-center justify-between">
+			<h2 class="text-lg font-medium text-gray-900">Posted Jobs</h2>
+			<div class="flex items-center gap-3 text-sm text-gray-600">
+				<span>Showing {filteredJobs.length} of {jobs.length} job{jobs.length === 1 ? '' : 's'}</span>
+			</div>
+		</div>
 
-	<TableWithAction
-		things={jobs}
-		tableHeader={['Job Title', 'Status', 'Applicants', 'Views', 'Posted', 'Expires']}
-		rowAttributes={['title', 'status', 'applicants', 'views', 'posted', 'expires']}
-		{handleAction}
-	/>
+		<!-- Search and Filters -->
+		<div class="mb-6">
+			<div class="flex gap-3">
+				<div class="relative">
+					<Search
+						class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5"
+					/>
+					<input
+						type="text"
+						placeholder="Search jobs by title..."
+						class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg min-w-lg text-sm placeholder:text-gray-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 transition-all"
+						bind:value={searchQuery}
+						oninput={handleSearch}
+					/>
+				</div>
+
+				<select
+					class="appearance-none px-4 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 font-medium hover:bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 transition-all cursor-pointer"
+					bind:value={statusFilter}
+					onchange={handleStatusFilter}
+				>
+					{#each statusOptions as option (option.value)}
+						<option value={option.value}>{option.label}</option>
+					{/each}
+				</select>
+			</div>
+		</div>
+
+		<DataTable data={filteredJobs} {columns} pageSize={10} {loading} />
+	</div>
 </div>
 
-<ConfirmActionWithReason
-	bind:isVisible={showDeleteModal}
-	actionName="Delete"
-	actOnKind="Job"
-	actOnIndividual={jobToDelete?.title}
-	bind:isActionInProgress={deleting}
-	reasonForAction={deleteReason}
-	action={confirmDelete}
+<DeleteModal
+	bind:isOpen={showDeleteModal}
+	onClose={() => {
+		showDeleteModal = false;
+		jobToDelete = null;
+	}}
+	onConfirm={confirmDelete}
+	title="Delete Job"
+	itemName={jobToDelete?.title || ''}
+	description="You're about to delete this job posting. This action cannot be undone and will remove the job along with all associated applications."
+	reasonPlaceholder="Please provide a detailed reason for deleting this job posting..."
+	confirmButtonText="Delete Job"
+	isDeleting={deleting}
 />

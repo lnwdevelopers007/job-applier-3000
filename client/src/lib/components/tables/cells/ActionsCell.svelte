@@ -2,13 +2,20 @@
 	import { MoreVertical } from 'lucide-svelte';
 	import Dropdown from '$lib/components/ui/Dropdown.svelte';
 
+	interface CustomAction {
+		label: string;
+		action: () => void;
+		variant: 'default' | 'danger' | 'warning' | 'success';
+	}
+
 	interface Props {
 		onView?: () => void;
 		onEdit?: () => void;
 		onDelete?: () => void;
+		customActions?: CustomAction[];
 	}
 
-	let { onView, onEdit, onDelete }: Props = $props();
+	let { onView, onEdit, onDelete, customActions = [] }: Props = $props();
 	let showMenu = $state(false);
 	let triggerElement = $state<HTMLElement>();
 
@@ -23,6 +30,7 @@
 			action: onEdit,
 			variant: 'default' as const
 		},
+		...customActions,
 		onDelete && {
 			label: 'Delete',
 			action: onDelete,
