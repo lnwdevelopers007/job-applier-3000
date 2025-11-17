@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { FileText, Download, BriefcaseBusiness, Globe, MapPin, StickyNote, Check, X } from 'lucide-svelte';
 	import SkillTag from '$lib/components/job/SkillTag.svelte';
+	import NotesModal from '$lib/components/ui/NotesModal.svelte';
+	import ApplicantFilesSection from '$lib/components/files/ApplicantFilesSection.svelte';
 	
 	let { 
 		userData = {},
@@ -12,8 +14,18 @@
 		onNotes = () => {},
 		isUpdatingStatus = false,
 		candidateStatus = '',
-		candidateId = ''
+		candidateId = '',
+		applicationId = ''
 	} = $props();
+	
+	// Notes modal state
+	let showNotesModal = $state(false);
+	
+	function handleNotesClick() {
+		showNotesModal = true;
+		// Still call the parent onNotes function if provided
+		onNotes();
+	}
 	
 	// Skills from userData
 	const skills = $derived(userData.skills && Array.isArray(userData.skills) ? userData.skills : []);
@@ -38,7 +50,6 @@
 	};
 	
 	const age = $derived(calculateAge(userData.dateOfBirth));
-	
 	
 	// Helper to check if status allows actions
 	const canTakeAction = $derived(candidateStatus === 'Pending');
@@ -101,7 +112,7 @@
 			<div class="flex gap-2">
 				<button 
 					class="flex items-center px-3 py-1.5 text-sm bg-white font-medium rounded-md border border-gray-200 hover:bg-gray-50"
-					onclick={onNotes}
+					onclick={handleNotesClick}
 				>
 					<StickyNote class="w-4 h-4 mr-2" />Notes
 				</button>
@@ -227,12 +238,14 @@
 	</div>
 
 	<!-- Documents -->
-	<div class="mb-8">
-		<h2 class="text-md font-medium text-gray-900 mb-4 flex items-center gap-2">
-			Documents
-		</h2>
-		
-		{#if documents.length > 0}
+	{#if applicationId}
+		<ApplicantFilesSection applicationId={applicationId} />
+	{:else if documents.length > 0}
+		<div class="mb-8">
+			<h2 class="text-md font-medium text-gray-900 mb-4 flex items-center gap-2">
+				<FileText class="w-5 h-5" />
+				Documents
+			</h2>
 			<div class="space-y-3">
 				{#each documents as doc (doc.name)}
 					<div class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded">
@@ -251,10 +264,26 @@
 					</div>
 				{/each}
 			</div>
-		{:else}
+		</div>
+	{:else}
+		<div class="mb-8">
+			<h2 class="text-md font-medium text-gray-900 mb-4 flex items-center gap-2">
+				<FileText class="w-5 h-5" />
+				Documents
+			</h2>
 			<div class="text-center py-8 text-gray-500">
 				<p class="text-sm">No documents uploaded</p>
 			</div>
-		{/if}
-	</div>
+		</div>
+	{/if}
 </div>
+
+<!-- Notes Modal -->
+<NotesModal 
+	bind:isOpen={showNotesModal}
+	onClose={() => showNotesModal = false}
+	jobApplicationId={applicationId}
+	candidateName={userData.fullName || userData.name || 'Unknown Candidate'}
+	candidateAvatar={userData.avatar}
+/>
+

@@ -87,9 +87,7 @@
 	);
 </script>
 
-{#if isCheckingStatus}
-	<!-- pass -->
-{:else if actualIsApplied}
+{#if actualIsApplied}
 	<button
 		disabled
 		class="{baseClasses} bg-green-700 text-white cursor-not-allowed"

@@ -100,7 +100,7 @@ export class JobService {
    */
   static async getJobsByCompany(companyId: string): Promise<Job[]> {
     try {
-      return await jobApi.getByCompanyId(companyId);
+      return await jobApi.query({ companyID: companyId });
     } catch (error) {
       console.error('Error fetching company jobs:', error);
       throw error;
@@ -155,31 +155,30 @@ export class JobService {
     };
   }
 
-  static buildPayload(formData: JobFormData) {
+  static buildPayload(formData: JobFormData, isUpdate: boolean) {
 
-    return {
+    const payload: any = {
       // Basic Info
-      title: formData.jobTitle || "Test Job Title",
-      companyID: String(formData.companyID || "64f0c44a27b1c27f4d92e9a2"),
-      location: formData.location || "Bangkok, Thailand",
+      title: formData.jobTitle,
+      location: formData.location,
       workType: formData.workType,
       workArrangement: formData.workArrangement,
       currency: formData.currency,
-      minSalary: Number(formData.minSalary || 0),
-      maxSalary: Number(formData.maxSalary || 0),
+      minSalary: Number(formData.minSalary),
+      maxSalary: Number(formData.maxSalary),
 
       // Description
-      jobDescription: formData.jobDescription || "Test description",
-      jobSummary: formData.jobSummary || "Test summary",
+      jobDescription: formData.jobDescription,
+      jobSummary: formData.jobSummary,
 
       // Requirements
       requiredSkills: Array.isArray(formData.requiredSkills) && formData.requiredSkills.length
           ? formData.requiredSkills.join(", ")
-          : "JS, Node",
-      experienceLevel: formData.yearsOfExperience || "Mid-Level",
-      education: formData.educationLevel || "Bachelor",
+          : "",
+      experienceLevel: formData.yearsOfExperience,
+      education: formData.educationLevel,
       niceToHave: "",
-      questions: formData.screeningQuestions || "What is your expected salary?",
+      questions: formData.screeningQuestions,
 
       // Post Settings
       postOpenDate: formData.postingOpenDate
@@ -193,6 +192,13 @@ export class JobService {
       emailNotifications: Boolean(formData.emailNotifications),
       autoReject: false
     };
+
+    // Only include companyID when creating, not when updating
+    if (!isUpdate) {
+      payload.companyID = formData.companyID;
+    }
+
+    return payload;
   }
 
   static validateStep(step: number, formData: JobFormData): Record<string, string> {
@@ -235,6 +241,26 @@ export class JobService {
       // Description validation
       if (!formData.jobDescription?.trim()) {
         errors.jobDescription = 'Job description is required';
+      }
+      
+      // Job Summary validation
+      if (!formData.jobSummary?.trim()) {
+        errors.jobSummary = 'Job summary is required';
+      }
+    }
+    
+    if (step === 3) {
+      // Requirements validation
+      if (!formData.requiredSkills || formData.requiredSkills.length === 0) {
+        errors.requiredSkills = 'At least one required skill is required';
+      }
+      
+      if (!formData.yearsOfExperience) {
+        errors.yearsOfExperience = 'Years of experience is required';
+      }
+      
+      if (!formData.educationLevel) {
+        errors.educationLevel = 'Education level is required';
       }
     }
     
@@ -284,7 +310,7 @@ export class JobService {
 
   static async createJob(formData: JobFormData): Promise<{ success: boolean; error?: string }> {
     try {
-      const payload = this.buildPayload(formData);
+      const payload = this.buildPayload(formData, false);
       console.log("Creating job with payload:", payload);
 
       await jobApi.create(payload as unknown as JobFormData);
@@ -298,7 +324,7 @@ export class JobService {
 
   static async updateJob(jobId: string, formData: JobFormData): Promise<{ success: boolean; error?: string }> {
     try {
-      const payload = this.buildPayload(formData);
+      const payload = this.buildPayload(formData, true);
       console.log("Updating job with payload:", payload);
 
       await jobApi.update(jobId, payload as unknown as Partial<JobFormData>);
@@ -323,8 +349,12 @@ export class JobService {
         ? new Date(job.postOpenDate).toISOString().slice(0, 10)
         : '';
 
+      // Destructure to exclude companyID from form data for editing
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { companyID, ...jobWithoutCompanyID } = job;
+      
       const formattedData: JobFormData = {
-        ...job,
+        ...jobWithoutCompanyID,
         requiredSkills: typeof job.requiredSkills === 'string'
           ? job.requiredSkills.split(',').map((s: string) => s.trim()).filter(Boolean)
           : job.requiredSkills || [],
