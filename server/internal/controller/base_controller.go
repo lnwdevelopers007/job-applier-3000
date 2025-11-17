@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lnwdevelopers007/job-applier-3000/server/internal/database"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/repository"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
 
@@ -29,7 +28,7 @@ func (controller BaseController[Schema, DTO]) Create(c *gin.Context) {
 	userInfo := getUserForLogging(c)
 	var raw Schema
 	if err := c.ShouldBindBodyWithJSON(&raw); err != nil {
-		msg := "Cannot create " + controller.displayName + ", incorrect schema"
+		msg := "Cannot create " + controller.displayName + ", incorrect request body"
 		slog.Warn(userInfo + msg)
 		c.JSON(http.StatusBadRequest, gin.H{"error": msg})
 		return
@@ -46,7 +45,7 @@ func (controller BaseController[Schema, DTO]) Create(c *gin.Context) {
 		return
 	}
 
-	slog.Info(userInfo + "Created " + controller.displayName + " Successfully")
+	slog.Info(userInfo + controller.displayName + " created successfully")
 
 	c.JSON(http.StatusCreated, res)
 }
@@ -54,28 +53,37 @@ func (controller BaseController[Schema, DTO]) Create(c *gin.Context) {
 // RetrieveAll retrieves all documents (row) and all of its attirbutes
 // from collectionName collection
 func (controller BaseController[Schema, DTO]) RetrieveAll(c *gin.Context) {
+	userInfo := getUserForLogging(c)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	res, err := repository.FindAll[Schema](ctx, bson.M{})
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Cannot retrieve " + controller.displayName})
+		msg := "Cannot retrieve " + controller.displayName
+		slog.Warn(userInfo + msg)
+		c.JSON(http.StatusNotFound, gin.H{"error": msg})
 		return
 	}
+	slog.Info(userInfo + "All " + controller.displayName + " retrieved Successfully")
 	c.JSON(http.StatusOK, res)
 }
 
 // Update() updates a resource by ID.
 func (controller BaseController[Schema, DTO]) Update(c *gin.Context) {
+	userInfo := getUserForLogging(c)
 	id := c.Param("id") // get :id from URL
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		msg := "Cannot Update " + controller.displayName + ", invalid ID"
+		slog.Warn(userInfo + msg + ": " + id)
+		c.JSON(http.StatusBadRequest, gin.H{"error": msg})
 		return
 	}
 
 	var newData DTO
 	if err := c.ShouldBindBodyWithJSON(&newData); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		msg := "Cannot Update " + controller.displayName + ", incorrect request body"
+		slog.Warn(userInfo + msg)
+		c.JSON(http.StatusBadRequest, gin.H{"error": msg})
 		return
 	}
 
@@ -84,30 +92,32 @@ func (controller BaseController[Schema, DTO]) Update(c *gin.Context) {
 
 	res, err := repository.Update[Schema](ctx, objID, newData)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to update " + controller.displayName,
-		})
+		msg := "Failed to update " + controller.displayName
+		slog.Error(userInfo + msg)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": msg})
 		return
 	}
 
 	if res.MatchedCount == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": controller.displayName + " not found",
-		})
+		msg := "Cannot Update " + controller.displayName + ", resource not found"
+		slog.Warn(userInfo + msg)
+		c.JSON(http.StatusNotFound, gin.H{"error": msg})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": controller.displayName + " updated successfully",
-	})
+	msg := controller.displayName + " " + id + " updated successfully"
+	c.JSON(http.StatusOK, gin.H{"message": msg})
 }
 
 // Delete() deletes a resource by ID.
 func (controller BaseController[Schema, DTO]) Delete(c *gin.Context) {
+	userInfo := getUserForLogging(c)
 	id := c.Param("id")
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		msg := "Cannot Delete " + controller.displayName + ", invalid ID"
+		slog.Warn(userInfo + msg + ": " + id)
+		c.JSON(http.StatusBadRequest, gin.H{"error": msg})
 		return
 	}
 
@@ -117,84 +127,42 @@ func (controller BaseController[Schema, DTO]) Delete(c *gin.Context) {
 	result, err := repository.DeleteOne[Schema](ctx, objID)
 
 	if result.DeletedCount == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "No " + controller.displayName + " found",
-		})
+		msg := "Cannot Delete " + controller.displayName + ", resource not found"
+		slog.Warn(userInfo + msg)
+		c.JSON(http.StatusNotFound, gin.H{"error": msg})
 		return
 	}
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Bad Delete Request",
-		})
+		msg := "Failed to delete " + controller.displayName
+		slog.Error(userInfo + msg)
+		c.JSON(http.StatusBadRequest, gin.H{"error": msg})
+		return
 	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": controller.displayName + " Deleted successfully",
-	})
+	msg := controller.displayName + " " + id + " deleted successfully"
+	slog.Info(userInfo + msg)
+	c.JSON(http.StatusOK, gin.H{"message": msg})
 }
 
 // RetrieveOne retrieves a single document by ID from collectionName collection.
 func (controller BaseController[Schema, DTO]) RetrieveOne(c *gin.Context) {
+	userInfo := getUserForLogging(c)
 	id := c.Param("id")
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		msg := "Cannot Retrieve " + controller.displayName + ", invalid ID"
+		slog.Warn(userInfo + msg + ": " + id)
+		c.JSON(http.StatusBadRequest, gin.H{"error": msg})
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	res, err := repository.FindOne[Schema](ctx, objID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": controller.displayName + " not found"})
+		msg := "Cannot Retrieve " + controller.displayName + ", resource not found"
+		slog.Warn(userInfo + msg)
+		c.JSON(http.StatusNotFound, gin.H{"error": msg})
 		return
 	}
 	c.JSON(http.StatusOK, res)
-}
-
-func (controller BaseController[Schema, DTO]) PatchOne(c *gin.Context) {
-	id := c.Param("id")
-	objID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
-		return
-	}
-
-	var body map[string]interface{}
-	if err := c.ShouldBindBodyWithJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON body"})
-		return
-	}
-
-	if len(body) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Empty update payload"})
-		return
-	}
-
-	update := bson.M{"$set": body}
-
-	db := database.GetDatabase()
-	collection := db.Collection(controller.collectionName)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	res, err := collection.UpdateOne(ctx, bson.M{"_id": objID}, update)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to update " + controller.displayName,
-		})
-		return
-	}
-
-	if res.MatchedCount == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": controller.displayName + " not found",
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": controller.displayName + " patched successfully",
-	})
 }
