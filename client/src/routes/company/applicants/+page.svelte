@@ -218,35 +218,6 @@
           skills: user.skills,
           documents: user.documents
         };
-          } catch (error) {
-              console.error(`Error processing applicant ${applicantID}:`, error);
-              
-              // Return a placeholder candidate object so the UI doesn't break
-              return {
-                  id: app.jobApplication.id,
-                  applicantID: applicantID,
-                  jobID: app.jobApplication.jobID,
-                  createdAt: app.jobApplication.createdAt,
-                  name: 'Unknown Applicant',
-                  fullName: 'Unknown Applicant',
-                  role: 'Unknown',
-                  applied: app.jobTitle,
-                  status: 'Pending',
-                  avatar: 'https://cdn-icons-png.flaticon.com/512/149/149071.png',
-                  time: 'Unknown',
-                  email: '-',
-                  phone: '-',
-                  address: '-',
-                  linkedin: '-',
-                  github: '',
-                  portfolio: '',
-                  aboutMe: '',
-                  dateOfBirth: '',
-                  education: [],
-                  skills: [],
-                  documents: []
-              };
-          }
       });
 
       return results;
