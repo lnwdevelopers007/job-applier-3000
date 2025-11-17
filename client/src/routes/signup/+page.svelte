@@ -90,7 +90,7 @@
     <div class="h-full flex flex-col justify-between p-12">
       <div class="max-w-2xl pt-20 px-20">
         <p class="text-gray-700 text-2xl leading-relaxed mb-6">
-          Job Applier 3000 connects CPE students, alumni, and companies in a platform where students find opportunities and recruiters reach verified talent
+          Job Applier 3000 connects CPSK students, alumni, and companies in a platform where students find opportunities and recruiters reach verified talent
         </p>
         <p class="text-2xl font-semibold text-gray-900">Join now to get started!</p>
       </div>

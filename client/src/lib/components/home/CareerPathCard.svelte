@@ -50,7 +50,6 @@
 			>
 				{path.title}
 			</h3>
-			<p class="text-sm text-gray-600 font-medium">{path.positions} open positions</p>
 		</div>
 	</div>
 </button>

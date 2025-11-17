@@ -194,7 +194,7 @@
   <div slot="left-side" class="h-full flex flex-col justify-between p-12 overflow-hidden">
     <div class="max-w-2xl pt-20 px-20">
       <p class="text-gray-700 text-2xl leading-relaxed mb-6">
-        Launch your career with Job Applier 3000! Connect with top companies looking for talented CPE students and alumni like you
+        Launch your career with Job Applier 3000! Connect with top companies looking for talented CPSK students and alumni like you
       </p>
       <p class="text-2xl font-semibold text-gray-900">Your dream job is just a click away!</p>
     </div>

@@ -133,21 +133,48 @@
 
 	onMount(() => {
 		fetchRecentJobs();
+		fetchTopCompanies();
 	});
 
-	// TODO: Replace with actual API fetch from backend
-	const topCompanies = [
-		{ id: '1', name: 'Google', positions: 12, logoStyle: 'bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600', logo: 'G' },
-		{ id: '2', name: 'Apple', positions: 8, logoStyle: 'bg-gradient-to-br from-gray-800 to-gray-900 text-white', logo: 'A' },
-		{ id: '3', name: 'Meta', positions: 15, logoStyle: 'bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600', logo: 'M' },
-		{ id: '4', name: 'Amazon', positions: 20, logoStyle: 'bg-gradient-to-br from-orange-100 to-orange-200 text-orange-600', logo: 'A' },
-		{ id: '5', name: 'Netflix', positions: 5, logoStyle: 'bg-gradient-to-br from-red-100 to-red-200 text-red-600', logo: 'N' },
-		{ id: '6', name: 'Spotify', positions: 7, logoStyle: 'bg-gradient-to-br from-green-100 to-green-200 text-green-600', logo: 'S' },
-		{ id: '7', name: 'Microsoft', positions: 18, logoStyle: 'bg-gradient-to-br from-purple-100 to-purple-200 text-purple-600', logo: 'M' },
-		{ id: '8', name: 'Tesla', positions: 9, logoStyle: 'bg-gradient-to-br from-red-100 to-red-200 text-red-600', logo: 'T' },
-		{ id: '9', name: 'Stripe', positions: 6, logoStyle: 'bg-gradient-to-br from-indigo-100 to-indigo-200 text-indigo-600', logo: 'S' },
-		{ id: '10', name: 'Airbnb', positions: 11, logoStyle: 'bg-gradient-to-br from-pink-100 to-pink-200 text-pink-600', logo: 'A' }
-	];
+	let topCompanies = $state<Array<{
+		id: string;
+		name: string;
+		positions: number;
+		logoStyle: string;
+		logo: string;
+	}>>([]);
+	let isLoadingCompanies = $state(true);
+
+	async function fetchTopCompanies() {
+		try {
+			console.log('Starting to fetch top companies...');
+			// Add timeout to prevent infinite loading
+			const timeoutPromise = new Promise((_, reject) =>
+				setTimeout(() => reject(new Error('Timeout')), 5000)
+			);
+			
+			const companies = await Promise.race([
+				CompanyService.getTopCompanies(),
+				timeoutPromise
+			]) as any[];
+			
+			console.log('Companies received:', companies);
+			
+			if (companies.length === 0) {
+				console.log('No companies returned, using fallback');
+				topCompanies = CompanyService.getFallbackCompanies();
+			} else {
+				topCompanies = CompanyService.formatForHomePage(companies);
+			}
+		} catch (error) {
+			console.error('Failed to fetch top companies:', error);
+			// Use fallback companies if API fails
+			topCompanies = CompanyService.getFallbackCompanies();
+		} finally {
+			console.log('Setting isLoadingCompanies to false');
+			isLoadingCompanies = false;
+		}
+	}
 
 	let currentSlide = $state(0);
 	let screenWidth = $state(0);
@@ -172,29 +199,6 @@
 	
 	const totalSlides = $derived(() => Math.ceil(topCompanies.length / companiesPerSlide()));
 
-	function nextSlide() {
-		if (currentSlide < totalSlides() - 1) {
-			currentSlide = currentSlide + 1;
-		}
-	}
-
-	function prevSlide() {
-		if (currentSlide > 0) {
-			currentSlide = currentSlide - 1;
-		}
-	}
-
-	function goToSlide(index: number) {
-		if (index !== currentSlide) {
-			currentSlide = index;
-		}
-	}
-
-	function getVisibleCompanies(slideIndex: number) {
-		const start = slideIndex * companiesPerSlide();
-		return topCompanies.slice(start, start + companiesPerSlide());
-	}
-	
 	// Reset slide when screen size changes
 	$effect(() => {
 		if (currentSlide >= totalSlides()) {
@@ -267,75 +271,8 @@
 			</div>
 		</section>
 
-		<!-- Top Companies -->
-		<section class="py-16 px-4 sm:px-6 lg:px-8 bg-slate-50">
-			<div class="container mx-auto max-w-7xl">
-				<div class="text-center mb-12">
-					<h2 class="text-3xl font-bold text-gray-900">Top Companies</h2>
-					<p class="text-gray-600 mt-2">Leading technology companies actively hiring KU students</p>
-				</div>
-
-				<!-- Carousel Container -->
-				<div class="relative px-4 sm:px-8 lg:px-16">
-					<!-- Navigation Buttons positioned outside overflow container -->
-					{#if currentSlide > 0}
-						<button
-							onclick={prevSlide}
-							class="absolute left-0 z-10 p-1.5 sm:p-2 bg-white rounded-full shadow-sm cursor-pointer transition-all border border-gray-200 hidden sm:block"
-							style="top: 84px; transform: translateY(-50%);"
-							aria-label="Previous companies"
-						>
-							<ChevronLeft class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-						</button>
-					{/if}
-					
-					{#if currentSlide < totalSlides() - 1}
-						<button
-							onclick={nextSlide}
-							class="absolute right-0 z-10 p-1.5 sm:p-2 bg-white rounded-full shadow-sm cursor-pointer transition-all border border-gray-200 hidden sm:block"
-							style="top: 84px; transform: translateY(-50%);"
-							aria-label="Next companies"
-						>
-							<ChevronRight class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-						</button>
-					{/if}
-
-					<!-- Companies Grid -->
-					<div class="overflow-hidden">
-						<div 
-							class="flex transition-transform duration-500 ease-in-out"
-							style="transform: translateX(-{currentSlide * (100 / totalSlides())}%); width: {totalSlides() * 100}%;"
-						>
-							<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
-							{#each Array(totalSlides()) as _, slideIndex (slideIndex)}
-								<div class="flex gap-2 sm:gap-3 lg:gap-4 flex-shrink-0 px-1 sm:px-2" style="width: {100 / totalSlides()}%;">
-									{#each getVisibleCompanies(slideIndex) as company (company.id)}
-										<div class="flex-1">
-											<CompanyCard {company} />
-										</div>
-									{/each}
-								</div>
-							{/each}
-						</div>
-					</div>
-
-					<!-- Pagination Dots -->
-					<div class="flex justify-center mt-8 gap-2">
-						<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
-						{#each Array(totalSlides()) as _, index (index)}
-							<button
-								onclick={() => goToSlide(index)}
-								class="w-2 h-2 rounded-full transition-colors {currentSlide === index ? 'bg-green-600' : 'bg-gray-300'} hover:cursor-pointer"
-								aria-label="Go to slide {index + 1}"
-							></button>
-						{/each}
-					</div>
-				</div>
-			</div>
-		</section>
-
 		<!-- Career Paths -->
-		<section class="py-16 px-4 sm:px-6 lg:px-8 bg-white">
+		<section class="py-16 px-4 sm:px-6 lg:px-8 bg-slate-50">
 			<div class="container mx-auto max-w-7xl">
 				<div class="text-center mb-12">
 					<h2 class="text-3xl font-bold text-gray-900">Explore Career Paths</h2>

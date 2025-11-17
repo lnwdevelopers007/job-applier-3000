@@ -17,7 +17,7 @@
   import FileUploadModal from '$lib/components/files/FileUploadModal.svelte';
 	import DeleteConfirmModal from '$lib/components/files/DeleteConfirmModal.svelte';
 	import { userService } from '$lib/services/userService';
-  import jobsListingImage from '$lib/assets/job-listing.png';
+  import companyApplicantsImage from '$lib/assets/company-applicants.png';
   import AuthLayout from '$lib/components/auth/AuthLayout.svelte';
   import AuthHeader from '$lib/components/auth/AuthHeader.svelte';
 
@@ -185,7 +185,7 @@
   <div slot="left-side" class="h-full flex flex-col justify-between p-12 overflow-hidden">
     <div class="max-w-2xl pt-20 px-20">
       <p class="text-gray-700 text-2xl leading-relaxed mb-6">
-        Join Job Applier 3000 as a recruiter and connect with talented CPE students and alumni ready to make their mark in the tech industry
+        Join Job Applier 3000 as a recruiter and connect with talented CPSK students and alumni ready to make their mark in the tech industry
       </p>
       <p class="text-2xl font-semibold text-gray-900">Start hiring top talent today!</p>
     </div>
@@ -194,7 +194,7 @@
       <div class="w-full max-w-4xl -ml-18 -mb-18">
         <div class="bg-white rounded-3xl border-5 border-black overflow-hidden">
           <!-- Jobs listing image -->
-          <img src={jobsListingImage} alt="Jobs listing dashboard preview" class="w-full h-160 object-cover" />
+          <img src={companyApplicantsImage} alt="Jobs listing dashboard preview" class="w-full h-160 object-cover" />
         </div>
       </div>
     </div>
