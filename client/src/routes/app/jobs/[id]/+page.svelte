@@ -11,7 +11,6 @@
 	import ApplyModal from '$lib/components/job/ApplyModal.svelte';
 	import FloatingJobHeader from '$lib/components/job/FloatingJobHeader.svelte';
 	import {
-		fetchJob,
 		DEFAULT_COMPANY_LOGO
 	} from '$lib/utils/fetcher';
 	import { isAuthenticated, getUserInfo } from '$lib/utils/auth';
@@ -29,7 +28,6 @@
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 	let isBookmarked = $state(false);
-	let userInfo: any = null;
 	let showFloatingCard = $state(false);
 	let applyButtonRef = $state<HTMLElement | undefined>();
 	let showApplyModal = $state(false);
@@ -84,7 +82,7 @@
 
 			// Check authentication
 			if (isAuthenticated()) {
-				userInfo = getUserInfo();
+				getUserInfo();
 			}
 
 			// Use JobService to get the job data

@@ -1,7 +1,6 @@
  <script lang="ts">
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
-  import ApplicantFilesSection from '$lib/components/files/ApplicantFilesSection.svelte';
   import { Search } from 'lucide-svelte';
   import { getUserInfo, isAuthenticated } from '$lib/utils/auth';
   import { goto } from '$app/navigation';

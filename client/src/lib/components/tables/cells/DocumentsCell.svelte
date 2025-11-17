@@ -51,7 +51,7 @@
 			<div class="p-3">
 				<div class="text-xs font-medium text-gray-500 mb-2">{userName}'s Documents</div>
 				<div class="space-y-1 max-h-48 overflow-y-auto">
-					{#each files as file}
+					{#each files as file (file.id)}
 						<div class="flex items-center justify-between p-2 rounded">
 							<div class="flex items-center gap-2 flex-1 min-w-0">
 								<FileText class="w-3 h-3 text-gray-400 flex-shrink-0" />

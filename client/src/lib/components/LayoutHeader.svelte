@@ -56,6 +56,8 @@
 
   // Close mobile menu when route changes
   $effect(() => {
+    // Track page changes to close mobile menu
+    void $page.url.pathname;
     isMobileMenuOpen = false;
   });
 

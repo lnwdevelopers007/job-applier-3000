@@ -36,15 +36,13 @@
 		companyInfo = null,
 		onApply,
 		onBookmark = null,
-		isBookmarked = false,
-		isApplied = false
+		isBookmarked = false
 	}: {
 		job: Job;
 		companyInfo?: CompanyInfo | null;
 		onApply: (job: Job) => void;
 		onBookmark?: () => void;
 		isBookmarked?: boolean;
-		isApplied?: boolean;
 	} = $props();
 	
 	

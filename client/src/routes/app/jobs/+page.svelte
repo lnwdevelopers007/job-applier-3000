@@ -18,7 +18,6 @@
 	import { UserService } from '$lib/services/userService';
 	import type { JobUI, UserInfo, JobCompanyInfo, Job, JobFilters, CompanyInfo } from '$lib/types';
 
-	let jobs = $state<JobUI[]>([]);
 	let filteredJobs = $state<JobUI[]>([]);
 	let selectedJob = $state<JobUI | null>(null);
 	let searchQuery = $state('');
@@ -133,7 +132,6 @@
 			const rawJobs = await JobService.queryJobs(jobFilters);
 			
 			if (!rawJobs || rawJobs.length === 0) {
-				jobs = [];
 				filteredJobs = [];
 				selectedJob = null;
 				return;
@@ -169,13 +167,11 @@
 				})
 			);
 
-			jobs = transformedJobs;
 			filteredJobs = transformedJobs;
 			selectedJob = transformedJobs[0] || null;
 			currentPage = 1;
 		} catch (err) {
 			console.error('Error fetching jobs:', err);
-			jobs = [];
 			filteredJobs = [];
 			selectedJob = null;
 		} finally {

@@ -17,8 +17,7 @@
 		onApply,
 		onBookmark,
 		onShare,
-		isBookmarked = false,
-		isApplied = false
+		isBookmarked = false
 	}: {
 		show: boolean;
 		job: Job;
@@ -26,7 +25,6 @@
 		onBookmark?: () => void;
 		onShare?: () => void;
 		isBookmarked?: boolean;
-		isApplied?: boolean;
 	} = $props();
 </script>
 

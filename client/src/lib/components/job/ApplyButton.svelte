@@ -30,7 +30,6 @@
 	}: Props = $props();
 	
 	let actualIsApplied = $state(isApplied);
-	let isCheckingStatus = $state(false);
 	
 	// If jobId is provided, check the applied status directly
 	async function checkApplicationStatus() {
@@ -40,7 +39,6 @@
 		}
 		
 		try {
-			isCheckingStatus = true;
 			const user = getUserInfo();
 			if (!user?.userID) {
 				actualIsApplied = false;
@@ -50,8 +48,6 @@
 		} catch (error) {
 			console.error('Error checking application status:', error);
 			actualIsApplied = isApplied; // fallback to prop value
-		} finally {
-			isCheckingStatus = false;
 		}
 	}
 	

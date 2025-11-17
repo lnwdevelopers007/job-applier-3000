@@ -1,7 +1,6 @@
 import ActionsCell from '../cells/ActionsCell.svelte';
 import ClickableNumberCell from '../cells/ClickableNumberCell.svelte';
 import StatusBadge from '$lib/components/ui/StatusBadge.svelte';
-import { formatDateDMY } from '$lib/utils/datetime';
 
 export interface CompanyJobDisplay {
 	id: string;

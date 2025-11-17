@@ -2,11 +2,10 @@
 	import { onMount } from 'svelte';
 	import HeroSection from '$lib/components/home/HeroSection.svelte';
 	import JobCard from '$lib/components/home/JobCard.svelte';
-	import CompanyCard from '$lib/components/home/CompanyCard.svelte';
 	import CareerPathCard from '$lib/components/home/CareerPathCard.svelte';
 	import CTASection from '$lib/components/home/CTASection.svelte';
 	import Footer from '$lib/components/home/Footer.svelte';
-	import { ArrowRight, Code, ChartLine, Brush, Shield, Smartphone, Cloud, Bot, Gamepad2, ChevronLeft, ChevronRight } from 'lucide-svelte';
+	import { ArrowRight, Code, ChartLine, Brush, Shield, Smartphone, Cloud, Bot, Gamepad2, Users, FileText, Bell, GraduationCap } from 'lucide-svelte';
 	import { isAuthenticated, navigateWithAuth } from '$lib/utils/auth';
 	import AuthModal from '$lib/components/ui/AuthModal.svelte';
 	import { fetchCompanyPublicInfo, DEFAULT_COMPANY_NAME, DEFAULT_COMPANY_LOGO } from '$lib/utils/fetcher';
@@ -133,78 +132,40 @@
 
 	onMount(() => {
 		fetchRecentJobs();
-		fetchTopCompanies();
 	});
 
-	let topCompanies = $state<Array<{
-		id: string;
-		name: string;
-		positions: number;
-		logoStyle: string;
-		logo: string;
-	}>>([]);
-	let isLoadingCompanies = $state(true);
 
-	async function fetchTopCompanies() {
-		try {
-			console.log('Starting to fetch top companies...');
-			// Add timeout to prevent infinite loading
-			const timeoutPromise = new Promise((_, reject) =>
-				setTimeout(() => reject(new Error('Timeout')), 5000)
-			);
-			
-			const companies = await Promise.race([
-				CompanyService.getTopCompanies(),
-				timeoutPromise
-			]) as any[];
-			
-			console.log('Companies received:', companies);
-			
-			if (companies.length === 0) {
-				console.log('No companies returned, using fallback');
-				topCompanies = CompanyService.getFallbackCompanies();
-			} else {
-				topCompanies = CompanyService.formatForHomePage(companies);
-			}
-		} catch (error) {
-			console.error('Failed to fetch top companies:', error);
-			// Use fallback companies if API fails
-			topCompanies = CompanyService.getFallbackCompanies();
-		} finally {
-			console.log('Setting isLoadingCompanies to false');
-			isLoadingCompanies = false;
+	// App features
+	const appFeatures = [
+		{
+			id: '1',
+			title: 'KU-Focused Platform',
+			description: 'Exclusively designed for CPSK students with opportunities tailored to your Computer Engineering background and skills.',
+			icon: GraduationCap,
+			iconStyle: 'bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600'
+		},
+		{
+			id: '2', 
+			title: 'One-Click Applications',
+			description: 'Apply to multiple positions effortlessly with your pre-filled profile and documents.',
+			icon: FileText,
+			iconStyle: 'bg-gradient-to-br from-green-100 to-green-200 text-green-600'
+		},
+		{
+			id: '3',
+			title: 'Real-time Notifications',
+			description: 'Stay updated on application status, new opportunities, and company responses instantly.',
+			icon: Bell,
+			iconStyle: 'bg-gradient-to-br from-purple-100 to-purple-200 text-purple-600'
+		},
+		{
+			id: '4',
+			title: 'Direct Company Connect',
+			description: 'Connect directly with hiring managers and companies actively seeking KU talent.',
+			icon: Users,
+			iconStyle: 'bg-gradient-to-br from-orange-100 to-orange-200 text-orange-600'
 		}
-	}
-
-	let currentSlide = $state(0);
-	let screenWidth = $state(0);
-	
-	// Reactive companies per slide based on screen width
-	$effect(() => {
-		if (typeof window !== 'undefined') {
-			screenWidth = window.innerWidth;
-			const updateScreenWidth = () => {
-				screenWidth = window.innerWidth;
-			};
-			window.addEventListener('resize', updateScreenWidth);
-			return () => window.removeEventListener('resize', updateScreenWidth);
-		}
-	});
-	
-	const companiesPerSlide = $derived(() => {
-		if (screenWidth < 640) return 2; // mobile: 2 per slide
-		if (screenWidth < 1024) return 3; // tablet: 3 per slide  
-		return 5; // desktop: 5 per slide
-	});
-	
-	const totalSlides = $derived(() => Math.ceil(topCompanies.length / companiesPerSlide()));
-
-	// Reset slide when screen size changes
-	$effect(() => {
-		if (currentSlide >= totalSlides()) {
-			currentSlide = 0;
-		}
-	});
+	];
 
 	// TODO: Replace with actual API fetch from backend
 	const careerPaths = [
@@ -271,6 +232,7 @@
 			</div>
 		</section>
 
+		
 		<!-- Career Paths -->
 		<section class="py-16 px-4 sm:px-6 lg:px-8 bg-slate-50">
 			<div class="container mx-auto max-w-7xl">
@@ -288,6 +250,31 @@
 				</div>
 			</div>
 		</section>
+
+		<!-- App Features -->
+		<section class="py-16 px-4 sm:px-6 lg:px-8 bg-white">
+			<div class="container mx-auto max-w-7xl">
+				<div class="text-center mb-12">
+					<h2 class="text-3xl font-bold text-gray-900">Why Choose Job Applier 3000?</h2>
+					<p class="text-gray-600 mt-2 max-w-2xl mx-auto">
+						Streamline your job search with powerful features designed specifically for CPSK students
+					</p>
+				</div>
+
+				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+					{#each appFeatures as feature (feature.id)}
+						<div class="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-sm transition-shadow duration-200">
+							<div class="flex items-center justify-center w-12 h-12 rounded-lg {feature.iconStyle} mb-4">
+								<feature.icon class="w-6 h-6" />
+							</div>
+							<h3 class="text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
+							<p class="text-gray-600 text-sm leading-relaxed">{feature.description}</p>
+						</div>
+					{/each}
+				</div>
+			</div>
+		</section>
+
 
 		<CTASection />
 	</main>

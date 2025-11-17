@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { authStore } from '$lib/stores/auth.svelte';
 	import { fetchUsers } from '$lib/utils/fetcher';
-	import { UserService } from '$lib/services/userService';
 	import { Search } from 'lucide-svelte';
 	import DeleteModal from '$lib/components/ui/DeleteModal.svelte';
 	import PermissionEditModal from '$lib/components/ui/PermissionEditModal.svelte';
@@ -55,7 +54,7 @@
 		showDeleteModal = true;
 	}
 
-	async function confirmDelete(reason: string) {
+	async function confirmDelete() {
 		if (!userToDelete) return;
 		deleting = true;
 		try {
@@ -79,7 +78,7 @@
 		}
 	}
 
-	async function confirmBan(reason: string) {
+	async function confirmBan() {
 		if (!userToBan) return;
 		banning = true;
 		try {
@@ -310,7 +309,7 @@
 	title="Delete User"
 	itemName={userToDelete?.name || ''}
 	description="You're about to delete this user account. This action cannot be undone and will remove the user along with all associated data."
-	reasonPlaceholder="Please provide a detailed reason for deleting this user account..."
+	reasonLabel=""
 	confirmButtonText="Delete User"
 	isDeleting={deleting}
 />
@@ -325,7 +324,7 @@
 	title="{userToBan?.banned ? 'Unban' : 'Ban'} User"
 	itemName={userToBan?.name || ''}
 	description="You're about to {userToBan?.banned ? 'unban' : 'ban'} this user account. {userToBan?.banned ? 'This will restore their access to the platform.' : 'This will prevent them from accessing the platform.'}"
-	reasonPlaceholder="Please provide a detailed reason for {userToBan?.banned ? 'unbanning' : 'banning'} this user..."
+	reasonLabel=""
 	confirmButtonText="{userToBan?.banned ? 'Unban' : 'Ban'} User"
 	isDeleting={banning}
 />

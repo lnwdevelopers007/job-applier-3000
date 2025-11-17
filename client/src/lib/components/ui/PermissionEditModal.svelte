@@ -78,7 +78,7 @@
 						disabled={isUpdating}
 						class="w-full border border-gray-300 rounded-lg text-sm px-3 py-3 text-gray-800 focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
 					>
-						{#each roleOptions as option}
+						{#each roleOptions as option (option.value)}
 							<option value={option.value}>{option.label}</option>
 						{/each}
 					</select>

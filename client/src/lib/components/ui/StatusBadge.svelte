@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { CircleCheck, CircleX, FileText, CircleDot, Shield, ShieldCheck, ShieldX, UserX, User, Building2, GraduationCap, Crown } from 'lucide-svelte';
+  import { CircleCheck, CircleX, FileText, CircleDot, Shield, User, Building2, GraduationCap } from 'lucide-svelte';
 
   interface Props {
     status: 'Active' | 'Closed' | 'Draft' | string;
-    type?: 'status' | 'role' | 'verification' | 'user_status';
     rawStatus?: string;
     size?: 'xs' | 'sm' | 'md';
     showIcon?: boolean;
@@ -11,7 +10,6 @@
 
   let { 
     status, 
-    type = 'status',
     rawStatus,
     size = 'sm',
     showIcon = true
@@ -65,12 +63,6 @@
       bg: 'bg-yellow-50',
       text: 'text-yellow-700',
       ring: 'ring-yellow-600/20'
-    },
-    // User status (display names)
-    'Active': {
-      bg: 'bg-green-50',
-      text: 'text-green-700',
-      ring: 'ring-green-600/20'
     },
     'Banned': {
       bg: 'bg-red-50',
