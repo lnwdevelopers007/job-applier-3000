@@ -209,7 +209,7 @@ func (jc UserController) VerifyUser(c *gin.Context) {
 		return
 	}
 
-	jc.baseController.PatchOne(c)
+	jc.baseController.Update(c)
 }
 
 // EditPermission godoc
@@ -245,7 +245,7 @@ func (jc UserController) EditPermission(c *gin.Context) {
 		return
 	}
 
-	jc.baseController.PatchOne(c)
+	jc.baseController.Update(c)
 }
 
 // GetPublicInfo godoc
