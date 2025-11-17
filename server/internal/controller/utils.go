@@ -107,11 +107,11 @@ func getUserFromContext(c *gin.Context) (userID primitive.ObjectID, role string,
 // getUserForLogging returns a string containing userId an role for logging purposes.
 func getUserForLogging(c *gin.Context) string {
 	uid, role, err := getUserFromMiddleware(c)
-	userInfo := "User: %s, Role: %s "
+	userInfo := "User: %s, Role: %s, "
 	if err != nil {
 		userInfo = fmt.Sprintf(userInfo, "UNKNOWN", "UNKNOWN")
 	} else {
-		userInfo = fmt.Sprintf(userInfo, uid, role)
+		userInfo = fmt.Sprintf(userInfo, uid.String(), role)
 	}
 	return userInfo
 }

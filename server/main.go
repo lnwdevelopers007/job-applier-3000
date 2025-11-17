@@ -21,6 +21,7 @@ func main() {
 	defer f.Close()
 	log.SetOutput(f)
 	slog.SetLogLoggerLevel(slog.LevelInfo)
+	slog.Info("Server started")
 
 	router := controller.NewRouter()
 	router.Run(os.Getenv("SERVER_ADDR"))
