@@ -26,7 +26,7 @@ func NewRouter() *gin.Engine {
 		authGroup.GET("/:provider", auth.Login)
 		authGroup.GET("/:provider/callback", auth.OAuthCallback)
 		authGroup.GET("/:provider/logout", auth.Logout)
-		authGroup.POST("/refresh", auth.RefreshToken)
+		authGroup.POST("/refresh", auth.RefreshRefreshToken)
 		authGroup.GET("/me", middleware.AuthMiddleware(), auth.Me)
 	}
 

@@ -6,21 +6,22 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/lnwdevelopers007/job-applier-3000/server/config"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var jwtSecret = []byte(config.LoadEnv("JWT_SECRET"))
 
-func generateTokens(email, name, avatarURL string, userID any) (accessToken, refreshToken string, err error) {
+func generateTokens[T primitive.ObjectID | string](userID T) (accessToken, refreshToken string, err error) {
 	// Access token (15m)
 	user, err := findUser(userID)
 	if err != nil {
 		return
 	}
 	accessClaims := jwt.MapClaims{
-		"email":     email,
-		"name":      name,
-		"avatarURL": avatarURL,
-		"userID":    userID,
+		"email":     user.Email,
+		"name":      user.Name,
+		"avatarURL": user.AvatarURL,
+		"userID":    user.ID,
 		"exp":       time.Now().Add(15 * time.Minute).Unix(),
 		"role":      user.Role,
 		"verified":  user.Verified,
@@ -39,10 +40,10 @@ func generateTokens(email, name, avatarURL string, userID any) (accessToken, ref
 	expDays := time.Duration(config.LoadInt("REFRESH_TOKEN_AGE_DAYS"))
 	// Refresh token (7d)
 	refreshClaims := jwt.MapClaims{
-		"email":     email,
-		"name":      name,
-		"avatarURL": avatarURL,
-		"userID":    userID,
+		"email":     user.Email,
+		"name":      user.Name,
+		"avatarURL": user.AvatarURL,
+		"userID":    user.ID,
 		"type":      "refresh",
 		"exp":       time.Now().Add(expDays * 24 * time.Hour).Unix(),
 		"role":      user.Role,

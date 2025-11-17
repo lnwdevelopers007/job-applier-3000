@@ -37,13 +37,13 @@ func addProvider(c *gin.Context) {
 // upsertUser update or insert user into the database.
 // "role" can be valid role and login.
 // Due to me being too lazy to catch every edge cases,
-func upsertUser(user goth.User, role string) (dbUser schema.User, isNewUser bool, err error) {
+func upsertUser(gUser goth.User, role string) (dbUser schema.User, isNewUser bool, err error) {
 	db := database.GetDatabase()
 	usersCollection := db.Collection("users")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	filter := bson.M{"userID": user.UserID}
+	filter := bson.M{"userID": gUser.UserID}
 
 	var existingUser schema.User
 	err = usersCollection.FindOne(ctx, filter).Decode(&existingUser)
@@ -65,14 +65,14 @@ func upsertUser(user goth.User, role string) (dbUser schema.User, isNewUser bool
 	// notice that role is setOnInsert meaning that there's no way a user will have role "login".
 	update := bson.M{
 		"$set": bson.M{
-			"provider":  user.Provider,
-			"email":     user.Email,
-			"avatarURL": user.AvatarURL,
+			"provider":  gUser.Provider,
+			"email":     gUser.Email,
+			"avatarURL": gUser.AvatarURL,
 			"updatedAt": time.Now(),
 		},
 		"$setOnInsert": bson.M{
 			"createdAt": time.Now(),
-			"name":      user.Name,
+			"name":      gUser.Name,
 			"role":      role, // unchanged behavior
 			"verified":  false,
 		},
@@ -88,6 +88,10 @@ func upsertUser(user goth.User, role string) (dbUser schema.User, isNewUser bool
 	// check whether upsert operation went successfully
 	if res.UpsertedID != nil {
 		isNewUser = true
+		err = usersCollection.FindOne(ctx, bson.M{"_id": res.UpsertedID}).Decode(&existingUser)
+		if err != nil {
+			return existingUser, isNewUser, fmt.Errorf("failed to reload new user: %w", err)
+		}
 	}
 
 	return existingUser, isNewUser, nil

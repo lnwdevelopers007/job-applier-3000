@@ -63,7 +63,7 @@ func OAuthCallback(c *gin.Context) {
 		return
 	}
 
-	accessToken, refreshToken, err := generateTokens(user.Email, user.Name, user.AvatarURL, dbUser.ID.Hex())
+	accessToken, refreshToken, err := generateTokens(dbUser.ID.Hex())
 	if err != nil {
 		msg := "cannot generate token"
 		slog.Error(msg + err.Error())
