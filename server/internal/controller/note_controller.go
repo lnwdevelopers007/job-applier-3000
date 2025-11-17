@@ -112,10 +112,6 @@ func (nc NoteController) validateNoteOwner(c *gin.Context) (shouldReturn bool) {
 // @Failure      500   {object}  map[string]string
 // @Router       /notes/ [post]
 func (nc NoteController) Create(c *gin.Context) {
-	shouldReturn := nc.validateNoteOwner(c)
-	if shouldReturn {
-		return
-	}
 	nc.baseController.Create(c)
 }
 
