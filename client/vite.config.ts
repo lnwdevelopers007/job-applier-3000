@@ -26,7 +26,8 @@ export default defineConfig(({ mode }) => {
 				'/jobs': { target: env.VITE_BACKEND, changeOrigin: true, secure: false },
 				'/apply': { target: env.VITE_BACKEND, changeOrigin: true, secure: false },
 				'/users': { target: env.VITE_BACKEND, changeOrigin: true, secure: false },
-				'/files': { target: env.VITE_BACKEND, changeOrigin: true, secure: false }
+				'/files': { target: env.VITE_BACKEND, changeOrigin: true, secure: false },
+				'/notes': { target: env.VITE_BACKEND, changeOrigin: true, secure: false },
 			}
 		},
 		test: {

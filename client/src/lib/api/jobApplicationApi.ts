@@ -3,7 +3,7 @@
  */
 
 import { ApiClient } from './client';
-import type { JobApplication, JobApplicationFilters } from '$lib/types';
+import type { JobApplication, JobApplicationFilters, JobApplicationWithApplicant } from '$lib/types';
 
 export class JobApplicationApi {
   constructor(private client: ApiClient) {}
@@ -65,8 +65,8 @@ export class JobApplicationApi {
   /**
    * Get applications by job ID
    */
-  async getByJobId(jobId: string): Promise<JobApplication[]> {
-    return this.query({ jobID: jobId });
+  async getByJobId(jobId: string): Promise<JobApplicationWithApplicant[]> {
+    return this.query({ jobID: jobId }) as Promise<JobApplicationWithApplicant[]>;
   }
 
   /**

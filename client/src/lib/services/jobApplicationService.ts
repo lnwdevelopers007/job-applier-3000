@@ -3,7 +3,7 @@
  */
 
 import { jobApplicationApi } from '$lib/api';
-import type { JobApplication, JobApplicationFilters } from '$lib/types';
+import type { JobApplication, JobApplicationFilters, JobApplicationWithApplicant } from '$lib/types';
 
 export class JobApplicationService {
   /**
@@ -93,7 +93,7 @@ export class JobApplicationService {
   /**
    * Get applications by job ID
    */
-  static async getApplicationsByJob(jobId: string): Promise<JobApplication[]> {
+  static async getApplicationsByJob(jobId: string): Promise<JobApplicationWithApplicant[]> {
     try {
       return await jobApplicationApi.getByJobId(jobId);
     } catch (error) {

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { authStore } from '$lib/stores/auth.svelte';
+
 	interface Props {
 		isApplied?: boolean;
 		closeDateRaw?: string | null;
@@ -44,9 +46,14 @@
 	const baseClasses = $derived(
 		`${sizeClasses[size]} font-medium rounded-md transition-all duration-150 ${fullWidth ? 'w-full' : ''} ${className}`
 	);
+
+	// Only show apply button for jobSeeker role
+	const shouldShowButton = $derived(() => authStore.hasRole('jobSeeker'));
 </script>
 
-{#if isApplied}
+{#if !shouldShowButton()}
+	<!-- Hide button for non-jobSeeker roles -->
+{:else if isApplied}
 	<button
 		disabled
 		class="{baseClasses} bg-green-700 text-white cursor-not-allowed"
