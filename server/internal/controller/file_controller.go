@@ -28,17 +28,6 @@ func NewFileController() FileController {
 	}
 }
 
-// getUserFromContext extracts user info from context (set by auth middleware)
-// if enableAuth = false in .env, it'll create a mock userID instead.
-func getUserFromContext(c *gin.Context) (userID primitive.ObjectID, role string, err error) {
-	enableAuth, _ := strconv.ParseBool(os.Getenv("ENABLE_AUTH"))
-
-	if enableAuth {
-		return getUserFromMiddleware(c)
-	}
-	return getFakeUser(c)
-}
-
 // Upload godoc
 // @Summary      Upload a file
 // @Description  Uploads a PDF or image file for a specific user. Supports categories such as resume, profile_picture, etc.

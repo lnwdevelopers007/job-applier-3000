@@ -3,6 +3,7 @@ package controller
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -25,10 +26,12 @@ type BaseController[Schema schema.CollectionEntity, DTO any] struct {
 
 // Create() inserts one document (row) to collectionName collection.
 func (controller BaseController[Schema, DTO]) Create(c *gin.Context) {
-
+	userInfo := getUserForLogging(c)
 	var raw Schema
 	if err := c.ShouldBindBodyWithJSON(&raw); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		msg := "Cannot create " + controller.displayName + ", incorrect schema"
+		slog.Warn(userInfo + msg)
+		c.JSON(http.StatusBadRequest, gin.H{"error": msg})
 		return
 	}
 
@@ -37,11 +40,13 @@ func (controller BaseController[Schema, DTO]) Create(c *gin.Context) {
 
 	res, err := repository.InsertOne(ctx, raw)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to create " + controller.displayName,
-		})
+		msg := "Failed to create " + controller.displayName
+		c.JSON(http.StatusInternalServerError, gin.H{"error": msg})
+		slog.Error(userInfo + msg)
 		return
 	}
+
+	slog.Info(userInfo + "Created " + controller.displayName + " Successfully")
 
 	c.JSON(http.StatusCreated, res)
 }
@@ -53,7 +58,7 @@ func (controller BaseController[Schema, DTO]) RetrieveAll(c *gin.Context) {
 	defer cancel()
 	res, err := repository.FindAll[Schema](ctx, bson.M{})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Cannot retrieve " + controller.displayName})
 		return
 	}
 	c.JSON(http.StatusOK, res)
