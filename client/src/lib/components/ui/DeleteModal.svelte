@@ -22,7 +22,7 @@
     title,
     itemName,
     description,
-    reasonLabel = "Reason for deletion",
+    reasonLabel = "Reason",
     reasonPlaceholder = "Please provide a detailed reason...",
     confirmButtonText = "Delete",
     isDeleting = false

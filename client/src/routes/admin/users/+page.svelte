@@ -1,438 +1,342 @@
 <script lang="ts">
+	import { authStore } from '$lib/stores/auth.svelte';
 	import { fetchUsers } from '$lib/utils/fetcher';
-	import TableWithAction from '$lib/components/table/TableWithAction.svelte';
-	import ConfirmActionWithReason from '$lib/components/modals/ConfirmActionWithReason.svelte';
-	import ConfirmDropdownAction from '$lib/components/modals/ConfirmDropdownAction.svelte';
-	import FilterPill from '$lib/components/forms/FilterPill.svelte';
-import { Search } from 'lucide-svelte';
-import { authStore } from '$lib/stores/auth.svelte';
+	import { UserService } from '$lib/services/userService';
+	import { Search } from 'lucide-svelte';
+	import DeleteModal from '$lib/components/ui/DeleteModal.svelte';
+	import PermissionEditModal from '$lib/components/ui/PermissionEditModal.svelte';
+	import DataTable from '$lib/components/tables/DataTable.svelte';
+	import { createUserColumns, type UserDisplay } from '$lib/components/tables/columns/userColumns';
 
-	const USER_ACTIONS = [
-		// { label: 'View', disabled: false },
-		{ label: 'Edit Permissions', disabled: false },
-		{ label: 'Ban', disabled: false },
-		{ label: 'Delete', disabled: false }
-	];
-	const TABLE_HEADER = ['Name', 'Email', 'Role', 'Verified'];
-
-	const VALID_ROLES = ['jobSeeker', 'company', 'faculty', 'admin'];
-	const VALID_VERIFICATION_OPTIONS = [true, false];
-	let currentFilteredBannedStatus = $state('');
-
-	const SORT_OPTIONS = [
-		{ value: 'name', label: 'Name' },
-		{ value: 'email', label: 'Email' },
-		{ value: 'role', label: 'Role' },
-		{ value: 'verified', label: 'Verification Status' }
-	];
-
-	let users = $state<any[]>([]);
-	let originalUsers = $state<any[]>([]);
-	let selectedUser = $state<any>(null);
+	let users = $state<UserDisplay[]>([]);
+	let loading = $state(true);
+	let searchQuery = $state('');
+	let roleFilter = $state('all');
+	let verificationFilter = $state('all');
 
 	let showDeleteModal = $state(false);
-	let deleteReason = $state('');
-	let isDeleting = $state(false);
+	let userToDelete = $state<UserDisplay | null>(null);
+	let deleting = $state(false);
 
 	let showBanModal = $state(false);
-	let banReason = $state('');
-	let isBanning = $state(false);
+	let userToBan = $state<UserDisplay | null>(null);
+	let banning = $state(false);
 
-	let showUnbanModal = $state(false);
-	let unbanReason = $state('');
-	let isUnbanning = $state(false);
+	let showPermissionModal = $state(false);
+	let userToEditPermissions = $state<UserDisplay | null>(null);
+	let updatingPermissions = $state(false);
 
-	let showPermissionEditModal = $state(false);
-	let showPermissionEditConfirmButton = $state(false);
+	const roleOptions = [
+		{ value: 'all', label: 'All Roles' },
+		{ value: 'jobSeeker', label: 'Job Seeker' },
+		{ value: 'company', label: 'Company' },
+		{ value: 'faculty', label: 'Faculty' },
+		{ value: 'admin', label: 'Admin' }
+	];
 
-	let currentFilteredRole = $state('');
-	let currentFilteredVerificationStatus = $state('');
+	const verificationOptions = [
+		{ value: 'all', label: 'All Status' },
+		{ value: 'verified', label: 'Verified' },
+		{ value: 'unverified', label: 'Unverified' }
+	];
 
-	let searchQuery = $state('');
-	let sortBy = $state('');
-
-let dropdowns = $derived([
-		{
-			name: 'Roles',
-			values: VALID_ROLES,
-			defaultVal: selectedUser === null ? '' : selectedUser.role
-		},
-		{
-			name: 'Verified',
-			values: VALID_VERIFICATION_OPTIONS,
-			defaultVal: selectedUser === null ? '' : selectedUser.verified
-		}
-	]);
-
-// Filter actions based on user - don't allow admin to ban themselves
-function getActionsForUser(user: any) {
-  const currentUserID = authStore.user?.userID;
-  const currentUserRole = authStore.user?.role;
-
-  // If viewing self and is admin, remove ban action
-  if (currentUserID === user.id && currentUserRole === 'admin') {
-    return USER_ACTIONS.filter(action => action.label !== 'Ban');
-  }
-
-  return USER_ACTIONS;
-}
-
-	async function onDeleteUser() {
-		isDeleting = true;
-
-		originalUsers = originalUsers.filter((u) => u.id !== selectedUser.id);
-		users = users.filter((u) => u.id !== selectedUser.id);
-
-		const res = await fetch(`/users/${selectedUser.id}`, {
-			method: 'DELETE',
-			credentials: 'include'
-		});
-
-		if (!res.ok) {
-			console.log('Error: Deletion failed');
-		}
-
-		showDeleteModal = false;
-		isDeleting = false;
+	function handleEdit(user: UserDisplay) {
+		userToEditPermissions = user;
+		showPermissionModal = true;
 	}
 
-	async function onBanUser() {
-		isBanning = true;
+	function handleBan(user: UserDisplay) {
+		userToBan = user;
+		showBanModal = true;
+	}
 
+	function handleDelete(user: UserDisplay) {
+		userToDelete = user;
+		showDeleteModal = true;
+	}
+
+	async function confirmDelete(reason: string) {
+		if (!userToDelete) return;
+		deleting = true;
 		try {
-			const newBanStatus = !selectedUser.banned;
-			const res = await fetch(`/users/${selectedUser.id}`, {
+			const res = await fetch(`/users/${userToDelete.id}`, {
+				method: 'DELETE',
+				credentials: 'include'
+			});
+
+			if (!res.ok) {
+				throw new Error('Failed to delete user');
+			}
+
+			users = users.filter((u) => u.id !== userToDelete?.id);
+			showDeleteModal = false;
+			userToDelete = null;
+		} catch (err) {
+			console.error('Error deleting user:', err);
+			throw err;
+		} finally {
+			deleting = false;
+		}
+	}
+
+	async function confirmBan(reason: string) {
+		if (!userToBan) return;
+		banning = true;
+		try {
+			const newBanStatus = !userToBan.banned;
+			const res = await fetch(`/users/${userToBan.id}`, {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json'
 				},
+				credentials: 'include',
 				body: JSON.stringify({ banned: newBanStatus })
 			});
 
 			if (!res.ok) {
-				console.error('Error: Failed to update ban status');
-				isBanning = false;
-				return;
+				throw new Error('Failed to update ban status');
 			}
 
-			selectedUser.banned = newBanStatus;
-
-			originalUsers = originalUsers.map((u) =>
-				u.id === selectedUser.id
-					? {
-							...u,
-							banned: newBanStatus,
-							actions: u.actions.map((a: { label: string; }) =>
-								a.label === 'Ban' || a.label === 'Unban'
-									? {
-											...a,
-											label: newBanStatus ? 'Unban' : 'Ban'
-									  }
-									: a
-							)
-					  }
-					: u
+			// Update user in the list
+			users = users.map((u) =>
+				u.id === userToBan!.id ? { ...u, banned: newBanStatus } : u
 			);
 
-			users = [...originalUsers];
-			console.log(
-				`User ${selectedUser.name} has been ${newBanStatus ? 'banned' : 'unbanned'} successfully ✅`
-			);
-		} catch (err) {
-			console.error('Network error banning user:', err);
-		} finally {
 			showBanModal = false;
-			isBanning = false;
-			banReason = '';
+			userToBan = null;
+		} catch (err) {
+			console.error('Error updating ban status:', err);
+			throw err;
+		} finally {
+			banning = false;
 		}
 	}
 
-	async function onConfirmPermissions(selectedVals: Record<string, any>) {
-		if (!selectedUser) return;
-
-		const role = selectedVals['Roles'];
-		const verified = selectedVals['Verified'];
-
-		// Update user role
-		if (role !== undefined && role !== selectedUser.role) {
-			const resRole = await fetch(`/users/${selectedUser.id}/role`, {
-				method: 'PATCH',
-        headers: {'Content-Type': 'application/json' },
-				credentials: "include",
-				body: JSON.stringify({ role })
-			});
-			if (!resRole.ok) console.error("Error: Can't update role");
-			else selectedUser.role = role;
-		}
-
-		// Update verified status
-		if (verified !== undefined && verified !== selectedUser.verified) {
-			const resVerified = await fetch(`/users/${selectedUser.id}/verify`, {
-				method: 'PATCH',
-				headers: {'Content-Type': 'application/json' },
-				credentials: "include",
-				body: JSON.stringify({ verified })
-			});
-			if (!resVerified.ok) console.error("Error: Can't update verified status");
-			else selectedUser.verified = verified;
-		}
-
-		// Update field locally
-		Object.entries(selectedVals).forEach(([key, val]) => {
-			if (key === 'Roles') selectedUser.role = val;
-			if (key === 'Verified') selectedUser.verified = val;
-		});
-
-		// Update the user array
-		originalUsers = originalUsers.map((u) =>
-			u.id === selectedUser.id ? { ...u, ...selectedUser } : u
-		);
-		users = users.map((u) => (u.id === selectedUser.id ? { ...u, ...selectedUser } : u));
-
-		// 4. close modal
-		showPermissionEditModal = false;
-	}
-
-	function onFilteringRole(role: string) {
-		users = role === '' ? originalUsers : originalUsers.filter((user: any) => user.role === role);
-	}
-
-	function onFilteringVerificationStatus(status: string) {
-		let strToBool = (str: string) => (str === 'true' ? true : false);
-
-		users =
-			status === ''
-				? originalUsers
-				: originalUsers.filter((user: any) => user.verified === strToBool(status));
-	}
-
-	function onFilteringBannedStatus(status: string) {
-		let strToBool = (str: string) => str === 'true';
-		users =
-			status === ''
-				? originalUsers
-				: originalUsers.filter((user: any) => user.banned === strToBool(status));
-	}
-
-	function onUserSearch() {
-		users =
-			searchQuery === ''
-				? originalUsers
-				: originalUsers.filter((user: any) =>
-						user.name.toLowerCase().includes(searchQuery.toLowerCase())
-					);
-	}
-
-	function onUserSort() {
-		// Reset or apply sort
-		users =
-			sortBy === ''
-				? originalUsers
-				: [...users].sort((a: any, b: any) => {
-						if (a[sortBy] < b[sortBy]) return -1;
-						if (a[sortBy] > b[sortBy]) return 1;
-						return 0;
-					});
-	}
-
-	function handleAction(action: any, user: any) {
-		selectedUser = user;
-		switch (action.label) {
-			// case 'View':
-			// 	console.log('Skibidi');
-			// 	break;
-			case 'Edit Permissions':
-				showPermissionEditModal = true;
-				console.log(showPermissionEditModal);
-				break;
-			case 'Ban':
-				showBanModal = true;
-				break;
-			case 'Unban':
-				showUnbanModal = true;
-				break;
-			case 'Delete':
-				showDeleteModal = true;
-				break;
-			default:
-				console.log('hello there');
-		}
-	}
-
-	async function loadUserData() {
-		const usersFromDB = await fetchUsers();
-		for (let user of usersFromDB) {
-			user.actions = getActionsForUser(user).map((a) =>
-				a.label === 'Ban'
-					? { ...a, label: user.banned ? 'Unban' : 'Ban' }
-					: a
-			);
-		}
-		users = originalUsers = usersFromDB;
-	}
-
-	async function onUnbanUser() {
-		isUnbanning = true;
+	async function confirmPermissionUpdate(role: string, verified: boolean) {
+		if (!userToEditPermissions) return;
+		updatingPermissions = true;
 		try {
-			const res = await fetch(`/users/${selectedUser.id}`, {
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ banned: false })
-			});
-			if (!res.ok) {
-				console.error('Error: Failed to unban user');
-				isUnbanning = false;
-				return;
+			// Update user role if changed
+			if (role !== userToEditPermissions.role) {
+				const resRole = await fetch(`/users/${userToEditPermissions.id}/role`, {
+					method: 'PATCH',
+					headers: { 'Content-Type': 'application/json' },
+					credentials: 'include',
+					body: JSON.stringify({ role })
+				});
+				if (!resRole.ok) throw new Error("Can't update role");
 			}
-			selectedUser.banned = false;
-			originalUsers = originalUsers.map((u) =>
-				u.id === selectedUser.id
-					? {
-							...u,
-							banned: false,
-							actions: u.actions.map((a: { label: string }) =>
-								a.label === 'Ban' || a.label === 'Unban'
-									? {
-											...a,
-											label: 'Ban'
-										}
-									: a
-							)
-					  }
+
+			// Update verified status if changed
+			if (verified !== userToEditPermissions.verified) {
+				const resVerified = await fetch(`/users/${userToEditPermissions.id}/verify`, {
+					method: 'PATCH',
+					headers: { 'Content-Type': 'application/json' },
+					credentials: 'include',
+					body: JSON.stringify({ verified })
+				});
+				if (!resVerified.ok) throw new Error("Can't update verified status");
+			}
+
+			// Update user in the list
+			users = users.map((u) =>
+				u.id === userToEditPermissions!.id 
+					? { ...u, role, verified } 
 					: u
 			);
-			users = [...originalUsers];
-			console.log(`User ${selectedUser.name} has been unbanned successfully ✅`);
+
+			showPermissionModal = false;
+			userToEditPermissions = null;
 		} catch (err) {
-			console.error('Network error unbanning user:', err);
+			console.error('Error updating permissions:', err);
+			throw err;
 		} finally {
-			showUnbanModal = false;
-			isUnbanning = false;
-			unbanReason = '';
+			updatingPermissions = false;
 		}
 	}
+
+	const filteredUsers = $derived(
+		users.filter((user) => {
+			const matchesSearch =
+				!searchQuery ||
+				user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+				user.email.toLowerCase().includes(searchQuery.toLowerCase());
+
+			const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+			
+			const matchesVerification = 
+				verificationFilter === 'all' ||
+				(verificationFilter === 'verified' && user.verified) ||
+				(verificationFilter === 'unverified' && !user.verified);
+
+			return matchesSearch && matchesRole && matchesVerification;
+		})
+	);
+
+	const columns = $derived(
+		createUserColumns({
+			onEdit: handleEdit,
+			onBan: handleBan,
+			onDelete: handleDelete,
+			getCurrentUserId: () => authStore.user?.userID
+		})
+	);
 
 	$effect(() => {
-		loadUserData();
+		if (authStore.isAuthenticated && authStore.user) {
+			loadAllUsers();
+		}
 	});
+
+	async function loadAllUsers() {
+		try {
+			loading = true;
+			const usersData = await fetchUsers();
+			
+			// Fetch files for each user
+			const usersWithFiles = await Promise.allSettled(
+				usersData.map(async (user: any) => {
+					let userFiles: string[] = [];
+					try {
+						const filesResponse = await fetch(`/files/user/${user.id}`, {
+							credentials: 'include'
+						});
+						
+						if (filesResponse.ok) {
+							const filesData = await filesResponse.json();
+							// Handle both old format (array) and new format (object with files array)
+							const files = Array.isArray(filesData) ? filesData : filesData.files || [];
+							userFiles = files.map((file: any) => ({
+								id: file.id,
+								filename: file.filename
+							}));
+						}
+					} catch (fileErr) {
+						console.warn(`Failed to load files for user ${user.id}:`, fileErr);
+						userFiles = [];
+					}
+					
+					return {
+						...user,
+						banned: user.banned || false,
+						files: userFiles
+					};
+				})
+			);
+			
+			// Filter successful results and map to user format
+			users = usersWithFiles
+				.filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
+				.map(result => result.value);
+				
+		} catch (err) {
+			console.error('Error loading users:', err);
+			users = [];
+		} finally {
+			loading = false;
+		}
+	}
+
+	function handleSearch(event: Event) {
+		searchQuery = (event.target as HTMLInputElement).value;
+	}
+
+	function handleRoleFilter(event: Event) {
+		roleFilter = (event.target as HTMLSelectElement).value;
+	}
+
+	function handleVerificationFilter(event: Event) {
+		verificationFilter = (event.target as HTMLSelectElement).value;
+	}
+
 </script>
 
-<div
-	class="-mt-5 pb-8 pt-8"
-	style="margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%); padding-left: calc(50vw - 50%); padding-right: calc(50vw - 50%); background: radial-gradient(circle,rgba(245, 255, 252, 1) 0%, rgba(248, 255, 249, 1) 25%, rgba(243, 255, 245, 1) 50%, rgba(237, 254, 244, 1) 75%, rgba(232, 254, 240, 1) 100%);"
->
-	<div class="mx-auto max-w-7xl space-y-4">
-		<!-- Search Bar -->
-		<div class="relative mx-auto max-w-3xl">
-			<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-				<Search class="h-5 w-5 text-gray-400" />
-			</div>
-			<input
-				type="text"
-				placeholder="Search Username"
-				class="w-full rounded-full border border-gray-200 bg-white py-3 pl-12 pr-4 text-gray-900 placeholder-gray-500 shadow-sm outline-none transition-all duration-200 focus:border-transparent focus:ring-1 focus:ring-gray-300"
-				bind:value={searchQuery}
-				oninput={onUserSearch}
-			/>
+<div>
+	<div>
+		<div class="mb-8">
+			<h1 class="text-2xl font-semibold text-gray-900 mb-1">User Management</h1>
+			<p class="text-base text-gray-600 mb-6">Manage and monitor all users across your platform</p>
 		</div>
 
-		<!-- Filter Pills -->
-		<div class="flex flex-wrap items-center justify-center gap-3">
-			<div class="flex items-center gap-2">
-				<span class="text-sm font-medium text-gray-600">Filters:</span>
 
-				<FilterPill
-					label="Role"
-					options={VALID_ROLES.map((role) => ({ value: role, label: role }))}
-					bind:selectedValue={currentFilteredRole}
-					onSelectionChange={onFilteringRole}
-				/>
+		<div class="mb-6">
+			<div class="flex gap-3">
+				<div class="relative">
+					<Search
+						class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5"
+					/>
+					<input
+						type="text"
+						placeholder="Search users by name or email..."
+						class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg min-w-lg text-sm placeholder:text-gray-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 transition-all"
+						bind:value={searchQuery}
+						oninput={handleSearch}
+					/>
+				</div>
 
-				<FilterPill
-					label="Verified"
-					options={VALID_VERIFICATION_OPTIONS.map((opt: boolean) => ({
-						value: opt.toString(),
-						label: opt.toString()
-					}))}
-					bind:selectedValue={currentFilteredVerificationStatus}
-					onSelectionChange={onFilteringVerificationStatus}
-				/>
+				<select
+					class="appearance-none px-4 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 font-medium hover:bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 transition-all cursor-pointer"
+					bind:value={roleFilter}
+					onchange={handleRoleFilter}
+				>
+					{#each roleOptions as option (option.value)}
+						<option value={option.value}>{option.label}</option>
+					{/each}
+				</select>
 
-				<FilterPill
-					label="Banned"
-					options={[
-						{ value: 'true', label: 'true' },
-						{ value: 'false', label: 'false' }
-					]}
-					bind:selectedValue={currentFilteredBannedStatus}
-					onSelectionChange={onFilteringBannedStatus}
-				/>
-
-				<!-- sort -->
-
-				<!-- <div class="h-4 w-px bg-gray-300"></div> -->
-
-				<FilterPill
-					label="Sort"
-					options={SORT_OPTIONS}
-					bind:selectedValue={sortBy}
-					onSelectionChange={onUserSort}
-					type="sort"
-				/>
+				<select
+					class="appearance-none px-4 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 font-medium hover:bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 transition-all cursor-pointer"
+					bind:value={verificationFilter}
+					onchange={handleVerificationFilter}
+				>
+					{#each verificationOptions as option (option.value)}
+						<option value={option.value}>{option.label}</option>
+					{/each}
+				</select>
 			</div>
 		</div>
+
+		<DataTable data={filteredUsers} {columns} pageSize={15} {loading} />
 	</div>
 </div>
 
-<TableWithAction
-	things={users}
-	tableHeader={TABLE_HEADER}
-	rowAttributes={TABLE_HEADER.map((attribute: string) => {
-		return attribute.toLowerCase();
-	})}
-	{handleAction}
+<DeleteModal
+	bind:isOpen={showDeleteModal}
+	onClose={() => {
+		showDeleteModal = false;
+		userToDelete = null;
+	}}
+	onConfirm={confirmDelete}
+	title="Delete User"
+	itemName={userToDelete?.name || ''}
+	description="You're about to delete this user account. This action cannot be undone and will remove the user along with all associated data."
+	reasonPlaceholder="Please provide a detailed reason for deleting this user account..."
+	confirmButtonText="Delete User"
+	isDeleting={deleting}
 />
 
-<ConfirmActionWithReason
-	bind:isVisible={showDeleteModal}
-	actionName="Delete"
-	actOnKind="User"
-	actOnIndividual={selectedUser === null ? '' : selectedUser.name}
-	bind:isActionInProgress={isDeleting}
-	bind:reasonForAction={deleteReason}
-	action={onDeleteUser}
+<DeleteModal
+	bind:isOpen={showBanModal}
+	onClose={() => {
+		showBanModal = false;
+		userToBan = null;
+	}}
+	onConfirm={confirmBan}
+	title="{userToBan?.banned ? 'Unban' : 'Ban'} User"
+	itemName={userToBan?.name || ''}
+	description="You're about to {userToBan?.banned ? 'unban' : 'ban'} this user account. {userToBan?.banned ? 'This will restore their access to the platform.' : 'This will prevent them from accessing the platform.'}"
+	reasonPlaceholder="Please provide a detailed reason for {userToBan?.banned ? 'unbanning' : 'banning'} this user..."
+	confirmButtonText="{userToBan?.banned ? 'Unban' : 'Ban'} User"
+	isDeleting={banning}
 />
 
-<ConfirmActionWithReason
-	bind:isVisible={showBanModal}
-	actionName="Ban"
-	actOnKind="User"
-	actOnIndividual={selectedUser === null ? '' : selectedUser.name}
-	bind:isActionInProgress={isBanning}
-	bind:reasonForAction={banReason}
-	action={onBanUser}
-/>
-
-<ConfirmDropdownAction
-	bind:isVisible={showPermissionEditModal}
-	actionName={`Editing ${selectedUser === null ? '' : selectedUser.name} Permission`}
-	bind:showConfirmButton={showPermissionEditConfirmButton}
-	bind:dropdowns
-	action={onConfirmPermissions}
-	linkData={selectedUser
-		? {
-				title: 'View Credentials of this User',
-				link: 'https://www.google.com'
-			}
-		: null}
-/>
-
-<ConfirmActionWithReason
-	bind:isVisible={showUnbanModal}
-	actionName="Unban"
-	actOnKind="User"
-	actOnIndividual={selectedUser === null ? '' : selectedUser.name}
-	bind:isActionInProgress={isUnbanning}
-	bind:reasonForAction={unbanReason}
-	action={onUnbanUser}
+<PermissionEditModal
+	bind:isOpen={showPermissionModal}
+	onClose={() => {
+		showPermissionModal = false;
+		userToEditPermissions = null;
+	}}
+	onConfirm={confirmPermissionUpdate}
+	user={userToEditPermissions}
+	isUpdating={updatingPermissions}
 />
