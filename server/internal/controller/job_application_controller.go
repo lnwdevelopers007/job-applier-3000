@@ -112,13 +112,37 @@ func jobApplicationFilter(c *gin.Context) (bson.M, bool) {
 			return primitive.ObjectIDFromHex(v)
 		},
 		"applicantID": func(v string) (any, error) {
-			return primitive.ObjectIDFromHex(v)
+			if v == "" {
+				return nil, fmt.Errorf("applicantID parameter is empty")
+			}
+			objID, err := primitive.ObjectIDFromHex(v)
+			if err != nil {
+				return nil, err
+			}
+			// Try both ObjectID and string format for backwards compatibility
+			return bson.M{"$in": []any{objID, v}}, nil
 		},
 		"jobID": func(v string) (any, error) {
-			return primitive.ObjectIDFromHex(v)
+			if v == "" {
+				return nil, fmt.Errorf("jobID parameter is empty")
+			}
+			objID, err := primitive.ObjectIDFromHex(v)
+			if err != nil {
+				return nil, err
+			}
+			// Try both ObjectID and string format for backwards compatibility
+			return bson.M{"$in": []any{objID, v}}, nil
 		},
 		"companyID": func(v string) (any, error) {
-			return primitive.ObjectIDFromHex(v)
+			if v == "" {
+				return nil, fmt.Errorf("companyID parameter is empty")
+			}
+			objID, err := primitive.ObjectIDFromHex(v)
+			if err != nil {
+				return nil, err
+			}
+			// Try both ObjectID and string format for backwards compatibility
+			return bson.M{"$in": []any{objID, v}}, nil
 		},
 		"status": func(v string) (any, error) {
 			if v == "" {
