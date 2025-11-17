@@ -4,7 +4,8 @@
 	import ConfirmActionWithReason from '$lib/components/modals/ConfirmActionWithReason.svelte';
 	import ConfirmDropdownAction from '$lib/components/modals/ConfirmDropdownAction.svelte';
 	import FilterPill from '$lib/components/forms/FilterPill.svelte';
-	import { Search } from 'lucide-svelte';
+import { Search } from 'lucide-svelte';
+import { authStore } from '$lib/stores/auth.svelte';
 
 	const USER_ACTIONS = [
 		// { label: 'View', disabled: false },
@@ -50,7 +51,7 @@
 	let searchQuery = $state('');
 	let sortBy = $state('');
 
-	let dropdowns = $derived([
+let dropdowns = $derived([
 		{
 			name: 'Roles',
 			values: VALID_ROLES,
@@ -62,6 +63,19 @@
 			defaultVal: selectedUser === null ? '' : selectedUser.verified
 		}
 	]);
+
+// Filter actions based on user - don't allow admin to ban themselves
+function getActionsForUser(user: any) {
+  const currentUserID = authStore.user?.userID;
+  const currentUserRole = authStore.user?.role;
+
+  // If viewing self and is admin, remove ban action
+  if (currentUserID === user.id && currentUserRole === 'admin') {
+    return USER_ACTIONS.filter(action => action.label !== 'Ban');
+  }
+
+  return USER_ACTIONS;
+}
 
 	async function onDeleteUser() {
 		isDeleting = true;
@@ -86,13 +100,13 @@
 		isBanning = true;
 
 		try {
-			const newBanStatus = !selectedUser.ban;
+			const newBanStatus = !selectedUser.banned;
 			const res = await fetch(`/users/${selectedUser.id}`, {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json'
 				},
-				body: JSON.stringify({ ban: newBanStatus })
+				body: JSON.stringify({ banned: newBanStatus })
 			});
 
 			if (!res.ok) {
@@ -101,13 +115,13 @@
 				return;
 			}
 
-			selectedUser.ban = newBanStatus;
+			selectedUser.banned = newBanStatus;
 
 			originalUsers = originalUsers.map((u) =>
 				u.id === selectedUser.id
 					? {
 							...u,
-							ban: newBanStatus,
+							banned: newBanStatus,
 							actions: u.actions.map((a: { label: string; }) =>
 								a.label === 'Ban' || a.label === 'Unban'
 									? {
@@ -197,7 +211,7 @@
 		users =
 			status === ''
 				? originalUsers
-				: originalUsers.filter((user: any) => user.ban === strToBool(status));
+				: originalUsers.filter((user: any) => user.banned === strToBool(status));
 	}
 
 	function onUserSearch() {
@@ -248,9 +262,9 @@
 	async function loadUserData() {
 		const usersFromDB = await fetchUsers();
 		for (let user of usersFromDB) {
-			user.actions = USER_ACTIONS.map((a) =>
+			user.actions = getActionsForUser(user).map((a) =>
 				a.label === 'Ban'
-					? { ...a, label: user.ban ? 'Unban' : 'Ban' }
+					? { ...a, label: user.banned ? 'Unban' : 'Ban' }
 					: a
 			);
 		}
@@ -263,19 +277,19 @@
 			const res = await fetch(`/users/${selectedUser.id}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ ban: false })
+				body: JSON.stringify({ banned: false })
 			});
 			if (!res.ok) {
 				console.error('Error: Failed to unban user');
 				isUnbanning = false;
 				return;
 			}
-			selectedUser.ban = false;
+			selectedUser.banned = false;
 			originalUsers = originalUsers.map((u) =>
 				u.id === selectedUser.id
 					? {
 							...u,
-							ban: false,
+							banned: false,
 							actions: u.actions.map((a: { label: string }) =>
 								a.label === 'Ban' || a.label === 'Unban'
 									? {

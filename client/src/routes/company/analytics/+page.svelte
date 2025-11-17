@@ -101,7 +101,9 @@
         const jobID = job.id || job._id;
         if (!jobID) continue;
 
-        const applyRes = await fetch(`/apply?jobID=${jobID}`);
+        const applyRes = await fetch(`/apply/query?jobID=${jobID}`, {
+            credentials: 'include'
+        });
         if (!applyRes.ok) continue;
 
         const applyData = await applyRes.json();

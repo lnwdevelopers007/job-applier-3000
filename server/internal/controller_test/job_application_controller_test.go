@@ -48,7 +48,7 @@ func TestQueryJobApplicationsSuccess(t *testing.T) {
 	router := getTestRouter()
 	w := httptest.NewRecorder()
 
-	req, _ := http.NewRequest("GET", "/apply/", nil)
+	req, _ := http.NewRequest("GET", "/apply/query", nil)
 	router.ServeHTTP(w, req)
 
 	t.Log(w.Body.String())

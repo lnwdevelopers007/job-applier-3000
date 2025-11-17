@@ -96,7 +96,7 @@
 					let applicantCount = 0;
 
 					try {
-						const applyRes = await apiFetch(`/apply?jobID=${jobID}`);
+						const applyRes = await apiFetch(`/apply/query?jobID=${jobID}`);
 						if (applyRes.ok) {
 							const applications = await applyRes.json();
 							if (Array.isArray(applications)) applicantCount = applications.length;

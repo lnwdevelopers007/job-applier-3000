@@ -66,7 +66,32 @@
   }
 
   function normalizeUser(user: any) {
-    const infoArray = user.userInfo || [];
+    // Safety check: if user is null/undefined, return default structure
+    if (!user || typeof user !== 'object') {
+        console.warn('normalizeUser received invalid user data:', user);
+        return {
+            id: '',
+            userID: '',
+            email: '',
+            avatar: 'https://cdn-icons-png.flaticon.com/512/149/149071.png',
+            name: 'Unknown User',
+            fullName: 'Unknown User',
+            role: 'Unknown Role',
+            phone: '-',
+            linkedIn: '-',
+            location: '-',
+            github: '',
+            portfolio: '',
+            aboutMe: '',
+            dateOfBirth: '',
+            education: [],
+            skills: [],
+            documents: []
+        };
+    }
+
+    // Handle userInfo array - add safety check
+    const infoArray = Array.isArray(user.userInfo) ? user.userInfo : [];
     const info = Object.fromEntries(infoArray.map((i: any) => [i.Key, i.Value]));
     
     // Parse skills from comma-separated string
@@ -74,13 +99,13 @@
     const skillsArray = skillsString ? skillsString.split(',').map((skill: string) => skill.trim()).filter((skill: string) => skill.length > 0) : [];
     
     return {
-      id: user.id,
-      userID: user.userID,
+      id: user.id || user._id || '',
+      userID: user.userID || '',
       email: user.email || '',
       avatar: user.avatarURL || 'https://cdn-icons-png.flaticon.com/512/149/149071.png',
       name: info.fullName || user.name || 'Unknown User',
       fullName: info.fullName || user.name || 'Unknown User',
-      role: info.desiredRole || 'Unknown Role',
+      role: info.desiredRole || user.role || 'Unknown Role',
       phone: info.phone || '-',
       linkedIn: info.linkedIn || '-',
       location: info.location || '-',
@@ -88,9 +113,9 @@
       portfolio: info.portfolio || '',
       aboutMe: info.aboutMe || '',
       dateOfBirth: info.dateOfBirth || '',
-      education: user.education || [],
+      education: Array.isArray(user.education) ? user.education : [],
       skills: skillsArray,
-      documents: user.documents || []
+      documents: Array.isArray(user.documents) ? user.documents : []
     };
   }
 
@@ -193,6 +218,35 @@
           skills: user.skills,
           documents: user.documents
         };
+          } catch (error) {
+              console.error(`Error processing applicant ${applicantID}:`, error);
+              
+              // Return a placeholder candidate object so the UI doesn't break
+              return {
+                  id: app.jobApplication.id,
+                  applicantID: applicantID,
+                  jobID: app.jobApplication.jobID,
+                  createdAt: app.jobApplication.createdAt,
+                  name: 'Unknown Applicant',
+                  fullName: 'Unknown Applicant',
+                  role: 'Unknown',
+                  applied: app.jobTitle,
+                  status: 'Pending',
+                  avatar: 'https://cdn-icons-png.flaticon.com/512/149/149071.png',
+                  time: 'Unknown',
+                  email: '-',
+                  phone: '-',
+                  address: '-',
+                  linkedin: '-',
+                  github: '',
+                  portfolio: '',
+                  aboutMe: '',
+                  dateOfBirth: '',
+                  education: [],
+                  skills: [],
+                  documents: []
+              };
+          }
       });
 
       return results;
