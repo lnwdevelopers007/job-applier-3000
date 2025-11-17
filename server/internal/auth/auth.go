@@ -1,10 +1,11 @@
 package auth
 
 import (
+	"errors"
+	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
-	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/sessions"
@@ -44,63 +45,29 @@ func OAuthCallback(c *gin.Context) {
 	role := c.Query("state")
 	user, err := gothic.CompleteUserAuth(c.Writer, c.Request)
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		msg := "cannot complete user authentication"
+		slog.Error(msg + ": " + err.Error())
+		c.AbortWithError(http.StatusInternalServerError, errors.New(msg))
 		return
 	}
 
-	res, isNewUser, err := upsertUser(user, role)
+	dbUser, isNewUser, err := upsertUser(user, role)
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		msg := "cannot upsert user"
+		slog.Error(msg + ": " + err.Error())
+		if isNewUser {
+			c.AbortWithError(http.StatusBadRequest, errors.New(msg))
+		} else {
+			c.AbortWithError(http.StatusInternalServerError, errors.New(msg))
+		}
 		return
 	}
 
-	fmt.Println(res)
-
-	// Check if user is banned before generating tokens
-	dbUser, err := findUser(res)
+	accessToken, refreshToken, err := generateTokens(user.Email, user.Name, user.AvatarURL, dbUser.ID.Hex())
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	if dbUser.Banned {
-	// Generate tokens even for banned users so frontend can verify ban status
-	accessToken, refreshToken, err := generateTokens(user.Email, user.Name, user.AvatarURL, res)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	refreshTokenAge := config.LoadInt("REFRESH_TOKEN_AGE_DAYS") * 24 * 3600
-	
-	// Set cookies so frontend can verify the user is banned
-	c.SetCookie(
-		"refresh_token",
-		refreshToken,
-		refreshTokenAge,
-		"/", "localhost",
-		false,
-		true,
-	)
-
-	c.SetCookie(
-		"access_token",
-		accessToken,
-		3600, // 1 hour
-		"/", "localhost",
-		false,
-		true,
-	)
-
-	// Now redirect to banned page WITH cookies
-	redirectURL := config.LoadEnv("FRONTEND") + "/banned"
-	c.Redirect(http.StatusFound, redirectURL)
-	return
-}
-
-	accessToken, refreshToken, err := generateTokens(user.Email, user.Name, user.AvatarURL, res)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		msg := "cannot generate token"
+		slog.Error(msg + err.Error())
+		c.AbortWithError(http.StatusInternalServerError, errors.New(msg))
 		return
 	}
 
@@ -125,6 +92,15 @@ func OAuthCallback(c *gin.Context) {
 		false,
 		true,
 	)
+
+	slog.Info("User: " + dbUser.ID.Hex() + ", Role: " + dbUser.Role + " logged in")
+
+	if dbUser.Banned {
+		// Now redirect to banned page WITH cookies
+		redirectURL := config.LoadEnv("FRONTEND") + "/banned"
+		c.Redirect(http.StatusFound, redirectURL)
+		return
+	}
 
 	// Redirect to frontend callback without token in URL
 	redirectURL := config.LoadEnv("FRONTEND") + "/callback"

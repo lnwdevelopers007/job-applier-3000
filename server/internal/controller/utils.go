@@ -111,7 +111,7 @@ func getUserForLogging(c *gin.Context) string {
 	if err != nil {
 		userInfo = fmt.Sprintf(userInfo, "UNKNOWN", "UNKNOWN")
 	} else {
-		userInfo = fmt.Sprintf(userInfo, uid.String(), role)
+		userInfo = fmt.Sprintf(userInfo, uid.Hex(), role)
 	}
 	return userInfo
 }

@@ -4,17 +4,22 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/database"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/repository"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
 	"github.com/markbates/goth"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+func getAllowedRoles() []string {
+	return []string{"jobSeeker", "admin", "faculty", "company"}
+}
 
 // addProvider adds the OAuth provider to the request from the query params.
 func addProvider(c *gin.Context) {
@@ -30,9 +35,9 @@ func addProvider(c *gin.Context) {
 }
 
 // upsertUser update or insert user into the database.
-// "role" can only have 3 values: company, jobSeeker, login.
+// "role" can be valid role and login.
 // Due to me being too lazy to catch every edge cases,
-func upsertUser(user goth.User, role string) (any, bool, error) {
+func upsertUser(user goth.User, role string) (dbUser schema.User, isNewUser bool, err error) {
 	db := database.GetDatabase()
 	usersCollection := db.Collection("users")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -40,30 +45,24 @@ func upsertUser(user goth.User, role string) (any, bool, error) {
 
 	filter := bson.M{"userID": user.UserID}
 
-	// Check if user already exists
 	var existingUser schema.User
-	err := usersCollection.FindOne(ctx, filter).Decode(&existingUser)
-	isNewUser := false
+	err = usersCollection.FindOne(ctx, filter).Decode(&existingUser)
+	// If there's error when querying user
 	if err != nil && err != mongo.ErrNoDocuments {
-		return nil, false, fmt.Errorf("failed to query existing user: %w", err)
+		return existingUser, false, fmt.Errorf("failed to query user: %w", err)
 	}
 
-	if err == mongo.ErrNoDocuments {
-		isNewUser = true
+	// If user tries to log in BUT the user does not exist in the database.
+	if role == "login" && err == mongo.ErrNoDocuments {
+		return existingUser, true, fmt.Errorf("please register first before using our service")
 	}
 
-	// Previously error checking for role change signup.
-	// if !isNewUser && role != existingUser.Role && role != "login" {
-	// 		return nil, false, fmt.Errorf("please go log in")
-	// }
-
-	// If the user does not exist and is trying to login, throw error.
-	if role == "login" {
-		if existingUser.ID.IsZero() {
-			return nil, false, fmt.Errorf("please register first before using our service")
-		}
+	// If user tries to register (role != login) but the role is invalid
+	if role != "login" && !slices.Contains(getAllowedRoles(), role) {
+		return existingUser, false, fmt.Errorf("role is not valid")
 	}
 
+	// notice that role is setOnInsert meaning that there's no way a user will have role "login".
 	update := bson.M{
 		"$set": bson.M{
 			"provider":  user.Provider,
@@ -74,7 +73,7 @@ func upsertUser(user goth.User, role string) (any, bool, error) {
 		"$setOnInsert": bson.M{
 			"createdAt": time.Now(),
 			"name":      user.Name,
-			"role":      role,
+			"role":      role, // unchanged behavior
 			"verified":  false,
 		},
 	}
@@ -83,42 +82,21 @@ func upsertUser(user goth.User, role string) (any, bool, error) {
 
 	res, err := usersCollection.UpdateOne(ctx, filter, update, opts)
 	if err != nil {
-		return nil, false, fmt.Errorf("failed to upsert user: %w", err)
-	}
-	if res.UpsertedID != nil {
-		return res.UpsertedID, true, nil
+		return existingUser, false, fmt.Errorf("failed to upsert user: %w", err)
 	}
 
-	return existingUser.ID, isNewUser, nil
+	// check whether upsert operation went successfully
+	if res.UpsertedID != nil {
+		isNewUser = true
+	}
+
+	return existingUser, isNewUser, nil
 }
 
 // find user
 func findUser(userID any) (schema.User, error) {
-	db := database.GetDatabase()
-	users := db.Collection("users")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Convert to ObjectID if it’s a string
-	var oid primitive.ObjectID
-	switch v := userID.(type) {
-	case string:
-		var err error
-		oid, err = primitive.ObjectIDFromHex(v)
-		if err != nil {
-			return schema.User{}, fmt.Errorf("invalid userID string: %w", err)
-		}
-	case primitive.ObjectID:
-		oid = v
-	default:
-		return schema.User{}, fmt.Errorf("unsupported userID type: %T", v)
-	}
-
-	var registeredUser schema.User
-	filter := bson.M{"_id": oid}
-	if err := users.FindOne(ctx, filter).Decode(&registeredUser); err != nil {
-		return registeredUser, fmt.Errorf("can't find user: %w", err)
-	}
-	return registeredUser, nil
-
+	return repository.FindOne[schema.User](ctx, userID)
 }
