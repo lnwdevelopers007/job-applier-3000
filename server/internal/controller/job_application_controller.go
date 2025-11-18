@@ -2,7 +2,9 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -229,7 +231,10 @@ func (jc JobApplicationController) Create(c *gin.Context) {
 				job.Title,
 			)
 
-			email.Send(companyEmail, subject, body)
+			if err := email.Send(companyEmail, subject, body); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to send email"})
+				return
+			}
 		}
 	}
 }
@@ -294,17 +299,19 @@ func (jc JobApplicationController) Update(c *gin.Context) {
 }
 
 // notifyApplicantOnStatusChange notifies the applicant when their application status changes
-func (jc JobApplicationController) notifyApplicantOnStatusChange(ctx context.Context, app schema.JobApplication) {
+func (jc JobApplicationController) notifyApplicantOnStatusChange(ctx context.Context, app schema.JobApplication) error {
 	applicant, err := repository.FindOne[schema.User](ctx, app.ApplicantID)
 	if err != nil {
-		fmt.Println("Failed to fetch applicant for notification:", err)
-		return
+		msg := "failed to fetch applicant for notification"
+		slog.Warn(msg + ": " + err.Error())
+		return errors.New(msg)
 	}
 
 	job, err := repository.FindOne[schema.Job](ctx, app.JobID)
 	if err != nil {
-		fmt.Println("Failed to fetch job for notification:", err)
-		return
+		msg := "failed to fetch job for notification"
+		slog.Warn(msg + ": " + err.Error())
+		return errors.New(msg)
 	}
 
 	var subject, body string
@@ -334,7 +341,7 @@ func (jc JobApplicationController) notifyApplicantOnStatusChange(ctx context.Con
 		)
 	}
 
-	email.Send(applicant.Email, subject, body)
+	return email.Send(applicant.Email, subject, body)
 }
 
 // Delete godoc

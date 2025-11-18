@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/auth"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/dto"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/email"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/repository"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
 	"go.mongodb.org/mongo-driver/bson"
@@ -145,6 +146,34 @@ func (jc UserController) Create(c *gin.Context) {
 // @Router       /users/{id} [delete]
 func (jc UserController) Delete(c *gin.Context) {
 	jc.baseController.Delete(c)
+	uid := c.Param("id")
+
+	var body struct {
+		Reason string `json:"reason"`
+	}
+	if err := c.BindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON body"})
+		return
+	}
+	reason := body.Reason
+	if reason == "" {
+		reason = "No reason provided."
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	user, _ := repository.FindOne[schema.User](ctx, uid)
+
+	emailBody := fmt.Sprintf(
+		"Dear %s, \n Your account has been deleted", user.Name,
+	)
+
+	if err := email.Send(user.Email, "User Deletion Notice", emailBody); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to send email"})
+		return
+	}
+
 }
 
 // RetrieveAll godoc
@@ -210,6 +239,22 @@ func (jc UserController) VerifyUser(c *gin.Context) {
 	}
 
 	jc.baseController.Update(c)
+
+	uid := c.Param("id")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	user, _ := repository.FindOne[schema.User](ctx, uid)
+	emailBody := fmt.Sprintf(
+		"Dear %s, \n Your account has been verified", user.Name,
+	)
+
+	if err := email.Send(user.Email, "User Account Verification Notice", emailBody); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to send email"})
+		return
+	}
+
 }
 
 // EditPermission godoc
@@ -246,6 +291,20 @@ func (jc UserController) EditPermission(c *gin.Context) {
 	}
 
 	jc.baseController.Update(c)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	uid := c.Param("id")
+	user, _ := repository.FindOne[schema.User](ctx, uid)
+
+	emailBody := fmt.Sprintf(
+		"Dear %s, \n Your account permission has been changed to", user.Role,
+	)
+
+	if err := email.Send(user.Email, "User Permission Change Notice", emailBody); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to send email"})
+		return
+	}
 }
 
 // GetPublicInfo godoc
