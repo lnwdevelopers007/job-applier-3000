@@ -298,7 +298,7 @@ func (jc UserController) EditPermission(c *gin.Context) {
 	user, _ := repository.FindOne[schema.User](ctx, uid)
 
 	emailBody := fmt.Sprintf(
-		"Dear %s, \n Your account permission has been changed to", user.Role,
+		"Dear %s, \n Your account permission has been changed to %s", user.Name, user.Role,
 	)
 
 	if err := email.Send(user.Email, "User Permission Change Notice", emailBody); err != nil {
