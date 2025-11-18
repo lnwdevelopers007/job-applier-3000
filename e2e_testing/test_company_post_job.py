@@ -26,6 +26,7 @@ MAXSALARY = config('MAXSALARY', default="100000")
 MINSALARY = config('MINSALARY', default="50000")
 EDITTITLE = config('EDITEDJOBTITLE', default="Updated Selenium Test Job")
 DELETEREASON = config('DELETEREASON', default="Position filled")
+SKILL = config('SKILL', default="JS")
 driver = get_driver(PROFILE, NUMBER, HEADLESS)
 actions = ActionChains(driver)
 wait = WebDriverWait(driver, 20)
@@ -115,7 +116,12 @@ try:
     ))
     education_select.select_by_visible_text(EDUCATIONLEVEL)
 
-    time.sleep(WAIT_TIME)    
+    skill_input = wait.until(
+        EC.element_to_be_clickable((By.ID, "requiredSkills"))
+    )
+    skill_input.send_keys(SKILL)
+    skill_input.send_keys(Keys.RETURN)
+    time.sleep(WAIT_TIME)
     print("Filled third part of the job post form")
 
     continue_btn = wait.until(
