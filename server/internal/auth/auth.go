@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -93,7 +94,11 @@ func OAuthCallback(c *gin.Context) {
 		true,
 	)
 
-	slog.Info("User: " + dbUser.ID.Hex() + ", Role: " + dbUser.Role + " logged in")
+	slog.Info("User logged in",
+		slog.String("userID", fmt.Sprint(dbUser.ID.Hex())),
+		slog.String("role", fmt.Sprint(dbUser.Role)),
+		slog.String("ip", c.ClientIP()),
+	)
 
 	if dbUser.Banned {
 		// Now redirect to banned page WITH cookies
@@ -124,8 +129,24 @@ func Login(c *gin.Context) {
 
 func Logout(c *gin.Context) {
 	addProvider(c)
+	// Try to log which user is logging out, if available in context.
+	cookie, _ := c.Cookie("access_token")
+
+	decodedClaims, _ := ParseJWT(cookie)
+	userID := decodedClaims.UserID
+	role := decodedClaims.Role
+
+	fmt.Println("Hello")
+
+	slog.Info("User logged out",
+		slog.String("userID", fmt.Sprint(userID)),
+		slog.String("role", fmt.Sprint(role)),
+		slog.String("ip", c.ClientIP()),
+	)
+
 	if err := gothic.Logout(c.Writer, c.Request); err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
+		return
 	}
 
 	c.SetCookie("refresh_token", "", -1, "/", c.Request.URL.Hostname(), false, true)
