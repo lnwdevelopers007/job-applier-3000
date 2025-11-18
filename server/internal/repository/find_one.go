@@ -35,15 +35,16 @@ func getPrimitiveObjID(objID any) (primitive.ObjectID, error) {
 	switch v := objID.(type) {
 	case string:
 		v = strings.TrimSpace(v)
+		if len(v) != 24 {
+			return oid, fmt.Errorf("invalid ObjectID string: wrong length")
+		}
 		id, err := primitive.ObjectIDFromHex(v)
 		if err != nil {
 			return oid, fmt.Errorf("invalid ObjectID string: %w", err)
 		}
 		oid = id
-
 	case primitive.ObjectID:
 		oid = v
-
 	default:
 		return oid, fmt.Errorf("unsupported ObjectID type: %T", objID)
 	}
