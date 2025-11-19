@@ -2,6 +2,9 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { isAuthenticated } from '$lib/utils/auth';
+  import PDPAModal from '$lib/components/modals/PDPAModal.svelte';
+
+  let showPDPA = false;
   
   onMount(() => {
     if (isAuthenticated()) {
@@ -65,14 +68,27 @@
         </a>
       </div>
 
-      <div class="text-center">
-        <p class="text-sm text-gray-500">
-          Already have an account? 
-          <a href="/login" class="text-green-600 hover:text-green-700 font-medium">Log in</a>
-        </p>
-      </div>
-    </div>
-  </div>
+			<div class="text-center">
+				<p class="mt-8 text-center text-sm text-gray-500">
+					By using our service, you consent to the processing of your Personal Data as described in
+					our
+
+					<button
+						type="button"
+						on:click={() => (showPDPA = true)}
+						class="font-medium text-blue-600 hover:text-blue-700"
+					>
+						Privacy Notice
+					</button>
+				</p>
+
+				<p class="text-sm text-gray-500">
+					Already have an account?
+					<a href="/login" class="font-medium text-green-600 hover:text-green-700">Log in</a>
+				</p>
+			</div>
+		</div>
+	</div>
 
   <!-- Right Side -->
   <div class="w-full lg:w-3/5 bg-gradient-to-br from-green-50 to-blue-50 relative overflow-hidden border-white">
@@ -99,41 +115,42 @@
     </div>
   </div>
 </div>
+<PDPAModal bind:isVisible={showPDPA} />
 
 <style>
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-    }
-  }
+	@keyframes fade-in {
+		from {
+			opacity: 0;
+		}
+	}
 
-  @keyframes fade-out {
-    to {
-      opacity: 0;
-    }
-  }
+	@keyframes fade-out {
+		to {
+			opacity: 0;
+		}
+	}
 
-  @keyframes slide-from-right {
-    from {
-      transform: translateX(30px);
-    }
-  }
+	@keyframes slide-from-right {
+		from {
+			transform: translateX(30px);
+		}
+	}
 
-  @keyframes slide-to-left {
-    to {
-      transform: translateX(-30px);
-    }
-  }
+	@keyframes slide-to-left {
+		to {
+			transform: translateX(-30px);
+		}
+	}
 
-  :root::view-transition-old(root) {
-    animation:
-      90ms cubic-bezier(0.4, 0, 1, 1) both fade-out,
-      300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-left;
-  }
+	:root::view-transition-old(root) {
+		animation:
+			90ms cubic-bezier(0.4, 0, 1, 1) both fade-out,
+			300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-left;
+	}
 
-  :root::view-transition-new(root) {
-    animation:
-      210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in,
-      300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-right;
-  }
+	:root::view-transition-new(root) {
+		animation:
+			210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in,
+			300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-right;
+	}
 </style>

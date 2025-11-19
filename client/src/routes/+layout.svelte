@@ -14,7 +14,7 @@
 	});
 
 	// Check if current page should hide header
-	const shouldHideHeader = $derived($page.url.pathname.startsWith('/login') || $page.url.pathname.startsWith('/signup'));
+	const shouldHideHeader = $derived($page.url.pathname.startsWith('/login') || $page.url.pathname.startsWith('/signup') || $page.url.pathname.startsWith('/unverified') || $page.url.pathname.startsWith('/banned'));
 	
 	// Get navigation items based on user role
 	const navItems = $derived(

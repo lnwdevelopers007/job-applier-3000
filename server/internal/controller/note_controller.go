@@ -62,16 +62,24 @@ func (nc NoteController) validateNoteOwner(c *gin.Context) (shouldReturn bool) {
 		return false
 	}
 
-	var raw schema.Note
-	if err := c.ShouldBindBodyWithJSON(&raw); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Incorrect Note Schema"})
+	id := c.Param("id")
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid note ID"})
 		return true
 	}
 
+	// Fetch existing note to get jobApplicationID
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	jobApplication, job, err := getJobAndApplication(ctx, raw.JobApplicationID)
+	existingNote, err := repository.FindOne[schema.Note](ctx, objID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Note not found"})
+		return true
+	}
+
+	jobApplication, job, err := getJobAndApplication(ctx, existingNote.JobApplicationID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot find Job or Job Application"})
 		return true
@@ -105,10 +113,6 @@ func (nc NoteController) validateNoteOwner(c *gin.Context) (shouldReturn bool) {
 // @Failure      500   {object}  map[string]string
 // @Router       /notes/ [post]
 func (nc NoteController) Create(c *gin.Context) {
-	shouldReturn := nc.validateNoteOwner(c)
-	if shouldReturn {
-		return
-	}
 	nc.baseController.Create(c)
 }
 

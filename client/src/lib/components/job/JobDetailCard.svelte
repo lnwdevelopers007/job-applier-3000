@@ -36,15 +36,13 @@
 		companyInfo = null,
 		onApply,
 		onBookmark = null,
-		isBookmarked = false,
-		isApplied = false
+		isBookmarked = false
 	}: {
 		job: Job;
 		companyInfo?: CompanyInfo | null;
 		onApply: (job: Job) => void;
 		onBookmark?: () => void;
 		isBookmarked?: boolean;
-		isApplied?: boolean;
 	} = $props();
 	
 	
@@ -138,7 +136,7 @@
 		<!-- Action Buttons -->
 		<div class="flex gap-2">
 			<ApplyButton
-				{isApplied}
+				jobId={job.id}
 				closeDate={job.closeDate}
 				posted={job.posted}
 				onClick={() => onApply(job)}

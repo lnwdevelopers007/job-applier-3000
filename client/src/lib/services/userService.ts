@@ -83,6 +83,30 @@ export class UserService {
 		}
 	}
 
+	/**
+	 * Approve a user (set verified to true) - PATCH /users/:id/verify
+	 */
+	static async approveUser(id: string): Promise<void> {
+		try {
+			await userApi.updateVerification(id, true);
+		} catch (error) {
+			console.error('Error approving user:', error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Update user role - PATCH /users/:id/role
+	 */
+	static async updateUserRole(id: string, role: string): Promise<void> {
+		try {
+			await userApi.updateRole(id, role);
+		} catch (error) {
+			console.error('Error updating user role:', error);
+			throw error;
+		}
+	}
+
 	// === BUSINESS LOGIC METHODS ===
 
 	/**

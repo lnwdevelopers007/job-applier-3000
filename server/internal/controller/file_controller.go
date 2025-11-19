@@ -157,7 +157,7 @@ func (fc FileController) Download(c *gin.Context) {
 	}
 
 	// Get authenticated user
-	requestingUserID, _, err := getUserFromContext(c)
+	requestingUserID, userRole, err := getUserFromContext(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
 		return
@@ -173,8 +173,8 @@ func (fc FileController) Download(c *gin.Context) {
 		return
 	}
 
-	// Authorization check: User can only download their own files
-	if fileDoc.UserID != requestingUserID {
+	// Authorization check: User can only download their own files or admin can download any file
+	if userRole != "admin" && fileDoc.UserID != requestingUserID {
 		c.JSON(http.StatusForbidden, gin.H{
 			"error": "you do not have permission to access this file",
 		})
@@ -210,15 +210,15 @@ func (fc FileController) ListByUser(c *gin.Context) {
 	}
 
 	// Get authenticated user
-	requestingUserID, _, err := getUserFromContext(c)
+	requestingUserID, userRole, err := getUserFromContext(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
 		return
 	}
 
-	// Check if requesting user is trying to access their own files
+	// Check if requesting user is trying to access their own files or is an admin
 	enableAuth, _ := strconv.ParseBool(os.Getenv("ENABLE_AUTH"))
-	if enableAuth && objectID != requestingUserID {
+	if enableAuth && userRole != "admin" && objectID != requestingUserID {
 		c.JSON(http.StatusForbidden, gin.H{
 			"error": "you can only access your own files",
 		})
