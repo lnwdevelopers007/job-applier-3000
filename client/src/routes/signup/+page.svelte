@@ -3,6 +3,13 @@
   import { goto } from '$app/navigation';
   import { isAuthenticated } from '$lib/utils/auth';
   import PDPAModal from '$lib/components/modals/PDPAModal.svelte';
+  import jobListing from '$lib/assets/job-listing.png';
+  import logo1 from '$lib/assets/logos/logoipsum-223.png';
+  import logo2 from '$lib/assets/logos/logoipsum-361.png';
+  import logo3 from '$lib/assets/logos/logoipsum-411.png';
+  import avatar1 from '$lib/assets/logos/avatar-1.jpeg';
+  import avatar2 from '$lib/assets/logos/avatar-2.png';
+  import avatar3 from '$lib/assets/logos/avatar-3.png';
 
   let showPDPA = false;
   
@@ -19,10 +26,10 @@
     <div class="w-full max-w-lg">
       <div class="text-center mb-8">
         <h2 class="text-2xl font-semibold text-gray-800 mb-2">Sign up</h2>
-        <div class="flex items-baseline justify-center gap-1 mb-3">
+        <a href="/" class="flex items-baseline justify-center gap-1 mb-3 hover:opacity-80 transition-opacity">
           <h1 class="text-2xl font-semibold text-gray-900">Job Applier</h1>
           <h1 class="text-2xl font-semibold text-green-700">3000</h1>
-        </div>
+        </a>
         <p class="text-sm text-gray-500">Are you looking for a job or hiring talented graduates?</p>
       </div>
 
@@ -32,11 +39,14 @@
           <div class="flex items-start space-x-3">
             <div class="flex-shrink-0">
               <div class="flex -space-x-2">
-                <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center border-2 border-white">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center border-2 border-white overflow-hidden">
+                  <img src={avatar2} alt="Student avatar 1" class="w-full h-full object-cover" />
                 </div>
-                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center border-2 border-white">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center border-2 border-white overflow-hidden">
+                  <img src={avatar1} alt="Student avatar 2" class="w-full h-full object-cover" />
                 </div>
-                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center border-2 border-white">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center border-2 border-white overflow-hidden">
+                  <img src={avatar3} alt="Student avatar 3" class="w-full h-full object-cover" />
                 </div>
               </div>
             </div>
@@ -52,11 +62,14 @@
           <div class="flex items-start space-x-3">
             <div class="flex-shrink-0">
               <div class="flex -space-x-2">
-                <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center border-2 border-white">
+                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center border-2 border-white overflow-hidden">
+                  <img src={logo1} alt="Company logo 1" class="w-5 h-5 object-contain" />
                 </div>
-                <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center border-2 border-white">
+                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center border-2 border-white overflow-hidden">
+                  <img src={logo2} alt="Company logo 2" class="w-5 h-5 object-contain" />
                 </div>
-                <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center border-2 border-white">
+                <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center border-2 border-white overflow-hidden">
+                  <img src={logo3} alt="Company logo 3" class="w-5 h-5 object-contain" />
                 </div>
               </div>
             </div>
@@ -103,12 +116,8 @@
       <div class="flex justify-end">
         <div class="w-full max-w-4xl -mr-18 -mb-18">
           <div class="bg-white rounded-3xl border-5 border-black overflow-hidden">
-            <!-- Image placeholder -->
-            <div class="w-full h-160 bg-gray-200 flex items-center justify-center">
-              <div class="text-center">
-                <p class="text-gray-500 text-lg">Dashboard Image</p>
-              </div>
-            </div>
+            <!-- Jobs listing image -->
+            <img src={jobListing} alt="Job listings preview" class="w-full h-160 object-cover" />
           </div>
         </div>
       </div>
