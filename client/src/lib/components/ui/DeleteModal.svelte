@@ -5,7 +5,7 @@
   interface Props {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: (reason: string) => Promise<void>;
+    onConfirm: (reason?: string) => Promise<void>;
     title: string;
     itemName: string;
     description?: string;
@@ -22,7 +22,7 @@
     title,
     itemName,
     description,
-    reasonLabel = "Reason for deletion",
+    reasonLabel = "Reason",
     reasonPlaceholder = "Please provide a detailed reason...",
     confirmButtonText = "Delete",
     isDeleting = false
@@ -32,7 +32,12 @@
 
   async function handleConfirm() {
     if (reasonLabel && reasonLabel.trim() && !deleteReason.trim()) return;
-    await onConfirm(deleteReason || "No reason provided");
+    
+    if (reasonLabel && reasonLabel.trim()) {
+      await onConfirm(deleteReason || "No reason provided");
+    } else {
+      await onConfirm();
+    }
     deleteReason = ''; // Reset after successful deletion
   }
 

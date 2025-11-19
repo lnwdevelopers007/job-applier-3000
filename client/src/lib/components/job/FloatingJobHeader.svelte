@@ -17,8 +17,7 @@
 		onApply,
 		onBookmark,
 		onShare,
-		isBookmarked = false,
-		isApplied = false
+		isBookmarked = false
 	}: {
 		show: boolean;
 		job: Job;
@@ -26,7 +25,6 @@
 		onBookmark?: () => void;
 		onShare?: () => void;
 		isBookmarked?: boolean;
-		isApplied?: boolean;
 	} = $props();
 </script>
 
@@ -43,7 +41,7 @@
 				</div>
 				<div class="flex items-center gap-2">
 					<ApplyButton
-						{isApplied}
+						jobId={job.id}
 						closeDateRaw={job.closeDateRaw}
 						postedDate={job.postedDate}
 						onClick={onApply}

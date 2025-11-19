@@ -1,84 +1,72 @@
 <script>
-	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
-	import { isAuthenticated } from '$lib/utils/auth';
-	import PDPAModal from '$lib/components/modals/PDPAModal.svelte';
+  import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
+  import { isAuthenticated } from '$lib/utils/auth';
+  import PDPAModal from '$lib/components/modals/PDPAModal.svelte';
 
-	let showPDPA = $state(false);
-
-	onMount(() => {
-		if (isAuthenticated()) {
-			goto('/app/jobs');
-		}
-	});
+  let showPDPA = false;
+  
+  onMount(() => {
+    if (isAuthenticated()) {
+      goto('/app/jobs');
+    }
+  });
 </script>
 
-<div class="flex min-h-screen flex-col lg:flex-row">
-	<!-- Left Side - Sign up section -->
-	<div class="flex w-full items-center justify-center p-8 lg:w-3/6">
-		<div class="w-full max-w-lg">
-			<div class="mb-8 text-center">
-				<h2 class="mb-2 text-2xl font-semibold text-gray-800">Sign up</h2>
-				<div class="mb-3 flex items-baseline justify-center gap-1">
-					<h1 class="text-2xl font-semibold text-gray-900">Job Applier</h1>
-					<h1 class="text-2xl font-semibold text-green-700">3000</h1>
-				</div>
-				<p class="text-sm text-gray-500">Are you looking for a job or hiring talented graduates?</p>
-			</div>
+<div class="min-h-screen flex flex-col lg:flex-row">
+  <!-- Left Side - Sign up section -->
+  <div class="w-full lg:w-3/6 flex items-center justify-center p-8">
+    <div class="w-full max-w-lg">
+      <div class="text-center mb-8">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-2">Sign up</h2>
+        <div class="flex items-baseline justify-center gap-1 mb-3">
+          <h1 class="text-2xl font-semibold text-gray-900">Job Applier</h1>
+          <h1 class="text-2xl font-semibold text-green-700">3000</h1>
+        </div>
+        <p class="text-sm text-gray-500">Are you looking for a job or hiring talented graduates?</p>
+      </div>
 
-			<div class="mb-8 space-y-3">
-				<!-- Option 1 - Student/Alumni -->
-				<a
-					href="/signup/student"
-					class="block cursor-pointer rounded-lg border border-gray-200 p-4 transition-all duration-200 hover:border-green-600"
-				>
-					<div class="flex items-start space-x-3">
-						<div class="flex-shrink-0">
-							<div class="flex -space-x-2">
-								<div
-									class="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-purple-100"
-								></div>
-								<div
-									class="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-blue-100"
-								></div>
-								<div
-									class="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-green-100"
-								></div>
-							</div>
-						</div>
-						<div class="flex-1">
-							<h3 class="text-sm font-medium text-gray-900">I'm a student/alumni</h3>
-							<p class="mt-1 text-xs text-gray-500">I'm a student/alumni looking for jobs.</p>
-						</div>
-					</div>
-				</a>
+      <div class="space-y-3 mb-8">
+        <!-- Option 1 - Student/Alumni -->
+        <a href="/signup/student" class="block border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-green-600 transition-all duration-200">
+          <div class="flex items-start space-x-3">
+            <div class="flex-shrink-0">
+              <div class="flex -space-x-2">
+                <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center border-2 border-white">
+                </div>
+                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center border-2 border-white">
+                </div>
+                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center border-2 border-white">
+                </div>
+              </div>
+            </div>
+            <div class="flex-1">
+              <h3 class="font-medium text-gray-900 text-sm">I'm a student/alumni</h3>
+              <p class="text-xs text-gray-500 mt-1">I'm a student/alumni looking for jobs.</p>
+            </div>
+          </div>
+        </a>
 
-				<!-- Option 2 - Recruiter -->
-				<a
-					href="/signup/company"
-					class="block cursor-pointer rounded-lg border border-gray-200 p-4 transition-all duration-200 hover:border-green-600"
-				>
-					<div class="flex items-start space-x-3">
-						<div class="flex-shrink-0">
-							<div class="flex -space-x-2">
-								<div
-									class="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-red-100"
-								></div>
-								<div
-									class="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-yellow-100"
-								></div>
-								<div
-									class="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-indigo-100"
-								></div>
-							</div>
-						</div>
-						<div class="flex-1">
-							<h3 class="text-sm font-medium text-gray-900">I want to hire talents</h3>
-							<p class="mt-1 text-xs text-gray-500">I'm a recruiter hiring talented graduates.</p>
-						</div>
-					</div>
-				</a>
-			</div>
+        <!-- Option 2 - Recruiter -->
+        <a href="/signup/company" class="block border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-green-600 transition-all duration-200">
+          <div class="flex items-start space-x-3">
+            <div class="flex-shrink-0">
+              <div class="flex -space-x-2">
+                <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center border-2 border-white">
+                </div>
+                <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center border-2 border-white">
+                </div>
+                <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center border-2 border-white">
+                </div>
+              </div>
+            </div>
+            <div class="flex-1">
+              <h3 class="font-medium text-gray-900 text-sm">I want to hire talents</h3>
+              <p class="text-xs text-gray-500 mt-1">I'm a recruiter hiring talented graduates.</p>
+            </div>
+          </div>
+        </a>
+      </div>
 
 			<div class="text-center">
 				<p class="mt-8 text-center text-sm text-gray-500">
@@ -102,33 +90,30 @@
 		</div>
 	</div>
 
-	<!-- Right Side -->
-	<div
-		class="relative w-full overflow-hidden border-white bg-gradient-to-br from-green-50 to-blue-50 lg:w-3/5"
-	>
-		<div class="flex h-full flex-col justify-between p-12">
-			<div class="max-w-2xl px-20 pt-20">
-				<p class="mb-6 text-2xl leading-relaxed text-gray-700">
-					Job Applier 3000 connects CPE students, alumni, and companies in a platform where students
-					find opportunities and recruiters reach verified talent
-				</p>
-				<p class="text-2xl font-semibold text-gray-900">Join now to get started!</p>
-			</div>
+  <!-- Right Side -->
+  <div class="w-full lg:w-3/5 bg-gradient-to-br from-green-50 to-blue-50 relative overflow-hidden border-white">
+    <div class="h-full flex flex-col justify-between p-12">
+      <div class="max-w-2xl pt-20 px-20">
+        <p class="text-gray-700 text-2xl leading-relaxed mb-6">
+          Job Applier 3000 connects CPE students, alumni, and companies in a platform where students find opportunities and recruiters reach verified talent
+        </p>
+        <p class="text-2xl font-semibold text-gray-900">Join now to get started!</p>
+      </div>
 
-			<div class="flex justify-end">
-				<div class="-mr-18 -mb-18 w-full max-w-4xl">
-					<div class="border-5 overflow-hidden rounded-3xl border-black bg-white">
-						<!-- Image placeholder -->
-						<div class="h-160 flex w-full items-center justify-center bg-gray-200">
-							<div class="text-center">
-								<p class="text-lg text-gray-500">Dashboard Image</p>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+      <div class="flex justify-end">
+        <div class="w-full max-w-4xl -mr-18 -mb-18">
+          <div class="bg-white rounded-3xl border-5 border-black overflow-hidden">
+            <!-- Image placeholder -->
+            <div class="w-full h-160 bg-gray-200 flex items-center justify-center">
+              <div class="text-center">
+                <p class="text-gray-500 text-lg">Dashboard Image</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 <PDPAModal bind:isVisible={showPDPA} />
 

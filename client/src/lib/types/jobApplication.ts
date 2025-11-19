@@ -6,10 +6,9 @@ export interface JobApplication {
   id: string;
   applicantID: string;
   jobID: string;
-  companyID: string;
+  companyID?: string;
   status: string;
-  appliedAt: string;
-  createdAt?: string;
+  createdAt: string;
   // Add other application fields as needed
 }
 

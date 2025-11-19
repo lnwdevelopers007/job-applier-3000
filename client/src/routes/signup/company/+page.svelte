@@ -1,22 +1,22 @@
 <script lang="ts">
-	import { get } from 'svelte/store';
-	import { page } from '$app/stores';
-	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
-	import { toast } from 'svelte-french-toast';
-	import { getUserInfo } from '$lib/utils/auth';
-	import { fileService, type FileMetadata } from '$lib/services/fileService';
-	import { ArrowLeft } from 'lucide-svelte';
-	import { fly } from 'svelte/transition';
-	import AuthLayout from '$lib/components/auth/AuthLayout.svelte';
-	import AuthHeader from '$lib/components/auth/AuthHeader.svelte';
-	import FormInput from '$lib/components/auth/FormInput.svelte';
-	import FormSelect from '$lib/components/auth/FormSelect.svelte';
-	import FormButton from '$lib/components/auth/FormButton.svelte';
-	import GoogleOAuthButton from '$lib/components/auth/GoogleOAuthButton.svelte';
-	import FileItem from '$lib/components/files/FileItem.svelte';
-	import FilePreviewModal from '$lib/components/files/FilePreviewModal.svelte';
-	import FileUploadModal from '$lib/components/files/FileUploadModal.svelte';
+  import { get } from 'svelte/store';
+  import { page } from '$app/stores';
+  import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
+  import { toast } from 'svelte-french-toast';
+  import { getUserInfo } from '$lib/utils/auth';
+  import { fileService, type FileMetadata } from '$lib/services/fileService';
+  import { ArrowLeft } from 'lucide-svelte';
+  import { fly } from 'svelte/transition';
+  import AuthLayout from '$lib/components/auth/AuthLayout.svelte';
+  import AuthHeader from '$lib/components/auth/AuthHeader.svelte';
+  import FormInput from '$lib/components/auth/FormInput.svelte';
+  import FormSelect from '$lib/components/auth/FormSelect.svelte';
+  import FormButton from '$lib/components/auth/FormButton.svelte';
+  import GoogleOAuthButton from '$lib/components/auth/GoogleOAuthButton.svelte';
+  import FileItem from '$lib/components/files/FileItem.svelte';
+  import FilePreviewModal from '$lib/components/files/FilePreviewModal.svelte';
+  import FileUploadModal from '$lib/components/files/FileUploadModal.svelte';
 	import DeleteConfirmModal from '$lib/components/files/DeleteConfirmModal.svelte';
 	import { userService } from '$lib/services/userService';
 	import PDPAModal from '$lib/components/modals/PDPAModal.svelte';
@@ -187,7 +187,7 @@
 </script>
 
 <AuthLayout backHref="/signup">
-	<AuthHeader />
+  <AuthHeader />
 
 	{#if currentStep === 1}
 		<div class="mb-8" in:fly={{ x: -20, duration: 200 }}>
