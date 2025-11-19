@@ -1,5 +1,6 @@
  <script lang="ts">
   import { onMount } from 'svelte';
+  import { page } from '$app/stores';
   import { Search } from 'lucide-svelte';
   import { getUserInfo, isAuthenticated } from '$lib/utils/auth';
   import { goto } from '$app/navigation';
@@ -90,9 +91,15 @@
         };
     }
 
-    // Handle userInfo array - add safety check
-    const infoArray = Array.isArray(user.userInfo) ? user.userInfo : [];
-    const info = Object.fromEntries(infoArray.map((i: any) => [i.Key, i.Value]));
+    // Handle userInfo - check if it's array or object format
+    let info: any = {};
+    if (Array.isArray(user.userInfo)) {
+      // Array format: [{ Key: "...", Value: "..." }, ...]
+      info = Object.fromEntries(user.userInfo.map((i: any) => [i.Key, i.Value]));
+    } else if (user.userInfo && typeof user.userInfo === 'object') {
+      // Object format: { "key": "value", ... }
+      info = user.userInfo;
+    }
     
     // Parse skills from comma-separated string
     const skillsString = info.skills || '';
@@ -281,7 +288,26 @@
       companyJobs = jobsData;
       candidates = candidatesData;
       
-      if (candidates.length > 0) selectedCandidate = candidates[0];
+      // Check if a jobId was provided in the URL
+      const jobId = $page.url.searchParams.get('jobId');
+      if (jobId && jobsData.length > 0) {
+        // Find the job with matching ID and set the filter
+        const matchingJob = jobsData.find(job => job.id === jobId);
+        if (matchingJob) {
+          selectedJobFilter = matchingJob.title;
+          console.log('Applied job filter:', matchingJob.title);
+        }
+      }
+      
+      console.log('Fetched jobs:', companyJobs);
+      console.log('Fetched candidates:', candidates);
+      
+      // Select first candidate from filtered results
+      if (filteredCandidates.length > 0) {
+        selectedCandidate = filteredCandidates[0];
+      } else if (candidates.length > 0) {
+        selectedCandidate = candidates[0];
+      }
     } else {
       // Try to redirect to login if not authenticated
       if (!isAuthenticated()) {

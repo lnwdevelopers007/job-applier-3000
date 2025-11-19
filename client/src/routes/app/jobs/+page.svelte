@@ -8,12 +8,16 @@
 	import { jobSearchStore } from '$lib/stores/jobSearch';
 	import { get } from 'svelte/store';
 	import { isAuthenticated, getUserInfo } from '$lib/utils/auth';
-	import { fetchCompanyNameLogo } from '$lib/utils/fetcher';
-	import { formatDateShort } from '$lib/utils/datetime';
+	import { goto } from '$app/navigation';
+	import {
+		DEFAULT_COMPANY_LOGO,
+		DEFAULT_COMPANY_NAME
+	} from '$lib/utils/fetcher';
 	import { bookmarkService } from '$lib/services/bookmarkService';
-	import type { JobUI, UserInfo, JobCompanyInfo } from '$lib/types';
+	import { JobService } from '$lib/services/jobService';
+	import { UserService } from '$lib/services/userService';
+	import type { JobUI, UserInfo, JobCompanyInfo, Job, JobFilters, CompanyInfo } from '$lib/types';
 
-	let jobs = $state<JobUI[]>([]);
 	let filteredJobs = $state<JobUI[]>([]);
 	let selectedJob = $state<JobUI | null>(null);
 	let searchQuery = $state('');
@@ -24,7 +28,6 @@
 	let userInfo = $state<UserInfo | null>(null);
 	let companyInfo = $state<JobCompanyInfo | null>(null);
 	let isLoggedIn = $state(false);
-	let appliedJobs = $state(new Set<string>());
 
 	let showApplyModal = $state(false);
 	let jobToApply = $state<JobUI | null>(null);
@@ -50,6 +53,7 @@
 		});
 		return unsubscribe;
 	});
+
 
 	let activeFilters = $state<{
 		workType: string;
@@ -86,151 +90,88 @@
 		{ value: 'title', label: 'Title A-Z' }
 	];
 
-	async function fetchAppliedJobs() {
-		if (!isLoggedIn || !userInfo?.userID) return;
-
-		try {
-			const res = await fetch(`/apply/query?applicantID=${userInfo.userID}`, {
-				credentials: 'include'
-			});
-			if (!res.ok) throw new Error('Failed to fetch applied jobs');
-
-			const data = await res.json();
-			appliedJobs = new Set(data.map((app: any) => app.jobApplication.jobID));
-		} catch (err) {
-			console.error('Error fetching applied jobs:', err);
-			appliedJobs = new Set();
-		}
-	}
 
 	async function fetchCompanyInfo(companyID: string) {
-    try {
-        const response = await fetch(`/users/query?id=${companyID}`, {
-            credentials: 'include'
-        });
-
-        if (!response.ok) {
-            console.error(`Failed to fetch company ${companyID}: ${response.status}`);
-            throw new Error(`HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log('Fetched company data:', data);
-
-        // Validate response is an array
-        if (!Array.isArray(data)) {
-            console.error('Expected array but got:', typeof data, data);
-            throw new Error('Invalid response format');
-        }
-
-        if (data.length === 0) {
-            console.warn(`No company found with ID ${companyID}`);
-            throw new Error('Company not found');
-        }
-
-        const company = data[0];
-        
-        // Safety check for userInfo
-        const infoArray = Array.isArray(company.userInfo) ? company.userInfo : [];
-        const info = Object.fromEntries(infoArray.map((i: any) => [i.Key, i.Value]));
-
-        return {
-            id: company.id || company._id,
-            name: info.companyName || company.name || 'Unknown Company',
-            email: company.email || '',
-            avatarURL: company.avatarURL || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
-            description: info.companyDescription || info.aboutUs || '',
-            location: info.location || '-',
-            website: info.website || '',
-            industry: info.industry || '',
-            size: info.companySize || '',
-            founded: info.foundedYear || ''
-        };
-    } catch (error) {
-        console.error(`Error fetching company ${companyID}:`, error);
-        
-        // Return placeholder company
-        return {
-            id: companyID,
-            name: 'Unknown Company',
-            email: '-',
-            avatarURL: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
-            description: '',
-            location: '-',
-            website: '',
-            industry: '',
-            size: '',
-            founded: ''
-        };
-    }
-}
+		try {
+			const user = await UserService.getUserById(companyID);
+			const company = user.userInfo as CompanyInfo;
+			
+			// Transform user data to company info format
+			companyInfo = {
+				name: company?.name || user.name || DEFAULT_COMPANY_NAME,
+				logo: company?.logo || user.avatarURL || DEFAULT_COMPANY_LOGO,
+				location: company?.headquarters || 'N/A',
+				website: company?.website || '',
+				aboutUs: company?.aboutUs || '',
+				industry: company?.industry || '',
+				size: company?.size || '',
+				foundedYear: company?.foundedYear || '',
+				linkedIn: company?.linkedIn || ''
+			};
+		} catch (err) {
+			console.error('Error fetching company info:', err);
+			companyInfo = null;
+		}
+	}
 
 	async function fetchJobs(query = '', filters: typeof activeFilters = activeFilters, sort = '') {
 		try {
 			isLoading = true;
-			const params = new URLSearchParams();
-			if (query) params.set('title', query);
-
-			if (filters.workType) {
-				params.set('workType', filters.workType);
+			
+			// Build filters object for JobService
+			const jobFilters: JobFilters = {};
+			if (query) jobFilters.title = query;
+			if (filters.workType) jobFilters.workType = filters.workType;
+			if (filters.postTime) jobFilters.postOpenDate = filters.postTime;
+			if (filters.arrangement) jobFilters.workArrangement = filters.arrangement;
+			if (sort && (sort === 'dateDesc' || sort === 'dateAsc' || sort === 'title')) {
+				jobFilters.sort = sort;
 			}
 
-			if (filters.postTime) {
-				params.set('postOpenDate', filters.postTime);
-			}
-
-			if (filters.arrangement) {
-				params.set('workArrangement', filters.arrangement);
-			}
-
-			if (sort) params.set('sort', sort);
-			const res = await fetch(`/jobs/query?${params.toString()}`, {
-				credentials: 'include'
-			});
-
-			if (res.status === 404) {
-				jobs = [];
+			// Use JobService to fetch and transform jobs
+			const rawJobs = await JobService.queryJobs(jobFilters);
+			
+			if (!rawJobs || rawJobs.length === 0) {
 				filteredJobs = [];
 				selectedJob = null;
 				return;
 			}
 
-			if (!res.ok) throw new Error(`Failed to load jobs: ${res.status}`);
-			const data = await res.json();
+			// Transform jobs to UI format
+			const transformedJobs = await Promise.all(
+				rawJobs.map(async (job: Job): Promise<JobUI> => {
+					const displayJob = await JobService.transformJobForDisplay(job);
+					console.log('Debug fetchJobs - Raw job object:', job);
+					console.log('Debug fetchJobs - Job ID being used:', job.id);
+					
+					return {
+						id: job.id || '',
+						title: job.title || '',
+						company: displayJob.company || 'Unknown Company',
+						companyID: job.companyID || '',
+						location: job.location || 'N/A',
+						workType: job.workType || 'Full-time',
+						workArrangement: job.workArrangement || 'On-site',
+						tags: job.requiredSkills
+							? job.requiredSkills.split(',').map((skill: string) => skill.trim())
+							: [],
+						posted: displayJob.posted || 'Unknown',
+						closeDate: displayJob.expires || 'Unknown',
+						description: job.jobDescription || 'No description provided.',
+						logo: displayJob.companyLogo || DEFAULT_COMPANY_LOGO,
+						salary:
+							job.minSalary && job.maxSalary
+								? `${job.currency || 'THB'} ${job.minSalary.toLocaleString()}-${job.maxSalary.toLocaleString()}`
+								: undefined
+					};
+				})
+			);
 
-			const jobPromises = data.map(async (job: any) => {
-				// fetch company name and logo.
-				let [companyName, companyLogo] = await fetchCompanyNameLogo(job.companyID || '');
-
-				return {
-					id: job.id,
-					title: job.title,
-					company: companyName,
-					companyID: job.companyID,
-					location: job.location || 'N/A',
-					workType: job.workType || 'Full-time',
-					workArrangement: job.workArrangement || 'On-site',
-					tags: job.requiredSkills
-						? job.requiredSkills.split(',').map((skill: string) => skill.trim())
-						: [],
-					posted: job.postOpenDate ? formatDateShort(job.postOpenDate) : 'Unknown',
-					closeDate: job.applicationDeadline ? formatDateShort(job.applicationDeadline) : 'Unknown',
-					description: job.jobDescription || 'No description provided.',
-					logo: companyLogo,
-					salary:
-						job.minSalary && job.maxSalary
-							? `${job.currency || 'THB'} ${job.minSalary.toLocaleString()}-${job.maxSalary.toLocaleString()}`
-							: undefined
-				};
-			});
-
-			jobs = await Promise.all(jobPromises);
-			filteredJobs = jobs;
-			selectedJob = jobs[0] || null;
+			filteredJobs = transformedJobs;
+			selectedJob = transformedJobs[0] || null;
 			currentPage = 1;
 		} catch (err) {
 			console.error('Error fetching jobs:', err);
-			jobs = [];
 			filteredJobs = [];
 			selectedJob = null;
 		} finally {
@@ -243,20 +184,41 @@
 		showApplyModal = true;
 	}
 
+	function handleJobClick(job: JobUI) {
+		// Check if on mobile/tablet (below lg breakpoint)
+		if (window.innerWidth < 1024) {
+			// Navigate to detail page on mobile
+			goto(`/app/jobs/${job.id}`);
+		} else {
+			// Select job for split view on desktop
+			selectedJob = job;
+		}
+	}
+
 	function refreshJobs() {
 		fetchJobs(searchQuery, activeFilters, sortBy);
 	}
 
 	onMount(() => {
-		isLoggedIn = isAuthenticated();
-		if (isLoggedIn) {
-			userInfo = getUserInfo();
-			fetchAppliedJobs();
-			// Initialize bookmark service with user ID
-			if (userInfo?.userID) {
-				bookmarkService.initializeBookmarks(userInfo.userID);
+		async function initializeApp() {
+			isLoggedIn = isAuthenticated();
+			if (isLoggedIn) {
+				userInfo = getUserInfo();
+				// Initialize bookmark service with user ID
+				if (userInfo?.userID) {
+					bookmarkService.initializeBookmarks(userInfo.userID);
+				}
+			}
+
+			const currentState = get(jobSearchStore);
+			if (!currentState.shouldFetch) {
+				// Only fetch jobs after applied jobs are loaded
+				fetchJobs();
 			}
 		}
+
+		// Start initialization
+		initializeApp();
 
 		const unsubscribe = jobSearchStore.subscribe((state) => {
 			if (state.shouldFetch) {
@@ -266,11 +228,6 @@
 				});
 			}
 		});
-
-		const currentState = get(jobSearchStore);
-		if (!currentState.shouldFetch) {
-			fetchJobs();
-		}
 
 		return () => {
 			unsubscribe();
@@ -301,9 +258,9 @@
 				</div>
 
 				<!-- Filter Pills -->
-				<div class="flex flex-wrap items-center justify-center gap-3">
-					<div class="flex items-center gap-2">
-						<span class="text-sm font-medium text-gray-600">Filters:</span>
+				<div class="flex flex-wrap items-center justify-center gap-3 px-4 sm:px-0">
+					<div class="flex flex-wrap items-center justify-center gap-2">
+						<span class="hidden sm:inline text-sm font-medium text-gray-600">Filters:</span>
 
 						<FilterPill
 							label="Work Type"
@@ -320,13 +277,13 @@
 						/>
 
 						<FilterPill
-							label="Work Arrangement"
+							label="Arrangement"
 							options={arrangementOptions}
 							bind:selectedValue={activeFilters.arrangement}
 							onSelectionChange={refreshJobs}
 						/>
 
-						<div class="h-4 w-px bg-gray-300"></div>
+						<div class="hidden sm:block h-4 w-px bg-gray-300"></div>
 
 						<FilterPill
 							label="Sort"
@@ -340,9 +297,9 @@
 			</div>
 		</div>
 
-		<div class="grid w-full grid-cols-3 gap-6">
+		<div class="grid w-full grid-cols-1 lg:grid-cols-3 gap-6">
 			<!-- Jobs List -->
-			<section class="col-span-1 flex h-[calc(100vh-280px)] flex-col">
+			<section class="col-span-1 lg:col-span-1 flex h-[calc(100vh-280px)] flex-col">
 				<div class="min-h-0 flex-1 overflow-y-auto p-2">
 					<div class="space-y-3">
 						{#if isLoading}
@@ -353,7 +310,7 @@
 								</div>
 							{/each}
 						{:else if paginatedJobs.length === 0}
-							<div class="flex items-center justify-center h-full text-gray-500">
+							<div class="flex items-center justify-center h-full text-gray-500 text-sm sm:text-base p-4">
 								No jobs match your search or filters.
 							</div>
 						{:else}
@@ -365,7 +322,7 @@
 											: ''
 									}`}
 								>
-									<JobCard {job} onclick={() => (selectedJob = job)} />
+									<JobCard {job} onclick={() => handleJobClick(job)} />
 								</div>
 							{/each}
 
@@ -381,13 +338,13 @@
 										<ChevronLeft class="h-4 w-4" />
 									</button>
 
-									<div class="flex items-center gap-2">
-										<span class="text-sm text-gray-600">Page</span>
-										<span class="text-sm font-medium text-gray-600">
+									<div class="flex items-center gap-1 sm:gap-2">
+										<span class="text-xs sm:text-sm text-gray-600">Page</span>
+										<span class="text-xs sm:text-sm font-medium text-gray-600">
 											{currentPage}
 										</span>
-										<span class="text-sm text-gray-600">of</span>
-										<span class="text-sm font-medium text-gray-600">
+										<span class="text-xs sm:text-sm text-gray-600">of</span>
+										<span class="text-xs sm:text-sm font-medium text-gray-600">
 											{totalPages}
 										</span>
 									</div>
@@ -407,9 +364,9 @@
 				</div>
 			</section>
 
-			<!-- Job Detail -->
+			<!-- Job Detail (Desktop only) -->
 			<section
-				class="col-span-2 flex flex-col h-[calc(100vh-280px)] overflow-hidden"
+				class="hidden lg:flex col-span-2 flex-col h-[calc(100vh-280px)] overflow-hidden"
 			>
 				{#if isLoading}
 					<div class="flex flex-1 items-center justify-center text-gray-500">Loading job details...</div>
@@ -428,11 +385,10 @@
 								}
 							}}
 							isBookmarked={selectedJobBookmarked}
-							isApplied={appliedJobs.has(selectedJob.id)}
 						/>
 					</div>
 				{:else}
-					<div class="flex flex-1 items-center justify-center text-gray-500">No job selected.</div>
+					<div class="flex flex-1 items-center justify-center text-gray-500">Select a job to view details.</div>
 				{/if}
 			</section>
 		</div>

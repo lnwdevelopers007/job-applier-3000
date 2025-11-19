@@ -31,7 +31,7 @@
 		loading = false,
 		emptyMessage = 'No data found',
 		emptyDescription = 'No items available',
-		rowClass = 'hover:bg-gray-50 transition-colors',
+		rowClass = 'transition-colors',
 		defaultCellClass = 'px-6 py-4 whitespace-nowrap',
 		class: className = ''
 	}: Props = $props();
@@ -91,7 +91,7 @@
 								{#each columns as column (column.id)}
 									<td class={column.cellClass || defaultCellClass}>
 										<!-- Safe skeleton rendering without @html -->
-										{#if column.id === 'job' || column.id === 'title'}
+										{#if column.id === 'job' || column.id === 'title' || column.id === 'user'}	
 											<div class="flex items-center">
 												<div class="flex-shrink-0 h-12 w-12">
 													<div class="h-12 w-12 bg-gray-200 rounded-lg animate-pulse"></div>
@@ -100,6 +100,11 @@
 													<div class="h-3 bg-gray-200 rounded-full w-24 animate-pulse"></div>
 													<div class="h-3 bg-gray-200 rounded-full w-32 animate-pulse"></div>
 												</div>
+											</div>
+										{:else if column.id === 'documents'}
+											<div class="flex items-center gap-1">
+												<div class="h-4 w-4 bg-gray-200 rounded animate-pulse"></div>
+												<div class="h-3 bg-gray-200 rounded-full w-16 animate-pulse"></div>
 											</div>
 										{:else}
 											<div class="h-4 bg-gray-200 rounded-full w-full animate-pulse"></div>

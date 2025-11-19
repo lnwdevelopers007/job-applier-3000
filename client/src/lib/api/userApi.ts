@@ -78,4 +78,18 @@ export class UserApi {
     const response = await this.client.get<User[]>(`/users/role/${role}`);
     return response.data;
   }
+
+  /**
+   * Update user verification status - PATCH /users/:id/verify
+   */
+  async updateVerification(id: string, verified: boolean): Promise<void> {
+    await this.client.patch(`/users/${id}/verify`, { verified });
+  }
+
+  /**
+   * Update user role - PATCH /users/:id/role
+   */
+  async updateRole(id: string, role: string): Promise<void> {
+    await this.client.patch(`/users/${id}/role`, { role });
+  }
 }

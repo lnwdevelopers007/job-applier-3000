@@ -19,6 +19,7 @@
 	import DeleteConfirmModal from '$lib/components/files/DeleteConfirmModal.svelte';
 	import { userService } from '$lib/services/userService';
 	import PDPAModal from '$lib/components/modals/PDPAModal.svelte';
+	import seekerDashboard from '$lib/assets/seeker-dashboard.png';
 
 	let showPDPA = false;
 
@@ -193,36 +194,40 @@
 </script>
 
 <AuthLayout backHref="/signup">
-	<AuthHeader />
+  <div slot="left-side" class="h-full flex flex-col justify-between p-12 overflow-hidden">
+    <div class="max-w-2xl pt-20 px-20">
+      <p class="text-gray-700 text-2xl leading-relaxed mb-6">
+        Launch your career with Job Applier 3000! Connect with top companies looking for talented CPSK students and alumni like you
+      </p>
+      <p class="text-2xl font-semibold text-gray-900">Your dream job is just a click away!</p>
+    </div>
 
-	{#if currentStep === 1}
-		<div class="mb-8" in:fly={{ x: -20, duration: 200 }}>
-			<h1 class="mb-2 text-3xl font-semibold text-gray-900">Sign up</h1>
-			<p class="text-sm text-gray-500">Register as a job seekeer to start finding your dream job</p>
-		</div>
+    <div class="flex justify-start">
+      <div class="w-full max-w-4xl -ml-18 -mb-18">
+        <div class="bg-white rounded-3xl border-5 border-black overflow-hidden">
+          <!-- Jobs listing image -->
+          <img src={seekerDashboard} alt="Seeker dashboard preview" class="w-full h-160 object-cover" />
+        </div>
+      </div>
+    </div>
+  </div>
 
-		<!-- <form onsubmit={e => { e.preventDefault(); handleEmailStep(); }} class="space-y-6">
-      <FormInput
-        id="email"
-        type="email"
-        label="Email"
-        placeholder="Enter email..."
-        bind:value={email}
-        required
-      />
-      
-      <FormButton type="submit">Continue with Email</FormButton>
-    </form>
-
-    <OrDivider /> -->
-		<GoogleOAuthButton text="Continue with Google" userType="jobSeeker" />
+  <AuthHeader />
+  
+  {#if currentStep === 1}
+    <div class="mb-8" in:fly={{ x: -20, duration: 200 }}>
+      <h1 class="text-3xl font-semibold text-gray-900 mb-2">Sign up</h1>
+      <p class="text-sm text-gray-500">Register as a job seekeer to start finding your dream job</p>
+    </div>
+    
+    <GoogleOAuthButton text="Continue with Google" userType="jobSeeker" />
 
 		<p class="mt-8 text-center text-sm text-gray-500">
 			By using our service, you consent to the processing of your Personal Data as described in our
 
 			<button
 				type="button"
-				onclick={() => (showPDPA = true)}
+				on:click={() => (showPDPA = true)}
 				class="font-medium text-blue-600 hover:text-blue-700"
 			>
 				Privacy Notice
@@ -237,7 +242,7 @@
 		<div class="mb-6" in:fly={{ x: 20, duration: 200 }}>
 			<button
 				type="button"
-				onclick={goBackToEmailStep}
+				on:click={goBackToEmailStep}
 				class="mb-4 flex cursor-pointer items-center text-sm text-gray-500 transition-colors hover:text-gray-700"
 			>
 				<ArrowLeft class="mr-1 h-4 w-4" />
@@ -248,10 +253,7 @@
 		</div>
 
 		<form
-			onsubmit={(e) => {
-				e.preventDefault();
-				handleSignup();
-			}}
+			on:submit|preventDefault={handleSignup}
 			class="space-y-4"
 		>
 			<div class="grid grid-cols-2 gap-4">
@@ -291,7 +293,7 @@
 			<div class="mt-4">
 				<button
 					type="button"
-					onclick={handleUploadClick}
+					on:click={handleUploadClick}
 					class="rounded bg-green-600 px-4 py-2 text-white"
 				>
 					Upload Files
@@ -334,7 +336,7 @@
 				{/if}
 			</div>
 
-			<FormButton type="submit" onclick={handleSubmit}>Create Account</FormButton>
+			<FormButton type="submit" on:click={handleSubmit}>Create Account</FormButton>
 		</form>
 	{/if}
 </AuthLayout>
