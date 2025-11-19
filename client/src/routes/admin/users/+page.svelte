@@ -4,8 +4,8 @@
 	import ConfirmActionWithReason from '$lib/components/modals/ConfirmActionWithReason.svelte';
 	import ConfirmDropdownAction from '$lib/components/modals/ConfirmDropdownAction.svelte';
 	import FilterPill from '$lib/components/forms/FilterPill.svelte';
-import { Search } from 'lucide-svelte';
-import { authStore } from '$lib/stores/auth.svelte';
+	import { Search } from 'lucide-svelte';
+	import { authStore } from '$lib/stores/auth.svelte';
 
 	const USER_ACTIONS = [
 		// { label: 'View', disabled: false },
@@ -51,7 +51,7 @@ import { authStore } from '$lib/stores/auth.svelte';
 	let searchQuery = $state('');
 	let sortBy = $state('');
 
-let dropdowns = $derived([
+	let dropdowns = $derived([
 		{
 			name: 'Roles',
 			values: VALID_ROLES,
@@ -64,18 +64,18 @@ let dropdowns = $derived([
 		}
 	]);
 
-// Filter actions based on user - don't allow admin to ban themselves
-function getActionsForUser(user: any) {
-  const currentUserID = authStore.user?.userID;
-  const currentUserRole = authStore.user?.role;
+	// Filter actions based on user - don't allow admin to ban themselves
+	function getActionsForUser(user: any) {
+		const currentUserID = authStore.user?.userID;
+		const currentUserRole = authStore.user?.role;
 
-  // If viewing self and is admin, remove ban action
-  if (currentUserID === user.id && currentUserRole === 'admin') {
-    return USER_ACTIONS.filter(action => action.label !== 'Ban');
-  }
+		// If viewing self and is admin, remove ban action
+		if (currentUserID === user.id && currentUserRole === 'admin') {
+			return USER_ACTIONS.filter((action) => action.label !== 'Ban');
+		}
 
-  return USER_ACTIONS;
-}
+		return USER_ACTIONS;
+	}
 
 	async function onDeleteUser() {
 		isDeleting = true;
@@ -85,7 +85,11 @@ function getActionsForUser(user: any) {
 
 		const res = await fetch(`/users/${selectedUser.id}`, {
 			method: 'DELETE',
-			credentials: 'include'
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			credentials: 'include',
+			body: JSON.stringify({ reason: deleteReason })
 		});
 
 		if (!res.ok) {
@@ -122,15 +126,15 @@ function getActionsForUser(user: any) {
 					? {
 							...u,
 							banned: newBanStatus,
-							actions: u.actions.map((a: { label: string; }) =>
+							actions: u.actions.map((a: { label: string }) =>
 								a.label === 'Ban' || a.label === 'Unban'
 									? {
 											...a,
 											label: newBanStatus ? 'Unban' : 'Ban'
-									  }
+										}
 									: a
 							)
-					  }
+						}
 					: u
 			);
 
@@ -157,8 +161,8 @@ function getActionsForUser(user: any) {
 		if (role !== undefined && role !== selectedUser.role) {
 			const resRole = await fetch(`/users/${selectedUser.id}/role`, {
 				method: 'PATCH',
-        headers: {'Content-Type': 'application/json' },
-				credentials: "include",
+				headers: { 'Content-Type': 'application/json' },
+				credentials: 'include',
 				body: JSON.stringify({ role })
 			});
 			if (!resRole.ok) console.error("Error: Can't update role");
@@ -169,8 +173,8 @@ function getActionsForUser(user: any) {
 		if (verified !== undefined && verified !== selectedUser.verified) {
 			const resVerified = await fetch(`/users/${selectedUser.id}/verify`, {
 				method: 'PATCH',
-				headers: {'Content-Type': 'application/json' },
-				credentials: "include",
+				headers: { 'Content-Type': 'application/json' },
+				credentials: 'include',
 				body: JSON.stringify({ verified })
 			});
 			if (!resVerified.ok) console.error("Error: Can't update verified status");
@@ -263,9 +267,7 @@ function getActionsForUser(user: any) {
 		const usersFromDB = await fetchUsers();
 		for (let user of usersFromDB) {
 			user.actions = getActionsForUser(user).map((a) =>
-				a.label === 'Ban'
-					? { ...a, label: user.banned ? 'Unban' : 'Ban' }
-					: a
+				a.label === 'Ban' ? { ...a, label: user.banned ? 'Unban' : 'Ban' } : a
 			);
 		}
 		users = originalUsers = usersFromDB;
@@ -298,7 +300,7 @@ function getActionsForUser(user: any) {
 										}
 									: a
 							)
-					  }
+						}
 					: u
 			);
 			users = [...originalUsers];

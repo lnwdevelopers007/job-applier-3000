@@ -43,6 +43,8 @@ func Send(to, subject, body string) error {
 		return errors.New("failed to send email")
 	}
 
-	slog.Info("Email sent successfully!")
+	logMsg := "Email sent to: %s subject: %s successfully 🎉"
+
+	slog.Info(logMsg, to, subject)
 	return nil
 }

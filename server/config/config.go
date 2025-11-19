@@ -2,6 +2,7 @@ package config
 
 import (
 	"log"
+	"log/slog"
 	"os"
 	"strconv"
 
@@ -11,7 +12,7 @@ import (
 func LoadEnv(env string) string {
 	if _, ok := os.LookupEnv(env); !ok {
 		if err := godotenv.Load(); err != nil {
-			log.Fatal(err)
+			slog.Error(err.Error())
 			return "false"
 		}
 	}

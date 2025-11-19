@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -152,13 +153,13 @@ func (jc UserController) Delete(c *gin.Context) {
 
 	user, _ := repository.FindOne[schema.User](ctx, uid)
 
-	jc.baseController.Delete(c)
-
 	var body struct {
 		Reason string `json:"reason"`
 	}
 	if err := c.BindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON body"})
+		errMsg := "invalid JSON body"
+		slog.Info(errMsg + ": " + err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
 		return
 	}
 	reason := body.Reason
@@ -167,13 +168,14 @@ func (jc UserController) Delete(c *gin.Context) {
 	}
 
 	emailBody := fmt.Sprintf(
-		"Dear %s, \n Your account has been deleted", user.Name,
+		"Dear %s,\nYour account has been deleted.\nReason: %s", user.Name, reason,
 	)
 
 	if err := email.Send(user.Email, "User Deletion Notice", emailBody); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to send email"})
 		return
 	}
+	jc.baseController.Delete(c)
 }
 
 // RetrieveAll godoc
@@ -247,13 +249,13 @@ func (jc UserController) VerifyUser(c *gin.Context) {
 
 	user, _ := repository.FindOne[schema.User](ctx, uid)
 	var verificationStatus string
-	if user.Banned {
-		verificationStatus = "unverified"
-	} else {
+	if user.Verified {
 		verificationStatus = "verified"
+	} else {
+		verificationStatus = "unverified"
 	}
 	emailBody := fmt.Sprintf(
-		"Dear %s, \n Your account has been %s", user.Name, verificationStatus,
+		"Dear %s,\nYour account has been %s.", user.Name, verificationStatus,
 	)
 
 	if err := email.Send(user.Email, "User Account Verification Notice", emailBody); err != nil {
