@@ -2,11 +2,9 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { isAuthenticated } from '$lib/utils/auth';
-  import jobsListingImage from '$lib/assets/job-listing.png';
-  import logo1 from '$lib/assets/logos/logoipsum-223.png';
-  import logo2 from '$lib/assets/logos/logoipsum-411.png';
-  import logo3 from '$lib/assets/logos/logoipsum-361.png';
-  import avatar1 from '$lib/assets/logos/avatar-1.jpeg';
+  import PDPAModal from '$lib/components/modals/PDPAModal.svelte';
+
+  let showPDPA = false;
   
   onMount(() => {
     if (isAuthenticated()) {
@@ -17,7 +15,7 @@
 
 <div class="min-h-screen flex flex-col lg:flex-row">
   <!-- Left Side - Sign up section -->
-  <div class="w-full lg:w-3/6 flex items-center justify-center p-8 min-h-screen lg:min-h-0">
+  <div class="w-full lg:w-3/6 flex items-center justify-center p-8">
     <div class="w-full max-w-lg">
       <div class="text-center mb-8">
         <h2 class="text-2xl font-semibold text-gray-800 mb-2">Sign up</h2>
@@ -35,13 +33,10 @@
             <div class="flex-shrink-0">
               <div class="flex -space-x-2">
                 <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center border-2 border-white">
-                  <img src={avatar1} alt="Company logo" class="w-8 h-auto object-contain rounded-full" />
                 </div>
                 <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center border-2 border-white">
-                  <img src={logo2} alt="Company logo" class="w-5 h-5 object-contain" />
                 </div>
                 <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center border-2 border-white">
-                  <img src={logo3} alt="Company logo" class="w-5 h-5 object-contain" />
                 </div>
               </div>
             </div>
@@ -58,13 +53,10 @@
             <div class="flex-shrink-0">
               <div class="flex -space-x-2">
                 <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center border-2 border-white">
-                  <img src={logo3} alt="Company logo" class="w-5 h-5 object-contain" />
                 </div>
                 <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center border-2 border-white">
-                  <img src={logo1} alt="Company logo" class="w-5 h-5 object-contain" />
                 </div>
                 <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center border-2 border-white">
-                  <img src={logo2} alt="Company logo" class="w-5 h-5 object-contain" />
                 </div>
               </div>
             </div>
@@ -76,21 +68,34 @@
         </a>
       </div>
 
-      <div class="text-center">
-        <p class="text-sm text-gray-500">
-          Already have an account? 
-          <a href="/login" class="text-green-600 hover:text-green-700 font-medium">Log in</a>
-        </p>
-      </div>
-    </div>
-  </div>
+			<div class="text-center">
+				<p class="mt-8 text-center text-sm text-gray-500">
+					By using our service, you consent to the processing of your Personal Data as described in
+					our
 
-  <!-- Right Side (Hidden on mobile) -->
-  <div class="hidden lg:block w-full lg:w-3/5 bg-gradient-to-br from-green-50 to-blue-50 relative overflow-hidden border-white">
+					<button
+						type="button"
+						on:click={() => (showPDPA = true)}
+						class="font-medium text-blue-600 hover:text-blue-700"
+					>
+						Privacy Notice
+					</button>
+				</p>
+
+				<p class="text-sm text-gray-500">
+					Already have an account?
+					<a href="/login" class="font-medium text-green-600 hover:text-green-700">Log in</a>
+				</p>
+			</div>
+		</div>
+	</div>
+
+  <!-- Right Side -->
+  <div class="w-full lg:w-3/5 bg-gradient-to-br from-green-50 to-blue-50 relative overflow-hidden border-white">
     <div class="h-full flex flex-col justify-between p-12">
       <div class="max-w-2xl pt-20 px-20">
         <p class="text-gray-700 text-2xl leading-relaxed mb-6">
-          Job Applier 3000 connects CPSK students, alumni, and companies in a platform where students find opportunities and recruiters reach verified talent
+          Job Applier 3000 connects CPE students, alumni, and companies in a platform where students find opportunities and recruiters reach verified talent
         </p>
         <p class="text-2xl font-semibold text-gray-900">Join now to get started!</p>
       </div>
@@ -98,49 +103,54 @@
       <div class="flex justify-end">
         <div class="w-full max-w-4xl -mr-18 -mb-18">
           <div class="bg-white rounded-3xl border-5 border-black overflow-hidden">
-            <!-- Jobs listing image -->
-            <img src={jobsListingImage} alt="Jobs listing dashboard preview" class="w-full h-160 object-cover" />
+            <!-- Image placeholder -->
+            <div class="w-full h-160 bg-gray-200 flex items-center justify-center">
+              <div class="text-center">
+                <p class="text-gray-500 text-lg">Dashboard Image</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
 </div>
+<PDPAModal bind:isVisible={showPDPA} />
 
 <style>
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-    }
-  }
+	@keyframes fade-in {
+		from {
+			opacity: 0;
+		}
+	}
 
-  @keyframes fade-out {
-    to {
-      opacity: 0;
-    }
-  }
+	@keyframes fade-out {
+		to {
+			opacity: 0;
+		}
+	}
 
-  @keyframes slide-from-right {
-    from {
-      transform: translateX(30px);
-    }
-  }
+	@keyframes slide-from-right {
+		from {
+			transform: translateX(30px);
+		}
+	}
 
-  @keyframes slide-to-left {
-    to {
-      transform: translateX(-30px);
-    }
-  }
+	@keyframes slide-to-left {
+		to {
+			transform: translateX(-30px);
+		}
+	}
 
-  :root::view-transition-old(root) {
-    animation:
-      90ms cubic-bezier(0.4, 0, 1, 1) both fade-out,
-      300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-left;
-  }
+	:root::view-transition-old(root) {
+		animation:
+			90ms cubic-bezier(0.4, 0, 1, 1) both fade-out,
+			300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-left;
+	}
 
-  :root::view-transition-new(root) {
-    animation:
-      210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in,
-      300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-right;
-  }
+	:root::view-transition-new(root) {
+		animation:
+			210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in,
+			300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-right;
+	}
 </style>
