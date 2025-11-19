@@ -145,8 +145,14 @@ func (jc UserController) Create(c *gin.Context) {
 // @Failure      500  {object}  map[string]string
 // @Router       /users/{id} [delete]
 func (jc UserController) Delete(c *gin.Context) {
-	jc.baseController.Delete(c)
 	uid := c.Param("id")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	user, _ := repository.FindOne[schema.User](ctx, uid)
+
+	jc.baseController.Delete(c)
 
 	var body struct {
 		Reason string `json:"reason"`
@@ -160,11 +166,6 @@ func (jc UserController) Delete(c *gin.Context) {
 		reason = "No reason provided."
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	user, _ := repository.FindOne[schema.User](ctx, uid)
-
 	emailBody := fmt.Sprintf(
 		"Dear %s, \n Your account has been deleted", user.Name,
 	)
@@ -173,7 +174,6 @@ func (jc UserController) Delete(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to send email"})
 		return
 	}
-
 }
 
 // RetrieveAll godoc
@@ -246,8 +246,14 @@ func (jc UserController) VerifyUser(c *gin.Context) {
 	defer cancel()
 
 	user, _ := repository.FindOne[schema.User](ctx, uid)
+	var verificationStatus string
+	if user.Banned {
+		verificationStatus = "unverified"
+	} else {
+		verificationStatus = "verified"
+	}
 	emailBody := fmt.Sprintf(
-		"Dear %s, \n Your account has been verified", user.Name,
+		"Dear %s, \n Your account has been %s", user.Name, verificationStatus,
 	)
 
 	if err := email.Send(user.Email, "User Account Verification Notice", emailBody); err != nil {
