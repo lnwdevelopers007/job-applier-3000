@@ -159,17 +159,33 @@ try:
     print("Navigated to Dashboard to verify the posted job")
     try:
         # Find the table row that contains the job title
+        search_bar = wait.until(
+            EC.element_to_be_clickable((By.XPATH, "//input[contains(@placeholder, 'Search') or @type='text']"))
+        )
+        search_bar.clear()
+        search_bar.send_keys(JOBTITLE)
+        time.sleep(WAIT_TIME)
         job_row = wait.until(
             EC.presence_of_element_located(
                 (By.XPATH, f"//tr[.//*[contains(text(), '{JOBTITLE}')]]")
             )
         )
 
-        # Inside that row, find the Edit button
-        edit_btn = job_row.find_element(
-            By.XPATH, ".//button[contains(., 'Edit')]"
+        ellipsis_btn = wait.until(
+            EC.element_to_be_clickable(
+                (By.XPATH, "/html/body/div/div[1]/div/div/main/div/div[3]/div[3]/div/table/tbody/tr/td[6]/div/button")
+            )
+        )
+        print("Found ellipsis:", ellipsis_btn)
+        ellipsis_btn.click()
+
+        edit_btn = wait.until(
+            EC.element_to_be_clickable(
+                (By.XPATH, "//button[contains(., 'Edit')]")
+            )
         )
         edit_btn.click()
+
         print(f"Clicked Edit button for job '{JOBTITLE}'")
         time.sleep(WAIT_TIME)
 
@@ -189,23 +205,37 @@ try:
         time.sleep(WAIT_TIME)
     except:
         print(f"Edit button for job '{JOBTITLE}' NOT found")
+    search_bar = wait.until(
+        EC.element_to_be_clickable((By.XPATH, "//input[contains(@placeholder, 'Search') or @type='text']"))
+    )
+    search_bar.clear()
+    search_bar.send_keys(EDITTITLE)
+    time.sleep(WAIT_TIME)
     job_row = wait.until(
         EC.presence_of_element_located(
             (By.XPATH, f"//tr[.//*[contains(text(), '{EDITTITLE}')]]")
         )
+    )    
+    ellipsis_btn = wait.until(
+        EC.element_to_be_clickable(
+            (By.XPATH, "/html/body/div/div[1]/div/div/main/div/div[3]/div[3]/div/table/tbody/tr/td[6]/div/button")
+        )
     )
+    print("Found ellipsis:", ellipsis_btn)
+    ellipsis_btn.click()
     delete_btn = job_row.find_element(
         By.XPATH, ".//button[contains(., 'Delete')]"
     )
     delete_btn.click()
     print(f"Clicked Delete button for job '{EDITTITLE}'")
+
     delete_input = wait.until(
         EC.element_to_be_clickable((By.XPATH, "//textarea"))
     )
     delete_input.send_keys(DELETEREASON)
     time.sleep(WAIT_TIME)
     confirm_delete_btn = wait.until(
-        EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Confirm Delete')]"))
+        EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Delete Job')]"))
     )
     confirm_delete_btn.click()
     time.sleep(WAIT_TIME)

@@ -20,6 +20,35 @@ jobs:
         with:
           go-version: "1.22.2"
 
+      - name: Create .env file
+        working-directory: server
+        run: cp ./.env.example .env
+      
+      - name: Load .env file
+        uses: xom9ikk/dotenv@v2.3.0
+        with:
+          path: ./server
+          load-mode: strict
+      
+      - name: Extract MongoDB Credentials
+        run: |
+          uri="${{ env.MONGODB_URI }}"
+          username=$(echo "$uri" | sed -E 's|^mongodb://([^:]+):.*|\1|')
+          password=$(echo "$uri" | sed -E 's|^mongodb://[^:]+:([^@]+)@.*|\1|')
+          port=$(echo "$uri" | sed -E 's|.*:([0-9]+)/.*|\1|')
+          echo "USERNAME=$username" >> $GITHUB_ENV
+          echo "PASSWORD=$password" >> $GITHUB_ENV
+          echo "PORT=$port" >> $GITHUB_ENV
+
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.12.0
+        with:
+          mongodb-version: ${{ matrix.mongodb-version }}
+          mongodb-port:  ${{ env.PORT }}
+          mongodb-username:  ${{ env.USERNAME }}
+          mongodb-password:  ${{ env.PASSWORD }}
+          mongodb-db: ${{ env.DB_NAME }}
+
       - name: Start Server
         working-directory: server
         run: |

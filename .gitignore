@@ -94,3 +94,5 @@ packages/playground/**/*
 # Ignore common virtual environment directories anywhere
 **/venv/
 **/.venv/
+/e2e_testing/__pycache__
+e2e_testing/__pycache__/construct_webdriver.cpython-312.pyc
