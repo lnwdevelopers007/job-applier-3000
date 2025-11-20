@@ -111,7 +111,7 @@
 			payload.userID = uid;
 			await userService.updateUser(userID!, payload);
 			toast.success('Jobseeker details updated successfully');
-			goto('/app/jobs');
+			goto('/unverified');
 		} catch (err) {
 			toast.error(err instanceof Error ? err.message : 'Failed to update jobseeker details');
 		}

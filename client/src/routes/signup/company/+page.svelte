@@ -150,7 +150,7 @@
 			payload.userID = uid;
 			await userService.updateUser(userID!, payload);
 			toast.success('Company details updated successfully');
-			goto('/company/dashboard');
+			goto('/unverified');
 		} catch (err) {
 			toast.error(err instanceof Error ? err.message : 'Failed to update company details');
 		}
