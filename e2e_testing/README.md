@@ -32,4 +32,6 @@
 5. Run the test
     ```bash
     python test_jobseeker.py
+    python test_company_accept_reject.py
+    python test_company_post_job.py
     ```

@@ -7,7 +7,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func RefreshToken(c *gin.Context) {
+// RefreshRefreshToken refreshes the refresh token
+func RefreshRefreshToken(c *gin.Context) {
 	refreshToken, err := c.Cookie("refresh_token")
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing refresh token"})
@@ -28,13 +29,10 @@ func RefreshToken(c *gin.Context) {
 		return
 	}
 
-	email := claims["email"].(string)
-	name, _ := claims["name"].(string)
-	avatarURL, _ := claims["avatarURL"].(string)
 	userID, _ := claims["userID"].(string)
 
 	// Issue new access token
-	accessToken, _, err := generateTokens(email, name, avatarURL, userID)
+	accessToken, _, err := generateTokens(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate token"})
 		return
