@@ -63,8 +63,8 @@
 				headers: {
 					'Content-Type': 'application/json'
 				},
-				credentials: 'include',
-				body: JSON.stringify({ reason: deleteReason })
+				credentials: 'include'
+				// body: JSON.stringify({ reason: deleteReason })
 			});
 
 			if (!res.ok) {

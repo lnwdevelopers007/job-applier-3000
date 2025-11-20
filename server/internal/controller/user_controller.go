@@ -3,7 +3,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"time"
 
@@ -153,22 +152,8 @@ func (jc UserController) Delete(c *gin.Context) {
 
 	user, _ := repository.FindOne[schema.User](ctx, uid)
 
-	var body struct {
-		Reason string `json:"reason"`
-	}
-	if err := c.BindJSON(&body); err != nil {
-		errMsg := "invalid JSON body"
-		slog.Info(errMsg + ": " + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
-		return
-	}
-	reason := body.Reason
-	if reason == "" {
-		reason = "No reason provided."
-	}
-
 	emailBody := fmt.Sprintf(
-		"Dear %s,\nYour account has been deleted.\nReason: %s", user.Name, reason,
+		"Dear %s,\nYour account has been deleted by the administrator. If you beleive this is a mistake, please reply to this email immediately.\nRegards,\nJob Applier 3000", user.Name,
 	)
 
 	if err := email.Send(user.Email, "User Deletion Notice", emailBody); err != nil {
