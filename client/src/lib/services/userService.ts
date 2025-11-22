@@ -39,6 +39,9 @@ export class UserService {
 	static async getUserById(id: string): Promise<User> {
 		try {
 			const user = await userApi.getById(id);
+			if (!user) {
+				throw new Error('User not found or unauthorized');
+			}
 			return processBackendUser(user);
 		} catch (error) {
 			console.error('Error fetching user:', error);

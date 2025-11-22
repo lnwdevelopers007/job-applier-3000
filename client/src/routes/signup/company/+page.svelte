@@ -214,7 +214,7 @@
 			<p class="text-sm text-gray-500">Register as a recruiter to start hiring talents</p>
 		</div>
 
-		<GoogleOAuthButton text="Continue with Google" userType="company" />
+		<GoogleOAuthButton text="Continue with Google" userType="company" isSignup={true} />
 
 		<p class="mt-8 text-center text-sm text-gray-500">
 			By using our service, you consent to the processing of your Personal Data as described in our

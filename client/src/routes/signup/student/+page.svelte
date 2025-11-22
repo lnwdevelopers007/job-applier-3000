@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { get } from 'svelte/store';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { toast } from 'svelte-french-toast';
 	import { getUserInfo } from '$lib/utils/auth';
+	import { authStore } from '$lib/stores/auth.svelte';
 	import { fileService, type FileMetadata } from '$lib/services/fileService';
 	import { ArrowLeft } from 'lucide-svelte';
 	import { fly } from 'svelte/transition';
@@ -20,10 +20,21 @@
 	import { userService } from '$lib/services/userService';
 	import PDPAModal from '$lib/components/modals/PDPAModal.svelte';
 	import seekerDashboard from '$lib/assets/seeker-dashboard.png';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
+	
+	// Get currentStep from URL params
+	let currentStep = $state(1);
+	
+	// Update currentStep reactively when page changes
+	$effect(() => {
+		if ($page.url) {
+			currentStep = +($page.url.searchParams.get('currentStep') || 1);
+		}
+	});
 
 	let showPDPA = false;
-
-	let currentStep = 1;
 	let email = '';
 	let fullName = '';
 	let desiredRole = '';
@@ -38,15 +49,16 @@
 	let avatar = '';
 	let uid = '';
 
-	let files: FileMetadata[] = [];
-	let isUploadModalOpen = false;
-	let selectedFile: FileMetadata | null = null;
-	let isPreviewModalOpen = false;
-	let fileToDelete: FileMetadata | null = null;
-	let isDeleteModalOpen = false;
-	let isDeleting = false;
+	let files = $state<FileMetadata[]>([]);
+	let isUploadModalOpen = $state(false);
+	let selectedFile = $state<FileMetadata | null>(null);
+	let isPreviewModalOpen = $state(false);
+	let fileToDelete = $state<FileMetadata | null>(null);
+	let isDeleteModalOpen = $state(false);
+	let isDeleting = $state(false);
 
-	let userInfo = getUserInfo();
+	// Use user data from server if available, otherwise get from auth store
+	let userInfo = data.user || getUserInfo();
 	let userID = userInfo?.userID || '';
 	const userRole = userInfo?.role || 'jobSeeker';
 
@@ -54,15 +66,6 @@
 		currentStep = 1;
 	}
 
-	function handleSignup() {
-		console.log('Student signup:', {
-			email,
-			firstName: fullName,
-			lastName: desiredRole,
-			portfolio: portfolio,
-			github: github
-		});
-	}
 
 	async function loadJobseekerDetails() {
 		try {
@@ -81,7 +84,6 @@
 			dateOfBirth = frontendData.dateOfBirth as string;
 			portfolio = frontendData.portfolio as string;
 			github = frontendData.github as string;
-			console.log(frontendData);
 		} catch (err) {
 			toast.error(err instanceof Error ? err.message : 'Failed to load jobseeker details');
 		}
@@ -109,6 +111,7 @@
 			payload.name = username;
 			payload.avatarURL = avatar;
 			payload.userID = uid;
+			
 			await userService.updateUser(userID!, payload);
 			toast.success('Jobseeker details updated successfully');
 			goto('/app/jobs');
@@ -117,9 +120,12 @@
 		}
 	}
 	async function loadFiles() {
-		if (!userID) return;
+		const currentUserID = userID || authStore.user?.userID || data.user?.userID;
+		if (!currentUserID) {
+			return;
+		}
 		try {
-			files = await fileService.listUserFiles(userID);
+			files = await fileService.listUserFiles(currentUserID);
 		} catch (err) {
 			toast.error(err instanceof Error ? err.message : 'Failed to load files');
 		}
@@ -166,29 +172,32 @@
 	}
 
 	onMount(async () => {
-		const urlStep = Number(get(page).url.searchParams.get('currentStep'));
-		if (urlStep === 2) {
-			currentStep = 2;
-		}
 		if (currentStep === 2) {
-			userInfo = getUserInfo();
-			userID = userInfo?.userID;
-			let retries = 0;
-			while (!userInfo && retries < 10) {
-				await new Promise((resolve) => setTimeout(resolve, 50));
-				userInfo = getUserInfo();
-				userID = userInfo?.userID;
-				retries++;
+			// Ensure we have user info from server or auth store
+			if (!userInfo) {
+				await new Promise((resolve) => setTimeout(resolve, 200));
+				userInfo = data.user || getUserInfo() || authStore.user;
+				userID = userInfo?.userID || '';
 			}
+			
 			if (!userID) {
-				console.error('Failed to load userID after login!');
-				toast.error('Unable to load user session. Try reloading the page.');
+				toast.error('Unable to load user session. Please try logging in again.');
+				setTimeout(() => goto('/login'), 2000);
 				return;
 			}
-		}
-		if (currentStep === 2) {
-			await loadFiles();
-			await loadJobseekerDetails();
+			
+			// Load user details and files
+			try {
+				await loadFiles();
+				await loadJobseekerDetails();
+			} catch (error) {
+				if ((error as any)?.status === 401) {
+					toast.error('Authentication failed. Please log in again.');
+					setTimeout(() => goto('/login'), 2000);
+				} else {
+					toast.error('Failed to load user information. Please refresh the page.');
+				}
+			}
 		}
 	});
 </script>
@@ -220,7 +229,7 @@
       <p class="text-sm text-gray-500">Register as a job seekeer to start finding your dream job</p>
     </div>
     
-    <GoogleOAuthButton text="Continue with Google" userType="jobSeeker" />
+    <GoogleOAuthButton text="Continue with Google" userType="jobSeeker" isSignup={true} />
 
 		<p class="mt-8 text-center text-sm text-gray-500">
 			By using our service, you consent to the processing of your Personal Data as described in our
@@ -253,7 +262,7 @@
 		</div>
 
 		<form
-			on:submit|preventDefault={handleSignup}
+			on:submit|preventDefault={handleSubmit}
 			class="space-y-4"
 		>
 			<div class="grid grid-cols-2 gap-4">
