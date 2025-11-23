@@ -149,8 +149,8 @@
 			payload.avatarURL = avatar;
 			payload.userID = uid;
 			await userService.updateUser(userID!, payload);
-			toast.success('Company details updated successfully');
-			goto('/company/dashboard');
+			toast.success('Account created successfully! Please wait for admin approval.');
+			goto(`/unverified?name=${encodeURIComponent(username)}`);
 		} catch (err) {
 			toast.error(err instanceof Error ? err.message : 'Failed to update company details');
 		}

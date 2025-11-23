@@ -45,6 +45,5 @@
 <div class="min-h-screen flex items-center justify-center bg-gray-50">
 	<div class="text-center space-y-4">
 		<div class="inline-flex items-center justify-center w-10 h-10 border-3 border-gray-600 border-t-transparent rounded-full animate-spin"></div>
-		<p class="text-lg text-gray-600">Processing authentication...</p>
 	</div>
 </div>

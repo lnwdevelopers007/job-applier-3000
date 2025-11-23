@@ -40,7 +40,9 @@ function handleUserAuth(decoded: JWTPayload, event: any, path: string) {
 	
 	// Check if user is verified (allow access to /unverified route, signup flow, and callback)
 	const isSignupFlow = path.startsWith('/signup/student') || path.startsWith('/signup/company');
-	const isAllowedUnverifiedPath = path === '/callback' || path === '/unverified' || path.startsWith('/unverified/') || isSignupFlow;
+	const isCallbackPath = path === '/callback';
+	const isUnverifiedPath = path === '/unverified' || path.startsWith('/unverified/');
+	const isAllowedUnverifiedPath = isCallbackPath || isUnverifiedPath || isSignupFlow;
 	
 	if (!decoded.verified && !isAllowedUnverifiedPath) {
 		const userName = decoded.name ? encodeURIComponent(decoded.name) : '';

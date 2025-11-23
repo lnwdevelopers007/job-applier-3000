@@ -113,8 +113,8 @@
 			payload.userID = uid;
 			
 			await userService.updateUser(userID!, payload);
-			toast.success('Jobseeker details updated successfully');
-			goto('/app/jobs');
+			toast.success('Account created successfully! Please wait for admin approval.');
+			goto(`/unverified?name=${encodeURIComponent(username)}`);
 		} catch (err) {
 			toast.error(err instanceof Error ? err.message : 'Failed to update jobseeker details');
 		}
@@ -181,8 +181,9 @@
 			}
 			
 			if (!userID) {
-				toast.error('Unable to load user session. Please try logging in again.');
-				setTimeout(() => goto('/login'), 2000);
+				// No user session - redirect back to step 1 to start OAuth flow
+				toast.error('Please complete the OAuth step first.');
+				currentStep = 1;
 				return;
 			}
 			
