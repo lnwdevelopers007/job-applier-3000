@@ -12,12 +12,13 @@
 	});
 
 	async function handleGoHome() {
-		// Logout completely when user chooses to leave unverified page
-		await authStore.logout();
+		// Clear cookies when user explicitly chooses to leave unverified page
+		await authStore.logoutAndClearTokens();
+		goto('/');
 	}
 
 	async function handleLogin() {
-		// Logout completely then go to login
+		// Clear cookies when user explicitly chooses to go to login
 		await authStore.logoutAndClearTokens();
 		goto('/login');
 	}
