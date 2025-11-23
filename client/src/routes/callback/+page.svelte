@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { goto, invalidateAll } from '$app/navigation';
 	import { authStore } from '$lib/stores/auth.svelte';
 	import type { PageData } from './$types';
 

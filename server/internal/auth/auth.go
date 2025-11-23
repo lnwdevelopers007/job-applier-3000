@@ -78,7 +78,7 @@ func OAuthCallback(c *gin.Context) {
 			"refresh_token",
 			refreshToken,
 			refreshTokenAge,
-			"/", "",  // Empty domain allows cookie to work across ports on same host
+			"/", "",
 			false,
 			true,
 		)
@@ -87,7 +87,7 @@ func OAuthCallback(c *gin.Context) {
 			"access_token",
 			accessToken,
 			3600, // 1 hour
-			"/", "",  // Empty domain allows cookie to work across ports on same host
+			"/", "",
 			false,
 			true,
 		)
@@ -111,7 +111,7 @@ func OAuthCallback(c *gin.Context) {
 		"refresh_token",
 		refreshToken,
 		refreshTokenAge,
-		"/", "",  // Empty domain allows cookie to work across ports on same host
+		"/", "",
 		false,
 		true,
 	)
@@ -122,7 +122,7 @@ func OAuthCallback(c *gin.Context) {
 		"access_token",
 		accessToken,
 		3600, // 1 hour
-		"/", "",  // Empty domain allows cookie to work across ports on same host
+		"/", "",
 		false,
 		true,
 	)
