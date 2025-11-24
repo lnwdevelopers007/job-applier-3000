@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -16,6 +17,9 @@ func RefreshRefreshToken(c *gin.Context) {
 	}
 
 	token, err := jwt.Parse(refreshToken, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+		}
 		return jwtSecret, nil
 	})
 	if err != nil || !token.Valid {
@@ -24,12 +28,16 @@ func RefreshRefreshToken(c *gin.Context) {
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok || claims["type"] != "refresh" {
+	if !ok || claims["type"] != "refresh" || !token.Valid {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid refresh token"})
 		return
 	}
 
-	userID, _ := claims["userID"].(string)
+	userID, ok := claims["userID"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid userID"})
+		return
+	}
 
 	// Issue new access token
 	accessToken, _, err := generateTokens(userID)
