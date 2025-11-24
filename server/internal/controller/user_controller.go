@@ -153,6 +153,7 @@ func (jc UserController) Delete(c *gin.Context) {
 	oid, err := getPrimitiveObjID(uid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "wrong UserID"})
+		return
 	}
 
 	user, err := repository.FindOne[schema.User](ctx, oid)
@@ -240,6 +241,7 @@ func (jc UserController) VerifyUser(c *gin.Context) {
 	oid, err := getPrimitiveObjID(uid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "wrong UserID"})
+		return
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -307,6 +309,7 @@ func (jc UserController) EditPermission(c *gin.Context) {
 	oid, err := getPrimitiveObjID(uid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "wrong UserID"})
+		return
 	}
 
 	user, err := repository.FindOne[schema.User](ctx, oid)

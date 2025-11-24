@@ -45,6 +45,6 @@ func Send(to, subject, body string) error {
 
 	logMsg := "Email sent to: %s subject: %s successfully 🎉"
 
-	slog.Info(logMsg, to, subject)
+	slog.Info(fmt.Sprint(logMsg, to, subject))
 	return nil
 }
