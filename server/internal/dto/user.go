@@ -9,6 +9,6 @@ type User struct {
 	Role      *string    `bson:"role,omitempty" json:"role,omitempty"`
 	Verified  *bool      `bson:"verified,omitempty" json:"verified,omitempty"`
 	UserInfo  *any       `bson:"userInfo,omitempty" json:"userInfo,omitempty"`
-	Ban       *bool      `bson:"ban,omitempty" json:"ban,omitempty"`
+	Banned    *bool      `bson:"banned,omitempty" json:"banned,omitempty"`
 	UpdatedAt *time.Time `bson:"updatedAt,omitempty" json:"updatedAt,omitempty"`
 }
