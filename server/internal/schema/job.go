@@ -50,19 +50,33 @@ func (j *Job) Validate() error {
 }
 
 func (j Job) ValidatePartial(fields map[string]any) error {
+    // Validate min/max salary if present
     if min, ok := fields["minSalary"].(float64); ok {
+        if min <= 0 || min > 1000000000 {
+            return fmt.Errorf("minSalary must be between 0 and 1,000,000,000")
+        }
         if max, ok2 := fields["maxSalary"].(float64); ok2 {
+            if max <= 0 || max > 1000000000 {
+                return fmt.Errorf("maxSalary must be between 0 and 1,000,000,000")
+            }
             if min > max {
                 return fmt.Errorf("minSalary cannot be greater than maxSalary")
             }
         }
     }
 
+    // Validate dates if present
     if postStr, ok := fields["postOpenDate"].(string); ok {
+        post, err := time.Parse(time.RFC3339, postStr)
+        if err != nil {
+            return fmt.Errorf("postOpenDate is invalid: %v", err)
+        }
         if deadlineStr, ok2 := fields["applicationDeadline"].(string); ok2 {
-            post, err1 := time.Parse(time.RFC3339, postStr)
             deadline, err2 := time.Parse(time.RFC3339, deadlineStr)
-            if err1 == nil && err2 == nil && post.After(deadline) {
+            if err2 != nil {
+                return fmt.Errorf("applicationDeadline is invalid: %v", err2)
+            }
+            if post.After(deadline) {
                 return fmt.Errorf("postOpenDate cannot be after applicationDeadline")
             }
         }
@@ -70,3 +84,4 @@ func (j Job) ValidatePartial(fields map[string]any) error {
 
     return nil
 }
+
