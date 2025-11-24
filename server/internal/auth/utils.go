@@ -9,7 +9,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/database"
-	"github.com/lnwdevelopers007/job-applier-3000/server/internal/repository"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
 	"github.com/markbates/goth"
 	"go.mongodb.org/mongo-driver/bson"
@@ -95,12 +94,4 @@ func upsertUser(gUser goth.User, role string) (dbUser schema.User, isNewUser boo
 	}
 
 	return existingUser, isNewUser, nil
-}
-
-// find user
-func findUser(userID any) (schema.User, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	return repository.FindOne[schema.User](ctx, userID)
 }

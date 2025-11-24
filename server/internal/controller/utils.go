@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/repository"
@@ -114,4 +115,27 @@ func getUserForLogging(c *gin.Context) string {
 		userInfo = fmt.Sprintf(userInfo, uid.Hex(), role)
 	}
 	return userInfo
+}
+
+func getPrimitiveObjID(objID any) (primitive.ObjectID, error) {
+	var oid primitive.ObjectID
+
+	switch v := objID.(type) {
+	case string:
+		v = strings.TrimSpace(v)
+		if len(v) != 24 {
+			return oid, fmt.Errorf("invalid ObjectID string: wrong length")
+		}
+		id, err := primitive.ObjectIDFromHex(v)
+		if err != nil {
+			return oid, fmt.Errorf("invalid ObjectID string: %w", err)
+		}
+		oid = id
+	case primitive.ObjectID:
+		oid = v
+	default:
+		return oid, fmt.Errorf("unsupported ObjectID type: %T", objID)
+	}
+
+	return oid, nil
 }

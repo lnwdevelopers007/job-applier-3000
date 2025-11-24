@@ -150,7 +150,15 @@ func (jc UserController) Delete(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	user, _ := repository.FindOne[schema.User](ctx, uid)
+	oid, err := getPrimitiveObjID(uid)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "wrong UserID"})
+	}
+
+	user, err := repository.FindOne[schema.User](ctx, oid)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "cannot find user"})
+	}
 
 	emailBody := fmt.Sprintf(
 		"Dear %s,\nYour account has been deleted by the administrator. If you beleive this is a mistake, please reply to this email immediately.\nRegards,\nJob Applier 3000", user.Name,
@@ -229,10 +237,18 @@ func (jc UserController) VerifyUser(c *gin.Context) {
 
 	uid := c.Param("id")
 
+	oid, err := getPrimitiveObjID(uid)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "wrong UserID"})
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	user, _ := repository.FindOne[schema.User](ctx, uid)
+	user, err := repository.FindOne[schema.User](ctx, oid)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "cannot find user"})
+	}
 	var verificationStatus string
 	if user.Verified {
 		verificationStatus = "verified"
@@ -288,8 +304,15 @@ func (jc UserController) EditPermission(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	uid := c.Param("id")
-	user, _ := repository.FindOne[schema.User](ctx, uid)
+	oid, err := getPrimitiveObjID(uid)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "wrong UserID"})
+	}
 
+	user, err := repository.FindOne[schema.User](ctx, oid)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "cannot find user"})
+	}
 	emailBody := fmt.Sprintf(
 		"Dear %s, \n Your account permission has been changed to %s", user.Name, user.Role,
 	)
