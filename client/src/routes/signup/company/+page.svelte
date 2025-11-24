@@ -20,6 +20,7 @@
 	import DeleteConfirmModal from '$lib/components/files/DeleteConfirmModal.svelte';
 	import { userService } from '$lib/services/userService';
 	import PDPAModal from '$lib/components/modals/PDPAModal.svelte';
+	import companyApplicants from '$lib/assets/company-applicants.png';
 
 	let currentStep = 1;
 	let email = '';
@@ -148,8 +149,8 @@
 			payload.avatarURL = avatar;
 			payload.userID = uid;
 			await userService.updateUser(userID!, payload);
-			toast.success('Company details updated successfully');
-			goto('/company/dashboard');
+			toast.success('Account created successfully! Please wait for admin approval.');
+			goto(`/unverified?name=${encodeURIComponent(username)}`);
 		} catch (err) {
 			toast.error(err instanceof Error ? err.message : 'Failed to update company details');
 		}
@@ -187,6 +188,24 @@
 </script>
 
 <AuthLayout backHref="/signup">
+  <div slot="left-side" class="h-full flex flex-col justify-between p-12 overflow-hidden">
+    <div class="max-w-2xl pt-20 px-20">
+      <p class="text-gray-700 text-2xl leading-relaxed mb-6">
+        Find the perfect talent for your team! Connect with talented CPSK students and alumni ready to contribute to your company's success
+      </p>
+      <p class="text-2xl font-semibold text-gray-900">Discover your next star employee!</p>
+    </div>
+
+    <div class="flex justify-start">
+      <div class="w-full max-w-4xl -ml-18 -mb-18">
+        <div class="bg-white rounded-3xl border-5 border-black overflow-hidden">
+          <!-- Company applicants dashboard image -->
+          <img src={companyApplicants} alt="Company applicants dashboard preview" class="w-full h-160 object-cover" />
+        </div>
+      </div>
+    </div>
+  </div>
+
   <AuthHeader />
 
 	{#if currentStep === 1}
@@ -195,7 +214,7 @@
 			<p class="text-sm text-gray-500">Register as a recruiter to start hiring talents</p>
 		</div>
 
-		<GoogleOAuthButton text="Continue with Google" userType="company" />
+		<GoogleOAuthButton text="Continue with Google" userType="company" isSignup={true} />
 
 		<p class="mt-8 text-center text-sm text-gray-500">
 			By using our service, you consent to the processing of your Personal Data as described in our

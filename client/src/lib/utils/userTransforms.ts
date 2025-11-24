@@ -58,7 +58,7 @@ export function transformToBackendFormat(
     // Handle userInfo fields - Always send all fields since BSON can't use omitempty
     if (userType === 'seeker' || userType === 'jobSeeker') {
       const userInfoFieldNames = [
-        'fullName', 'location', 'phone', 'linkedin', 'desiredRole', 
+        'fullName', 'location', 'phone', 'linkedIn', 'desiredRole', 
         'aboutMe', 'dateOfBirth', 'portfolio', 'github', 'skills'
       ];
       
@@ -113,7 +113,7 @@ export function transformToFrontendFormat(user: User): Record<string, unknown> {
     frontendData.fullName = '';
     frontendData.location = '';
     frontendData.phone = '';
-    frontendData.linkedin = '';
+    frontendData.linkedIn = '';
     frontendData.desiredRole = '';
     frontendData.aboutMe = '';
     frontendData.dateOfBirth = '';
@@ -128,7 +128,7 @@ export function transformToFrontendFormat(user: User): Record<string, unknown> {
       frontendData.fullName = info.fullName || '';
       frontendData.location = info.location || '';
       frontendData.phone = info.phone || '';
-      frontendData.linkedin = info.linkedIn || '';
+      frontendData.linkedIn = info.linkedIn || '';
       frontendData.desiredRole = info.desiredRole || '';
       frontendData.aboutMe = info.aboutMe || '';
       frontendData.dateOfBirth = info.dateOfBirth || '';
@@ -187,7 +187,7 @@ function buildSeekerInfo(userData: Record<string, unknown>): JobSeekerInfo {
     fullName: (userData.fullName as string) || '',
     location: (userData.location as string) || '',
     phone: (userData.phone as string) || '',
-    linkedIn: (userData.linkedin as string) || '',
+    linkedIn: (userData.linkedIn as string) || '', // Fixed: use linkedIn not linkedin
     desiredRole: (userData.desiredRole as string) || '',
     aboutMe: (userData.aboutMe as string) || '',
     dateOfBirth: (userData.dateOfBirth as string) || '',
@@ -219,6 +219,11 @@ function buildCompanyInfo(userData: Record<string, unknown>): CompanyInfo {
  * Process backend user data (handle _id mapping and userInfo parsing)
  */
 export function processBackendUser(user: any): User {
+  // Handle null or undefined user
+  if (!user) {
+    throw new Error('User data is null or undefined');
+  }
+  
   // Map _id from backend to id for frontend
   if (user._id) {
     user.id = user._id;

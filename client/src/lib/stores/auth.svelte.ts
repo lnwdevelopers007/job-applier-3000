@@ -75,8 +75,14 @@ class AuthStore {
 		}
 	}
 
-	async logout() {
-		// Clear cookies by calling logout endpoint
+	clearUser() {
+		// Clear local state only (keep cookies for signup flow)
+		this.state.isAuthenticated = false;
+		this.state.user = null;
+	}
+
+	async logoutAndClearTokens() {
+		// Clear cookies by calling logout endpoint but don't redirect
 		if (browser) {
 			try {
 				await fetch(`${import.meta.env.VITE_LOCAL}/auth/google/logout`, {
@@ -88,10 +94,14 @@ class AuthStore {
 			}
 
 			// Clear local state
-			this.state.isAuthenticated = false;
-			this.state.user = null;
+			this.clearUser();
+		}
+	}
 
-			// Redirect to home
+	async logout() {
+		// Clear cookies and redirect to home
+		await this.logoutAndClearTokens();
+		if (browser) {
 			goto('/');
 		}
 	}

@@ -64,11 +64,47 @@ func OAuthCallback(c *gin.Context) {
 		return
 	}
 
+	if dbUser.Banned {
+		// Generate tokens even for banned users so frontend can verify ban status
+		accessToken, refreshToken, err := generateTokens(dbUser.ID.Hex())
+		if err != nil {
+			msg := "cannot generate token"
+			slog.Error(msg + err.Error())
+			c.AbortWithError(http.StatusInternalServerError, errors.New(msg))
+			return
+		}
+
+		refreshTokenAge := config.LoadInt("REFRESH_TOKEN_AGE_DAYS") * 24 * 3600
+
+		// Set cookies so frontend can verify the user is banned
+		c.SetCookie(
+			"refresh_token",
+			refreshToken,
+			refreshTokenAge,
+			"/", "",
+			false,
+			true,
+		)
+
+		c.SetCookie(
+			"access_token",
+			accessToken,
+			3600, // 1 hour
+			"/", "",
+			false,
+			true,
+		)
+
+		// Now redirect to banned page WITH cookies
+		redirectURL := config.LoadEnv("FRONTEND") + "/banned"
+		c.Redirect(http.StatusFound, redirectURL)
+		return
+	}
+
+	// Normal flow for non-banned users
 	accessToken, refreshToken, err := generateTokens(dbUser.ID.Hex())
 	if err != nil {
-		msg := "cannot generate token"
-		slog.Error(msg + err.Error())
-		c.AbortWithError(http.StatusInternalServerError, errors.New(msg))
+		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
@@ -78,7 +114,7 @@ func OAuthCallback(c *gin.Context) {
 		"refresh_token",
 		refreshToken,
 		refreshTokenAge,
-		"/", "localhost",
+		"/", "",
 		false,
 		true,
 	)
@@ -89,7 +125,7 @@ func OAuthCallback(c *gin.Context) {
 		"access_token",
 		accessToken,
 		3600, // 1 hour
-		"/", "localhost",
+		"/", "",
 		false,
 		true,
 	)
