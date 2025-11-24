@@ -6,17 +6,13 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/lnwdevelopers007/job-applier-3000/server/config"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/dto"
 )
 
 var jwtSecret = []byte(config.LoadEnv("JWT_SECRET"))
 
-func generateTokens[T primitive.ObjectID | string](userID T) (accessToken, refreshToken string, err error) {
+func generateTokens(user dto.RefreshTokenUser) (accessToken, refreshToken string, err error) {
 	// Access token (15m)
-	user, err := findUser(userID)
-	if err != nil {
-		return
-	}
 	accessClaims := jwt.MapClaims{
 		"email":     user.Email,
 		"name":      user.Name,

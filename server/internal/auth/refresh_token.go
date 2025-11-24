@@ -6,6 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/dto"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // RefreshRefreshToken refreshes the refresh token
@@ -40,7 +42,22 @@ func RefreshRefreshToken(c *gin.Context) {
 	}
 
 	// Issue new access token
-	accessToken, _, err := generateTokens(userID)
+	oid, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid userID"})
+		return
+	}
+	refreshTokenUser := dto.RefreshTokenUser{
+		Email:     claims["email"].(string),
+		Name:      claims["name"].(string),
+		AvatarURL: claims["avatarURL"].(string),
+		ID:        oid,
+		Role:      claims["role"].(string),
+		Verified:  claims["verified"].(bool),
+		Banned:    claims["banned"].(bool),
+	}
+
+	accessToken, _, err := generateTokens(refreshTokenUser)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate token"})
 		return

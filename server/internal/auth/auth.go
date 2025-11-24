@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/sessions"
 	"github.com/lnwdevelopers007/job-applier-3000/server/config"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/dto"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/google"
@@ -65,7 +66,16 @@ func OAuthCallback(c *gin.Context) {
 	}
 
 	// Normal flow for non-banned users
-	accessToken, refreshToken, err := generateTokens(dbUser.ID.Hex())
+	refreshTokenUser := dto.RefreshTokenUser{
+		Email:     dbUser.Email,
+		Name:      dbUser.Name,
+		AvatarURL: dbUser.AvatarURL,
+		ID:        dbUser.ID,
+		Role:      dbUser.Role,
+		Verified:  dbUser.Verified,
+		Banned:    dbUser.Banned,
+	}
+	accessToken, refreshToken, err := generateTokens(refreshTokenUser)
 	if err != nil {
 		msg := "cannot generate token"
 		slog.Error(msg + err.Error())
