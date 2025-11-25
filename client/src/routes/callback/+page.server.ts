@@ -12,7 +12,7 @@ type JWTPayload = {
 	exp?: number;
 };
 
-export const load: PageServerLoad = async ({ url, cookies }) => {
+export const load: PageServerLoad = async ({ url }) => {
 	const token = url.searchParams.get('token');
 	const error = url.searchParams.get('error');
 
@@ -54,28 +54,9 @@ export const load: PageServerLoad = async ({ url, cookies }) => {
 		throw redirect(303, `/unverified?name=${userName}`);
 	}
 
-	const jwtExpiresIn = decoded.exp
-		? Math.max(0, decoded.exp - Math.floor(Date.now() / 1000))
-		: 60 * 60 * 24;
-
-	// Set the main access_token cookie with same settings as backend
-	cookies.set('access_token', token, {
-		path: '/',
-		httpOnly: true,
-		secure: false,
-		sameSite: 'lax',
-		maxAge: jwtExpiresIn
-	});
-	
-	
-	// Set refresh token with same attributes
-	cookies.set('refresh_token', token, {
-		path: '/',
-		httpOnly: false,
-		secure: false,
-		sameSite: 'lax',
-		maxAge: 60 * 60 * 24 * 7 // 7 days
-	});
+	// Backend already sets the cookies properly during OAuth callback
+	// Frontend should NOT overwrite them with the URL token parameter
+	// The token in URL is just for validation, not for setting cookies
 
 	// Determine redirect path based on role
 	let redirectPath = '/';
