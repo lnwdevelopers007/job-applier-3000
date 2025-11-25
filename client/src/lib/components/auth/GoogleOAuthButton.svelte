@@ -1,9 +1,14 @@
-<script>
-  export let text;
-  export let userType;
+<script lang="ts">
+  export let text: string;
+  export let userType: string;
+  export let isSignup = false;
   
   function handleGoogleOAuth() {
-    window.location.href = `${import.meta.env.VITE_LOCAL}/auth/google?role=${userType}`;
+    const params = new URLSearchParams({ role: userType });
+    if (isSignup) {
+      params.append('step', 'signup');
+    }
+    window.location.href = `${import.meta.env.VITE_LOCAL}/auth/google?${params.toString()}`;
   }
 </script>
 

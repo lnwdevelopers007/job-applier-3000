@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/database"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/dto"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/email"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/repository"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
-	"github.com/lnwdevelopers007/job-applier-3000/server/internal/database"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -350,7 +350,7 @@ func (jc JobController) Delete(c *gin.Context) {
 }
 
 // notifyJobDeletion send emails to all applicants when a job they applied to got deleted.
-func notifyJobDeletion(c *gin.Context) bool {
+func notifyJobDeletion(c *gin.Context) (shouldReturn bool) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -416,7 +416,10 @@ func notifyJobDeletion(c *gin.Context) bool {
 			job.Title,
 			reason,
 		)
-		email.Send(applicant.Email, "Job Deletion Notice", emailBody)
+		if err := email.Send(applicant.Email, "Job Deletion Notice", emailBody); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to send email"})
+			return true
+		}
 	}
 
 	return false

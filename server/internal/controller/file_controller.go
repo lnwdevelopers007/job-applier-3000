@@ -2,6 +2,7 @@ package controller
 
 import (
 	"io"
+	"mime"
 	"net/http"
 	"os"
 	"strconv"
@@ -26,17 +27,6 @@ func NewFileController() FileController {
 			displayName:    "File",
 		},
 	}
-}
-
-// getUserFromContext extracts user info from context (set by auth middleware)
-// if enableAuth = false in .env, it'll create a mock userID instead.
-func getUserFromContext(c *gin.Context) (userID primitive.ObjectID, role string, err error) {
-	enableAuth, _ := strconv.ParseBool(os.Getenv("ENABLE_AUTH"))
-
-	if enableAuth {
-		return getUserFromMiddleware(c)
-	}
-	return getFakeUser(c)
 }
 
 // Upload godoc
@@ -194,7 +184,7 @@ func (fc FileController) Download(c *gin.Context) {
 
 	// Set headers for file download
 	c.Header("Content-Type", fileDoc.ContentType)
-	c.Header("Content-Disposition", "attachment; filename="+fileDoc.Filename)
+	c.Header("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": fileDoc.Filename}))
 	c.Data(http.StatusOK, fileDoc.ContentType, fileDoc.Content)
 }
 
@@ -555,6 +545,6 @@ func (fc FileController) DownloadApplicantFile(c *gin.Context) {
 
 	// 6. Serve the file
 	c.Header("Content-Type", fileDoc.ContentType)
-	c.Header("Content-Disposition", "attachment; filename="+fileDoc.Filename)
+	c.Header("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": fileDoc.Filename}))
 	c.Data(http.StatusOK, fileDoc.ContentType, fileDoc.Content)
 }

@@ -8,7 +8,7 @@ type User struct {
 	AvatarURL *string    `bson:"avatarURL,omitempty" json:"avatarURL,omitempty"`
 	Role      *string    `bson:"role,omitempty" json:"role,omitempty"`
 	Verified  *bool      `bson:"verified,omitempty" json:"verified,omitempty"`
-	UserInfo  any        `bson:"userInfo,omitempty" json:"userInfo,omitempty"`
-	Ban       *bool      `bson:"ban,omitempty" json:"ban,omitempty"`
+	UserInfo  *any       `bson:"userInfo,omitempty" json:"userInfo,omitempty"`
+	Banned    *bool      `bson:"banned,omitempty" json:"banned,omitempty"`
 	UpdatedAt *time.Time `bson:"updatedAt,omitempty" json:"updatedAt,omitempty"`
 }

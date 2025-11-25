@@ -60,7 +60,11 @@
 		try {
 			const res = await fetch(`/users/${userToDelete.id}`, {
 				method: 'DELETE',
+				headers: {
+					'Content-Type': 'application/json'
+				},
 				credentials: 'include'
+				// body: JSON.stringify({ reason: deleteReason })
 			});
 
 			if (!res.ok) {
@@ -97,9 +101,7 @@
 			}
 
 			// Update user in the list
-			users = users.map((u) =>
-				u.id === userToBan!.id ? { ...u, banned: newBanStatus } : u
-			);
+			users = users.map((u) => (u.id === userToBan!.id ? { ...u, banned: newBanStatus } : u));
 
 			showBanModal = false;
 			userToBan = null;
@@ -138,11 +140,7 @@
 			}
 
 			// Update user in the list
-			users = users.map((u) =>
-				u.id === userToEditPermissions!.id 
-					? { ...u, role, verified } 
-					: u
-			);
+			users = users.map((u) => (u.id === userToEditPermissions!.id ? { ...u, role, verified } : u));
 
 			showPermissionModal = false;
 			userToEditPermissions = null;
@@ -162,8 +160,8 @@
 				user.email.toLowerCase().includes(searchQuery.toLowerCase());
 
 			const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-			
-			const matchesVerification = 
+
+			const matchesVerification =
 				verificationFilter === 'all' ||
 				(verificationFilter === 'verified' && user.verified) ||
 				(verificationFilter === 'unverified' && !user.verified);
@@ -191,7 +189,7 @@
 		try {
 			loading = true;
 			const usersData = await fetchUsers();
-			
+
 			// Fetch files for each user
 			const usersWithFiles = await Promise.allSettled(
 				usersData.map(async (user: any) => {
@@ -200,7 +198,7 @@
 						const filesResponse = await fetch(`/files/user/${user.id}`, {
 							credentials: 'include'
 						});
-						
+
 						if (filesResponse.ok) {
 							const filesData = await filesResponse.json();
 							// Handle both old format (array) and new format (object with files array)
@@ -214,7 +212,7 @@
 						console.warn(`Failed to load files for user ${user.id}:`, fileErr);
 						userFiles = [];
 					}
-					
+
 					return {
 						...user,
 						banned: user.banned || false,
@@ -222,12 +220,11 @@
 					};
 				})
 			);
-			
+
 			// Filter successful results and map to user format
 			users = usersWithFiles
 				.filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
-				.map(result => result.value);
-				
+				.map((result) => result.value);
 		} catch (err) {
 			console.error('Error loading users:', err);
 			users = [];
@@ -247,34 +244,32 @@
 	function handleVerificationFilter(event: Event) {
 		verificationFilter = (event.target as HTMLSelectElement).value;
 	}
-
 </script>
 
 <div>
 	<div>
 		<div class="mb-8">
-			<h1 class="text-2xl font-semibold text-gray-900 mb-1">User Management</h1>
-			<p class="text-base text-gray-600 mb-6">Manage and monitor all users across your platform</p>
+			<h1 class="mb-1 text-2xl font-semibold text-gray-900">User Management</h1>
+			<p class="mb-6 text-base text-gray-600">Manage and monitor all users across your platform</p>
 		</div>
-
 
 		<div class="mb-6">
 			<div class="flex gap-3">
 				<div class="relative">
 					<Search
-						class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5"
+						class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-400"
 					/>
 					<input
 						type="text"
 						placeholder="Search users by name or email..."
-						class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg min-w-lg text-sm placeholder:text-gray-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 transition-all"
+						class="min-w-lg w-full rounded-lg border border-gray-200 py-2.5 pl-10 pr-4 text-sm transition-all placeholder:text-gray-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
 						bind:value={searchQuery}
 						oninput={handleSearch}
 					/>
 				</div>
 
 				<select
-					class="appearance-none px-4 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 font-medium hover:bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 transition-all cursor-pointer"
+					class="cursor-pointer appearance-none rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 pr-10 text-sm font-medium text-gray-700 transition-all hover:bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
 					bind:value={roleFilter}
 					onchange={handleRoleFilter}
 				>
@@ -284,7 +279,7 @@
 				</select>
 
 				<select
-					class="appearance-none px-4 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 font-medium hover:bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 transition-all cursor-pointer"
+					class="cursor-pointer appearance-none rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 pr-10 text-sm font-medium text-gray-700 transition-all hover:bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
 					bind:value={verificationFilter}
 					onchange={handleVerificationFilter}
 				>
@@ -323,7 +318,11 @@
 	onConfirm={confirmBan}
 	title="{userToBan?.banned ? 'Unban' : 'Ban'} User"
 	itemName={userToBan?.name || ''}
-	description="You're about to {userToBan?.banned ? 'unban' : 'ban'} this user account. {userToBan?.banned ? 'This will restore their access to the platform.' : 'This will prevent them from accessing the platform.'}"
+	description="You're about to {userToBan?.banned
+		? 'unban'
+		: 'ban'} this user account. {userToBan?.banned
+		? 'This will restore their access to the platform.'
+		: 'This will prevent them from accessing the platform.'}"
 	reasonLabel=""
 	confirmButtonText="{userToBan?.banned ? 'Unban' : 'Ban'} User"
 	isDeleting={banning}

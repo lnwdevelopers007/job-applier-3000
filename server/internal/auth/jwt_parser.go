@@ -17,6 +17,7 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
+// ParseJWT unencrypts JWT token
 func ParseJWT(tokenStr string) (*Claims, error) {
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {

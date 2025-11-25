@@ -17,6 +17,13 @@ import (
 // NewRouter returns new, default router.
 func NewRouter() *gin.Engine {
 	router := gin.Default()
+
+	allowedOrigins := []string{
+		os.Getenv("FRONTEND"),
+	}
+
+	router.Use(middleware.RejectUnknownOriginsMiddleware(allowedOrigins))
+
 	cfg := setUpCors()
 
 	router.Use(cors.New(cfg))
@@ -25,8 +32,8 @@ func NewRouter() *gin.Engine {
 	{
 		authGroup.GET("/:provider", auth.Login)
 		authGroup.GET("/:provider/callback", auth.OAuthCallback)
-		authGroup.GET("/:provider/logout", auth.Logout)
-		authGroup.POST("/refresh", auth.RefreshToken)
+		authGroup.POST("/:provider/logout", auth.Logout)
+		authGroup.POST("/refresh", auth.RefreshRefreshToken)
 		authGroup.GET("/me", middleware.AuthMiddleware(), auth.Me)
 	}
 

@@ -11,15 +11,15 @@ import (
 
 func FindOne[T schema.CollectionEntity](
 	ctx context.Context,
-	objID primitive.ObjectID,
+	primitiveObjectID primitive.ObjectID,
 ) (T, error) {
 	var result T
+
 	collection := database.GetDatabase().Collection(result.GetCollectionName())
-	filter := bson.M{"_id": objID}
-	err := collection.FindOne(ctx, filter).Decode(&result)
-	if err != nil {
-		var thing T
-		return thing, err
+	filter := bson.M{"_id": primitiveObjectID}
+
+	if err := collection.FindOne(ctx, filter).Decode(&result); err != nil {
+		return result, err
 	}
 	return result, nil
 }

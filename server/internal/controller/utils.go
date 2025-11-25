@@ -2,7 +2,11 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"os"
+	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/repository"
@@ -88,4 +92,50 @@ func getFakeUser(c *gin.Context) (userID primitive.ObjectID, role string, err er
 
 	return userID, role, nil
 
+}
+
+// getUserFromContext extracts user info from context (set by auth middleware)
+// if enableAuth = false in .env, it'll create a mock userID instead.
+func getUserFromContext(c *gin.Context) (userID primitive.ObjectID, role string, err error) {
+	enableAuth, _ := strconv.ParseBool(os.Getenv("ENABLE_AUTH"))
+
+	if enableAuth {
+		return getUserFromMiddleware(c)
+	}
+	return getFakeUser(c)
+}
+
+// getUserForLogging returns a string containing userId an role for logging purposes.
+func getUserForLogging(c *gin.Context) string {
+	uid, role, err := getUserFromMiddleware(c)
+	userInfo := "User: %s, Role: %s, "
+	if err != nil {
+		userInfo = fmt.Sprintf(userInfo, "UNKNOWN", "UNKNOWN")
+	} else {
+		userInfo = fmt.Sprintf(userInfo, uid.Hex(), role)
+	}
+	return userInfo
+}
+
+func getPrimitiveObjID(objID any) (primitive.ObjectID, error) {
+	var oid primitive.ObjectID
+
+	switch v := objID.(type) {
+	case string:
+		v = strings.TrimSpace(v)
+		if len(v) != 24 {
+			return oid, fmt.Errorf("invalid ObjectID string: wrong length")
+		}
+		id, err := primitive.ObjectIDFromHex(v)
+		if err != nil {
+			return oid, fmt.Errorf("invalid ObjectID string: %w", err)
+		}
+		oid = id
+	case primitive.ObjectID:
+		oid = v
+	default:
+		return oid, fmt.Errorf("unsupported ObjectID type: %T", objID)
+	}
+
+	return oid, nil
 }
