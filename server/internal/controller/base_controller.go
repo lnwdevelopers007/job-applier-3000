@@ -31,6 +31,13 @@ func (controller BaseController[Schema]) Create(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	// Validate input
+	if v, ok := any(&raw).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -83,6 +90,13 @@ func (controller BaseController[Schema]) Update(c *gin.Context) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+
+	if v, ok := any(*new(Schema)).(interface{ ValidatePartial(map[string]any) error }); ok {
+		if err := v.ValidatePartial(updateFields); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+	}
 
 	// use $set to update only provided fields
 	update := bson.M{"$set": updateFields}
