@@ -17,27 +17,16 @@ import (
 )
 
 type FileController struct {
-	baseController BaseController[schema.File]
+	baseController BaseController[schema.File, schema.File]
 }
 
 func NewFileController() FileController {
 	return FileController{
-		baseController: BaseController[schema.File]{
+		baseController: BaseController[schema.File, schema.File]{
 			collectionName: "files",
 			displayName:    "File",
 		},
 	}
-}
-
-// getUserFromContext extracts user info from context (set by auth middleware)
-// if enableAuth = false in .env, it'll create a mock userID instead.
-func getUserFromContext(c *gin.Context) (userID primitive.ObjectID, role string, err error) {
-	enableAuth, _ := strconv.ParseBool(os.Getenv("ENABLE_AUTH"))
-
-	if enableAuth {
-		return getUserFromMiddleware(c)
-	}
-	return getFakeUser(c)
 }
 
 // Upload godoc

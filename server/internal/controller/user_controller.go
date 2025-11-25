@@ -8,6 +8,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/auth"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/dto"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/email"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/repository"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
 	"go.mongodb.org/mongo-driver/bson"
@@ -15,12 +17,12 @@ import (
 )
 
 type UserController struct {
-	baseController BaseController[schema.User]
+	baseController BaseController[schema.User, dto.User]
 }
 
 func NewUserController() UserController {
 	return UserController{
-		baseController: BaseController[schema.User]{
+		baseController: BaseController[schema.User, dto.User]{
 			collectionName: "users",
 			displayName:    "User",
 		},
@@ -143,6 +145,30 @@ func (jc UserController) Create(c *gin.Context) {
 // @Failure      500  {object}  map[string]string
 // @Router       /users/{id} [delete]
 func (jc UserController) Delete(c *gin.Context) {
+	uid := c.Param("id")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	oid, err := getPrimitiveObjID(uid)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "wrong UserID"})
+		return
+	}
+
+	user, err := repository.FindOne[schema.User](ctx, oid)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "cannot find user"})
+	}
+
+	emailBody := fmt.Sprintf(
+		"Dear %s,\nYour account has been deleted by the administrator. If you beleive this is a mistake, please reply to this email immediately.\nRegards,\nJob Applier 3000", user.Name,
+	)
+
+	if err := email.Send(user.Email, "User Deletion Notice", emailBody); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to send email"})
+		return
+	}
 	jc.baseController.Delete(c)
 }
 
@@ -208,7 +234,38 @@ func (jc UserController) VerifyUser(c *gin.Context) {
 		return
 	}
 
-	jc.baseController.PatchOne(c)
+	jc.baseController.Update(c)
+
+	uid := c.Param("id")
+
+	oid, err := getPrimitiveObjID(uid)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "wrong UserID"})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	user, err := repository.FindOne[schema.User](ctx, oid)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "cannot find user"})
+	}
+	var verificationStatus string
+	if user.Verified {
+		verificationStatus = "verified"
+	} else {
+		verificationStatus = "unverified"
+	}
+	emailBody := fmt.Sprintf(
+		"Dear %s,\nYour account has been %s.", user.Name, verificationStatus,
+	)
+
+	if err := email.Send(user.Email, "User Account Verification Notice", emailBody); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to send email"})
+		return
+	}
+
 }
 
 // EditPermission godoc
@@ -244,7 +301,29 @@ func (jc UserController) EditPermission(c *gin.Context) {
 		return
 	}
 
-	jc.baseController.PatchOne(c)
+	jc.baseController.Update(c)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	uid := c.Param("id")
+	oid, err := getPrimitiveObjID(uid)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "wrong UserID"})
+		return
+	}
+
+	user, err := repository.FindOne[schema.User](ctx, oid)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "cannot find user"})
+	}
+	emailBody := fmt.Sprintf(
+		"Dear %s, \n Your account permission has been changed to %s", user.Name, user.Role,
+	)
+
+	if err := email.Send(user.Email, "User Permission Change Notice", emailBody); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to send email"})
+		return
+	}
 }
 
 // GetPublicInfo godoc

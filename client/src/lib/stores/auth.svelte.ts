@@ -85,14 +85,14 @@ class AuthStore {
 		// Clear cookies by calling logout endpoint but don't redirect
 		if (browser) {
 			try {
-				await fetch('/api/logout', {
+				await fetch(`${import.meta.env.VITE_LOCAL}/auth/google/logout`, {
 					method: 'POST',
 					credentials: 'include'
 				});
 			} catch (error) {
 				console.error('Logout failed:', error);
 			}
-			
+
 			// Clear local state
 			this.clearUser();
 		}

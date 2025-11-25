@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/database"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/dto"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/email"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/repository"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
@@ -19,13 +20,13 @@ import (
 
 // JobController is a custom controller for JobSchema
 type JobController struct {
-	baseController BaseController[schema.Job]
+	baseController BaseController[schema.Job, dto.Job]
 }
 
 // NewJobController initializes a JobController
 func NewJobController() JobController {
 	return JobController{
-		baseController: BaseController[schema.Job]{
+		baseController: BaseController[schema.Job, dto.Job]{
 			collectionName: "jobs",
 			displayName:    "Job",
 		},
@@ -349,7 +350,7 @@ func (jc JobController) Delete(c *gin.Context) {
 }
 
 // notifyJobDeletion send emails to all applicants when a job they applied to got deleted.
-func notifyJobDeletion(c *gin.Context) bool {
+func notifyJobDeletion(c *gin.Context) (shouldReturn bool) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -415,7 +416,10 @@ func notifyJobDeletion(c *gin.Context) bool {
 			job.Title,
 			reason,
 		)
-		email.Send(applicant.Email, "Job Deletion Notice", emailBody)
+		if err := email.Send(applicant.Email, "Job Deletion Notice", emailBody); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to send email"})
+			return true
+		}
 	}
 
 	return false
