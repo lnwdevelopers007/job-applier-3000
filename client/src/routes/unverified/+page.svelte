@@ -1,14 +1,25 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
+	import { authStore } from '$lib/stores/auth.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
-	function handleGoHome() {
+	onMount(() => {
+		// Clear the auth store when user reaches unverified state
+		authStore.clearUser();
+	});
+
+	async function handleGoHome() {
+		// Clear cookies when user explicitly chooses to leave unverified page
+		await authStore.logoutAndClearTokens();
 		goto('/');
 	}
 
-	function handleLogin() {
+	async function handleLogin() {
+		// Clear cookies when user explicitly chooses to go to login
+		await authStore.logoutAndClearTokens();
 		goto('/login');
 	}
 </script>

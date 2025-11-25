@@ -2,6 +2,7 @@ package controller
 
 import (
 	"io"
+	"mime"
 	"net/http"
 	"os"
 	"strconv"
@@ -194,7 +195,7 @@ func (fc FileController) Download(c *gin.Context) {
 
 	// Set headers for file download
 	c.Header("Content-Type", fileDoc.ContentType)
-	c.Header("Content-Disposition", "attachment; filename="+fileDoc.Filename)
+	c.Header("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": fileDoc.Filename}))
 	c.Data(http.StatusOK, fileDoc.ContentType, fileDoc.Content)
 }
 
@@ -555,6 +556,6 @@ func (fc FileController) DownloadApplicantFile(c *gin.Context) {
 
 	// 6. Serve the file
 	c.Header("Content-Type", fileDoc.ContentType)
-	c.Header("Content-Disposition", "attachment; filename="+fileDoc.Filename)
+	c.Header("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": fileDoc.Filename}))
 	c.Data(http.StatusOK, fileDoc.ContentType, fileDoc.Content)
 }

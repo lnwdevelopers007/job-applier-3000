@@ -149,8 +149,8 @@
 			payload.avatarURL = avatar;
 			payload.userID = uid;
 			await userService.updateUser(userID!, payload);
-			toast.success('Company details updated successfully');
-			goto('/company/dashboard');
+			toast.success('Account created successfully! Please wait for admin approval.');
+			goto(`/unverified?name=${encodeURIComponent(username)}`);
 		} catch (err) {
 			toast.error(err instanceof Error ? err.message : 'Failed to update company details');
 		}
@@ -214,7 +214,7 @@
 			<p class="text-sm text-gray-500">Register as a recruiter to start hiring talents</p>
 		</div>
 
-		<GoogleOAuthButton text="Continue with Google" userType="company" />
+		<GoogleOAuthButton text="Continue with Google" userType="company" isSignup={true} />
 
 		<p class="mt-8 text-center text-sm text-gray-500">
 			By using our service, you consent to the processing of your Personal Data as described in our

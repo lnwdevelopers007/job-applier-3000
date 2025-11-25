@@ -27,12 +27,6 @@ type JWTPayload = {
 
 // Helper function to handle user verification and setup
 function handleUserAuth(decoded: JWTPayload, event: any, path: string) {
-	// Check if user is verified (allow access to /unverified route)
-	if (!decoded.verified && path !== '/unverified' && !path.startsWith('/unverified/')) {
-		const userName = decoded.name ? encodeURIComponent(decoded.name) : '';
-		throw redirect(303, `/unverified?name=${userName}`);
-	}
-	
 	// Set user in locals
 	event.locals.user = {
 		email: decoded.email || '',
@@ -41,8 +35,19 @@ function handleUserAuth(decoded: JWTPayload, event: any, path: string) {
 		userID: decoded.userID || '',
 		role: (decoded.role as any) || 'jobSeeker',
 		verified: decoded.verified || false,
-		isAuthenticated: decoded.verified === true
+		isAuthenticated: true // User has valid token, even if not verified
 	};
+	
+	// Check if user is verified (allow access to /unverified route, signup flow, and callback)
+	const isSignupFlow = path.startsWith('/signup/student') || path.startsWith('/signup/company');
+	const isCallbackPath = path === '/callback';
+	const isUnverifiedPath = path === '/unverified' || path.startsWith('/unverified/');
+	const isAllowedUnverifiedPath = isCallbackPath || isUnverifiedPath || isSignupFlow;
+	
+	if (!decoded.verified && !isAllowedUnverifiedPath) {
+		const userName = decoded.name ? encodeURIComponent(decoded.name) : '';
+		throw redirect(303, `/unverified?name=${userName}`);
+	}
 }
 
 export const handle: Handle = async ({ event, resolve }) => {
@@ -54,6 +59,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	const accessToken = event.cookies.get('access_token');
 	const refreshToken = event.cookies.get('refresh_token');
+	
 
 	if (accessToken) {
 		let decoded: JWTPayload | null = null;
@@ -72,7 +78,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 			// Check if token is expired
 			const isExpired = decoded.exp && decoded.exp * 1000 < Date.now();
 			
-			if (isExpired && refreshToken) {
+			// Don't try to refresh tokens for unverified users in signup flow
+			const isSignupFlow = path.startsWith('/signup/student') || path.startsWith('/signup/company');
+			const skipRefresh = !decoded.verified && isSignupFlow;
+			
+			if (isExpired && refreshToken && !skipRefresh) {
 				// Try to refresh the token
 				try {
 					const backendUrl = import.meta.env.VITE_BACKEND || 'http://localhost:8080';
@@ -132,6 +142,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 				}
 			} else if (!isExpired) {
 				// Token is valid, handle user authentication
+				handleUserAuth(decoded, event, path);
+			} else if (skipRefresh) {
+				// Token expired but skip refresh for unverified signup users - still allow access
 				handleUserAuth(decoded, event, path);
 			} else {
 				// Token expired and no refresh token
