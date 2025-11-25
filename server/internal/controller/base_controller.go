@@ -33,6 +33,13 @@ func (controller BaseController[Schema, DTO]) Create(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": msg})
 		return
 	}
+	// Validate input
+	if v, ok := any(&raw).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -91,6 +98,7 @@ func (controller BaseController[Schema, DTO]) Update(c *gin.Context) {
 	defer cancel()
 
 	res, err := repository.Update[Schema](ctx, objID, newData)
+
 	if err != nil {
 		msg := "Update " + controller.displayName + " failed"
 		slog.Error(userInfo + msg + ": " + err.Error())

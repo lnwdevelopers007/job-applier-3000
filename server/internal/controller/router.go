@@ -17,6 +17,13 @@ import (
 // NewRouter returns new, default router.
 func NewRouter() *gin.Engine {
 	router := gin.Default()
+
+	allowedOrigins := []string{
+		os.Getenv("FRONTEND"),
+	}
+
+	router.Use(middleware.RejectUnknownOriginsMiddleware(allowedOrigins))
+
 	cfg := setUpCors()
 
 	router.Use(cors.New(cfg))

@@ -17,6 +17,11 @@ func Update[collectionEntity schema.CollectionEntity, dto any](
 ) (*mongo.UpdateResult, error) {
 
 	updateFields := buildUpdateMap(newData)
+	if v, ok := any(*new(dto)).(interface{ ValidatePartial(map[string]any) error }); ok {
+		if err := v.ValidatePartial(updateFields); err != nil {
+			return nil, err
+		}
+	}
 
 	update := bson.M{"$set": updateFields}
 
