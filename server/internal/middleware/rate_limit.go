@@ -10,10 +10,10 @@ import (
 
 var methodLimits = map[string]uint{
 	http.MethodGet:    2500,
-	http.MethodPost:   10,
-	http.MethodPut:		15,
-	http.MethodPatch:  15,
-	http.MethodDelete: 15,
+	http.MethodPost:   20,
+	http.MethodPut:		25,
+	http.MethodPatch:  25,
+	http.MethodDelete: 25,
 }
 
 var rateLimiters map[string]gin.HandlerFunc
