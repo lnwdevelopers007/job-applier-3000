@@ -18,12 +18,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// sanitizeEmailBodyField strips dangerous characters (newlines, carriage returns)
-func sanitizeEmailBodyField(input string) string {
-	// Removes \r and \n to prevent email content injection attacks
-	return strings.ReplaceAll(strings.ReplaceAll(input, "\r", ""), "\n", "")
-}
-
 // JobController is a custom controller for JobSchema
 type JobController struct {
 	baseController BaseController[schema.Job, dto.Job]
@@ -377,8 +371,6 @@ func notifyJobDeletion(c *gin.Context) (shouldReturn bool) {
 	if reason == "" {
 		reason = "No reason provided."
 	}
-	// Sanitize untrusted reason: strip newlines and carriage returns
-	reason = sanitizeEmailBodyField(reason)
 
 	job, err := repository.FindOne[schema.Job](ctx, jobID)
 	if err != nil {

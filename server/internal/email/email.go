@@ -20,6 +20,7 @@ func Send(to, subject, body string) error {
 	from := config.LoadEnv("EMAIL")
 	pass := config.LoadEnv("EMAIL_PASSWORD")
 
+	sanitizedBody := SanitizeEmailBodyField(body)
 	// 2. Construct the message safely
 	// Note: We still construct the byte slice manually here, but inputs are safer.
 	msg := []byte(fmt.Sprintf(
@@ -29,7 +30,7 @@ func Send(to, subject, body string) error {
 			"Content-Type: text/plain; charset=\"UTF-8\"\r\n"+
 			"\r\n"+
 			"%s\r\n",
-		to, subject, body,
+		to, subject, sanitizedBody,
 	))
 
 	smtpHost := config.LoadEnv("EMAIL_PROVIDER")
@@ -47,4 +48,10 @@ func Send(to, subject, body string) error {
 
 	slog.Info(fmt.Sprint(logMsg, to, subject))
 	return nil
+}
+
+// sanitizeEmailBodyField strips dangerous characters (newlines, carriage returns)
+func SanitizeEmailBodyField(input string) string {
+	// Removes \r and \n to prevent email content injection attacks
+	return strings.ReplaceAll(strings.ReplaceAll(input, "\r", ""), "\n", "")
 }
