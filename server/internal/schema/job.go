@@ -9,19 +9,19 @@ import (
 
 type Job struct {
 	ID                  primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
-	Title               string             `bson:"title" json:"title" binding:"required,min=3,max=200"`
+	Title               string             `bson:"title" json:"title" binding:"required,min=1,max=200"`
 	CompanyID           primitive.ObjectID `bson:"companyID" json:"companyID" binding:"required"`
-	Location            string             `bson:"location" json:"location" binding:"required,min=2,max=200"`
+	Location            string             `bson:"location" json:"location" binding:"required,min=1,max=200"`
 	WorkType            string             `bson:"workType" json:"workType" binding:"required,min=1,max=200"`
 	WorkArrangement     string             `bson:"workArrangement" json:"workArrangement" binding:"required,min=1,max=200"`
 	Currency            string             `bson:"currency" json:"currency" binding:"required,len=3"`
 	MinSalary           float64            `bson:"minSalary" json:"minSalary" binding:"required,gte=0,lte=1000000000"`
 	MaxSalary           float64            `bson:"maxSalary" json:"maxSalary" binding:"required,gte=0,lte=1000000000"`
-	JobDescription      string             `bson:"jobDescription" json:"jobDescription" binding:"required,min=50,max=10000"`
-	JobSummary          string             `bson:"jobSummary" json:"jobSummary" binding:"required,min=20,max=500"`
-	RequiredSkills      string             `bson:"requiredSkills" json:"requiredSkills" binding:"required,min=5,max=2000"`
+	JobDescription      string             `bson:"jobDescription" json:"jobDescription" binding:"required,min=1,max=10000"`
+	JobSummary          string             `bson:"jobSummary" json:"jobSummary" binding:"required,min=1,max=1000"`
+	RequiredSkills      string             `bson:"requiredSkills" json:"requiredSkills" binding:"required,min=1,max=2000"`
 	ExperienceLevel     string             `bson:"experienceLevel" json:"experienceLevel" binding:"required,min=1,max=200"`
-	Education           string             `bson:"education" json:"education" binding:"required,min=2,max=200"`
+	Education           string             `bson:"education" json:"education" binding:"required,min=1,max=200"`
 	NiceToHave          string             `bson:"niceToHave" json:"niceToHave" binding:"omitempty,max=2000"`
 	Questions           string             `bson:"questions" json:"questions" binding:"omitempty,max=2000"`
 	PostOpenDate        time.Time          `bson:"postOpenDate" json:"postOpenDate" binding:"required"`
@@ -50,38 +50,37 @@ func (j *Job) Validate() error {
 }
 
 func (j Job) ValidatePartial(fields map[string]any) error {
-    // Validate min/max salary if present
-    if min, ok := fields["minSalary"].(float64); ok {
-        if min <= 0 || min > 1000000000 {
-            return fmt.Errorf("minSalary must be between 0 and 1,000,000,000")
-        }
-        if max, ok2 := fields["maxSalary"].(float64); ok2 {
-            if max <= 0 || max > 1000000000 {
-                return fmt.Errorf("maxSalary must be between 0 and 1,000,000,000")
-            }
-            if min > max {
-                return fmt.Errorf("minSalary cannot be greater than maxSalary")
-            }
-        }
-    }
+	// Validate min/max salary if present
+	if min, ok := fields["minSalary"].(float64); ok {
+		if min <= 0 || min > 1000000000 {
+			return fmt.Errorf("minSalary must be between 0 and 1,000,000,000")
+		}
+		if max, ok2 := fields["maxSalary"].(float64); ok2 {
+			if max <= 0 || max > 1000000000 {
+				return fmt.Errorf("maxSalary must be between 0 and 1,000,000,000")
+			}
+			if min > max {
+				return fmt.Errorf("minSalary cannot be greater than maxSalary")
+			}
+		}
+	}
 
-    // Validate dates if present
-    if postStr, ok := fields["postOpenDate"].(string); ok {
-        post, err := time.Parse(time.RFC3339, postStr)
-        if err != nil {
-            return fmt.Errorf("postOpenDate is invalid: %v", err)
-        }
-        if deadlineStr, ok2 := fields["applicationDeadline"].(string); ok2 {
-            deadline, err2 := time.Parse(time.RFC3339, deadlineStr)
-            if err2 != nil {
-                return fmt.Errorf("applicationDeadline is invalid: %v", err2)
-            }
-            if post.After(deadline) {
-                return fmt.Errorf("postOpenDate cannot be after applicationDeadline")
-            }
-        }
-    }
+	// Validate dates if present
+	if postStr, ok := fields["postOpenDate"].(string); ok {
+		post, err := time.Parse(time.RFC3339, postStr)
+		if err != nil {
+			return fmt.Errorf("postOpenDate is invalid: %v", err)
+		}
+		if deadlineStr, ok2 := fields["applicationDeadline"].(string); ok2 {
+			deadline, err2 := time.Parse(time.RFC3339, deadlineStr)
+			if err2 != nil {
+				return fmt.Errorf("applicationDeadline is invalid: %v", err2)
+			}
+			if post.After(deadline) {
+				return fmt.Errorf("postOpenDate cannot be after applicationDeadline")
+			}
+		}
+	}
 
-    return nil
+	return nil
 }
-
