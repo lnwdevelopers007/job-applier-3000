@@ -176,7 +176,12 @@ func Logout(c *gin.Context) {
 	}
 
 	c.SetCookie("refresh_token", "", -1, "/", c.Request.URL.Hostname(), false, true)
-	c.Redirect(http.StatusPermanentRedirect, config.LoadEnv("FRONTEND"))
+	
+	// Return JSON response instead of redirect for CORS compatibility
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Logout successful",
+		"redirect": config.LoadEnv("FRONTEND"),
+	})
 }
 
 // Me returns the current authenticated user's information from JWT
