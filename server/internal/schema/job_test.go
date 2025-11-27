@@ -23,12 +23,12 @@ func jobValidPayload() map[string]any {
 		"minSalary":       2000.34,
 		"maxSalary":       300000.213213,
 
-		// description
-		"jobDescription": "long",
-		"jobSummary":     "longer",
+	// description
+	"jobDescription": "This is a detailed job description that is intentionally long to meet the minimum length requirement for tests.",
+	"jobSummary":     "Concise summary with sufficient length",
 
-		// requirements
-		"requiredSkills":  "none",
+	// requirements
+	"requiredSkills":  "skill1, skill2, skill3",
 		"experienceLevel": "a lot",
 		"education":       "maybe",
 		"niceToHave":      "noting",
