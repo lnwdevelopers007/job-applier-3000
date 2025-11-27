@@ -1,16 +1,22 @@
 package auth
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/database"
 	"github.com/lnwdevelopers007/job-applier-3000/server/internal/dto"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/schema"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // RefreshRefreshToken refreshes the refresh token
+// SECURITY FIX: Now checks fresh ban status from database
 func RefreshRefreshToken(c *gin.Context) {
 	refreshToken, err := c.Cookie("refresh_token")
 	if err != nil {
@@ -47,14 +53,37 @@ func RefreshRefreshToken(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid userID"})
 		return
 	}
+
+	// SECURITY: Check fresh ban status from database
+	db := database.GetDatabase()
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var dbUser schema.User
+	err = db.Collection("users").FindOne(ctx, bson.M{"_id": oid}).Decode(&dbUser)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
+		return
+	}
+
+	// Reject token refresh if user is banned
+	if dbUser.Banned {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error":   "account_banned",
+			"message": "Your account has been banned. Please contact support.",
+		})
+		return
+	}
+
+	// Use fresh user data from database (includes updated ban/verified status)
 	refreshTokenUser := dto.RefreshTokenUser{
-		Email:     claims["email"].(string),
-		Name:      claims["name"].(string),
-		AvatarURL: claims["avatarURL"].(string),
-		ID:        oid,
-		Role:      claims["role"].(string),
-		Verified:  claims["verified"].(bool),
-		Banned:    claims["banned"].(bool),
+		Email:     dbUser.Email,
+		Name:      dbUser.Name,
+		AvatarURL: dbUser.AvatarURL,
+		ID:        dbUser.ID,
+		Role:      dbUser.Role,
+		Verified:  dbUser.Verified,
+		Banned:    dbUser.Banned,
 	}
 
 	accessToken, _, err := generateTokens(refreshTokenUser)
