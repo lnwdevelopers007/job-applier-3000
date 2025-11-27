@@ -22,6 +22,7 @@ func NewRouter() *gin.Engine {
 		os.Getenv("FRONTEND"),
 	}
 
+	router.Use(middleware.SecurityHeaders())
 	router.Use(middleware.RejectUnknownOriginsMiddleware(allowedOrigins))
 
 	cfg := setUpCors()
