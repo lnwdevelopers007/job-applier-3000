@@ -1,57 +1,89 @@
 name: ZAP Full DAST Scan
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    push:
+        branches: ['main']
+    pull_request:
+        branches: ['main']
 
 jobs:
-  zap_full_scan:
-    runs-on: ubuntu-latest
-    timeout-minutes: 40
+    zap_full_scan:
+        runs-on: ubuntu-latest
+        timeout-minutes: 40
+        strategy:
+            matrix:
+                mongodb-version: ['7.0']
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.22.2"
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      - name: Start Server
-        working-directory: server
-        run: |
-          go mod download
-          nohup go run main.go &
-          sleep 10
+            - name: Setup Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version: '1.22.2'
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
-        with:
-          bun-version: 1.2.6
+            - name: Create .env file
+              working-directory: server
+              run: cp ./.env.example .env
 
-      - name: Start Client
-        working-directory: client
-        run: |
-          bun install
-          nohup bun run dev &
-          sleep 10
+            - name: Load .env file
+              uses: xom9ikk/dotenv@v2.3.0
+              with:
+                  path: ./server
+                  load-mode: strict
 
-      - name: Run ZAP Full Scan
-        uses: zaproxy/action-full-scan@v0.9.0
-        with:
-          target: 'http://localhost:5173'
-          rules_file_name: '.zap/rules.tsv'
-          cmd_options: '-a'
-        continue-on-error: true
+            - name: Extract MongoDB Credentials
+              run: |
+                  uri="${{ env.MONGODB_URI }}"
+                  username=$(echo "$uri" | sed -E 's|^mongodb://([^:]+):.*|\1|')
+                  password=$(echo "$uri" | sed -E 's|^mongodb://[^:]+:([^@]+)@.*|\1|')
+                  port=$(echo "$uri" | sed -E 's|.*:([0-9]+)/.*|\1|')
+                  echo "USERNAME=$username" >> $GITHUB_ENV
+                  echo "PASSWORD=$password" >> $GITHUB_ENV
+                  echo "PORT=$port" >> $GITHUB_ENV
 
-      - name: Upload ZAP Report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: zap-report
-          path: |
-            report_html.html
-            report_json.json
+            - name: Start MongoDB
+              uses: supercharge/mongodb-github-action@1.12.0
+              with:
+                  mongodb-version: ${{ matrix.mongodb-version }}
+                  mongodb-port: ${{ env.PORT }}
+                  mongodb-username: ${{ env.USERNAME }}
+                  mongodb-password: ${{ env.PASSWORD }}
+                  mongodb-db: ${{ env.DB_NAME }}
+
+            - name: Start Server
+              working-directory: server
+              run: |
+                  go mod download
+                  nohup go run main.go &
+                  sleep 10
+
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v1
+              with:
+                  bun-version: 1.2.6
+
+            - name: Start Client
+              working-directory: client
+              run: |
+                  bun install
+                  nohup bun run dev &
+                  sleep 10
+
+            - name: Run ZAP Full Scan
+              uses: zaproxy/action-full-scan@v0.9.0
+              with:
+                  target: 'http://localhost:5173'
+                  rules_file_name: '.zap/rules.tsv'
+                  cmd_options: '-a'
+              continue-on-error: true
+
+            - name: Upload ZAP Report
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: zap-report
+                  path: |
+                      report_html.html
+                      report_json.json

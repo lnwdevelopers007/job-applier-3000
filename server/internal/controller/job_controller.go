@@ -371,6 +371,8 @@ func notifyJobDeletion(c *gin.Context) (shouldReturn bool) {
 	if reason == "" {
 		reason = "No reason provided."
 	}
+	// Sanitize untrusted reason: strip newlines and carriage returns to prevent email content injection
+	reason = email.SanitizeEmailBodyField(reason)
 
 	job, err := repository.FindOne[schema.Job](ctx, jobID)
 	if err != nil {
