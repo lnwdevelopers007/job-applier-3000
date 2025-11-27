@@ -34,7 +34,8 @@
 		}
 	});
 
-	let showPDPA = false;
+	let showPDPA = $state(false);
+	let acceptedPDPA = $state(false);
 	let email = '';
 	let fullName = '';
 	let desiredRole = '';
@@ -230,19 +231,39 @@
       <p class="text-sm text-gray-500">Register as a job seekeer to start finding your dream job</p>
     </div>
     
-    <GoogleOAuthButton text="Continue with Google" userType="jobSeeker" isSignup={true} />
-
-		<p class="mt-8 text-center text-sm text-gray-500">
-			By using our service, you consent to the processing of your Personal Data as described in our
-
-			<button
-				type="button"
-				on:click={() => (showPDPA = true)}
-				class="font-medium text-blue-600 hover:text-blue-700"
-			>
-				Privacy Notice
-			</button>
-		</p>
+    <div class="mb-6">
+      <label class="flex items-start space-x-3">
+        <input
+          type="checkbox"
+          bind:checked={acceptedPDPA}
+          class="mt-1 h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+        />
+        <span class="text-sm text-gray-600">
+          I have read and agree to the
+          <button
+            type="button"
+            on:click={() => (showPDPA = true)}
+            class="font-medium text-blue-600 hover:text-blue-700 underline"
+          >
+            Privacy Notice
+          </button>
+          and consent to the processing of my personal data
+        </span>
+      </label>
+    </div>
+    
+    <div class:opacity-50={!acceptedPDPA} class:pointer-events-none={!acceptedPDPA}>
+      <GoogleOAuthButton 
+        text="Continue with Google" 
+        userType="jobSeeker" 
+        isSignup={true}
+        disabled={!acceptedPDPA}
+      />
+    </div>
+    
+	<p class="mt-2 text-center text-xs text-gray-500">
+	Please accept the Privacy Notice to continue
+	</p>
 
 		<p class="mt-8 text-center text-sm text-gray-500">
 			Already have an account?
