@@ -17,14 +17,14 @@ KU Dept. of Computer Engineering Students and Alumni.
 NOTE: .env is for local development running without docker-compose. .env.production is for docker-compose production running. Those configurations are independent and different.
 
 ### Back-end
+Requirements: Golang version 1.24.0 or newer.
 
 1. Install [golang](https://go.dev/)
-1. `cd server`
-1. `go get .`
-1. `cp .env.example .env`
+1. Change to backend directory: `cd server`
+1. Install dependencies with `go get .`
+1. Create .env file variable with `cp .env.example .env`
 1. Replace it with your real config.
-1. `go run .`
-1. Visit `localhost:8080/jobs`.
+1. Run the backend with `go run .`
 1. To run tests, use `godotenv -f ./.env go test ./... -v`
    (install [godotenv](https://github.com/joho/godotenv?tab=readme-ov-file#installation) as bin command first.)
 
@@ -36,8 +36,8 @@ Resources:
 ### Front-end
 
 1. Install [Bun](https://bun.sh)
-1. `cd client`
-1. `cp .env.example .env`
+1. Change to frontend directory:`cd client`
+1. Create .env file with `cp .env.example .env`
 1. Replace it with your real config.
 1. `bun install`
 1. `bun run dev --open`
