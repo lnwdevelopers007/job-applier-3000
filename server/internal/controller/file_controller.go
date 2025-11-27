@@ -5,6 +5,7 @@ import (
 	"mime"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -182,9 +183,16 @@ func (fc FileController) Download(c *gin.Context) {
 		return
 	}
 
-	// Set headers for file download
-	c.Header("Content-Type", fileDoc.ContentType)
-	c.Header("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": fileDoc.Filename}))
+	// Sanitize headers derived from user input before sending
+	contentType := sanitizeHeaderValue(fileDoc.ContentType)
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+
+	filename := sanitizeFilename(fileDoc.Filename)
+
+	c.Header("Content-Type", contentType)
+	c.Header("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": filename}))
 	c.Data(http.StatusOK, fileDoc.ContentType, fileDoc.Content)
 }
 
@@ -448,6 +456,51 @@ func (fc FileController) GetApplicantFiles(c *gin.Context) {
 	})
 }
 
+// sanitizeHeaderValue removes control characters (CR/LF and other control codes)
+// that can be used to perform HTTP header injection and trims whitespace.
+func sanitizeHeaderValue(s string) string {
+	if s == "" {
+		return ""
+	}
+	// Remove ASCII control characters (0x00-0x1F and 0x7F)
+	cleaned := regexp.MustCompile(`[\x00-\x1F\x7F]+`).ReplaceAllString(s, "")
+	return strings.TrimSpace(cleaned)
+}
+
+// sanitizeFilename ensures filename cannot break headers or include path separators.
+// It removes control characters and strips path components.
+func sanitizeFilename(name string) string {
+	if name == "" {
+		return "file"
+	}
+	// Remove control characters
+	cleaned := regexp.MustCompile(`[\x00-\x1F\x7F]+`).ReplaceAllString(name, "")
+	// Strip directory separators to prevent injections like "../..."
+	cleaned = strings.ReplaceAll(cleaned, "/", "_")
+	cleaned = strings.ReplaceAll(cleaned, "\\", "_")
+	cleaned = strings.TrimSpace(cleaned)
+	if cleaned == "" {
+		return "file"
+	}
+
+	// Prefer a file-like token (name.ext). If the string contains extra data after
+	// the extension (for example from CRLF injection cleaned to continuous text),
+	// try to extract the first valid filename with extension. This prevents
+	// injected headers from appearing.
+	re := regexp.MustCompile(`([A-Za-z0-9_\-\.]+\.[A-Za-z0-9]+)`) // capture filename.ext
+	if m := re.FindString(cleaned); m != "" {
+		return m
+	}
+
+	// As a final fallback, remove any remaining unsafe characters and return
+	// the cleaned result (or 'file' if it becomes empty)
+	fallback := regexp.MustCompile(`[^A-Za-z0-9_\-\.]`).ReplaceAllString(cleaned, "")
+	if fallback == "" {
+		return "file"
+	}
+	return fallback
+}
+
 // DownloadApplicantFile godoc
 // @Summary      Download an applicant's file
 // @Description  Allows a company to download a specific file from an applicant for a job application. Only the company who owns the job can access.
@@ -543,8 +596,14 @@ func (fc FileController) DownloadApplicantFile(c *gin.Context) {
 		return
 	}
 
-	// 6. Serve the file
-	c.Header("Content-Type", fileDoc.ContentType)
-	c.Header("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": fileDoc.Filename}))
+	// 6. Serve the file — sanitize header values first
+	contentType := sanitizeHeaderValue(fileDoc.ContentType)
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+	filename := sanitizeFilename(fileDoc.Filename)
+
+	c.Header("Content-Type", contentType)
+	c.Header("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": filename}))
 	c.Data(http.StatusOK, fileDoc.ContentType, fileDoc.Content)
 }

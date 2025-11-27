@@ -3,6 +3,7 @@ package email
 import (
 	"errors"
 	"fmt"
+	"html"
 	"log/slog"
 	"net/smtp"
 	"strings"
@@ -29,7 +30,7 @@ func Send(to, subject, body string) error {
 			"Content-Type: text/plain; charset=\"UTF-8\"\r\n"+
 			"\r\n"+
 			"%s\r\n",
-		to, subject, body,
+		to, subject, html.EscapeString(body),
 	))
 
 	smtpHost := config.LoadEnv("EMAIL_PROVIDER")
