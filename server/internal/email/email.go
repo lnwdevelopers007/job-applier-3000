@@ -20,9 +20,8 @@ func Send(to, subject, body string) error {
 	from := config.LoadEnv("EMAIL")
 	pass := config.LoadEnv("EMAIL_PASSWORD")
 
-	sanitizedBody := SanitizeEmailBodyField(body)
-	// 2. Construct the message safely
-	// Note: We still construct the byte slice manually here, but inputs are safer.
+	// Construct the message safely
+	// Note: Callers should sanitize individual untrusted fields before constructing the body
 	msg := []byte(fmt.Sprintf(
 		"To: %s\r\n"+
 			"Subject: %s\r\n"+
@@ -30,7 +29,7 @@ func Send(to, subject, body string) error {
 			"Content-Type: text/plain; charset=\"UTF-8\"\r\n"+
 			"\r\n"+
 			"%s\r\n",
-		to, subject, sanitizedBody,
+		to, subject, body,
 	))
 
 	smtpHost := config.LoadEnv("EMAIL_PROVIDER")
