@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/lnwdevelopers007/job-applier-3000/server/internal/auth"
 )
 
 var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
@@ -61,6 +62,13 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		if err != nil || !token.Valid {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired token"})
+			c.Abort()
+			return
+		}
+
+		// Check if token is blacklisted
+		if auth.IsBlacklisted(tokenString) {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "token has been revoked"})
 			c.Abort()
 			return
 		}

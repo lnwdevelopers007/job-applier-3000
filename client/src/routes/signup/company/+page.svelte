@@ -1,55 +1,63 @@
 <script lang="ts">
-  import { get } from 'svelte/store';
-  import { page } from '$app/stores';
-  import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
-  import { toast } from 'svelte-french-toast';
-  import { getUserInfo } from '$lib/utils/auth';
-  import { fileService, type FileMetadata } from '$lib/services/fileService';
-  import { ArrowLeft } from 'lucide-svelte';
-  import { fly } from 'svelte/transition';
-  import AuthLayout from '$lib/components/auth/AuthLayout.svelte';
-  import AuthHeader from '$lib/components/auth/AuthHeader.svelte';
-  import FormInput from '$lib/components/auth/FormInput.svelte';
-  import FormSelect from '$lib/components/auth/FormSelect.svelte';
-  import FormButton from '$lib/components/auth/FormButton.svelte';
-  import GoogleOAuthButton from '$lib/components/auth/GoogleOAuthButton.svelte';
-  import FileItem from '$lib/components/files/FileItem.svelte';
-  import FilePreviewModal from '$lib/components/files/FilePreviewModal.svelte';
-  import FileUploadModal from '$lib/components/files/FileUploadModal.svelte';
+	import { page } from '$app/stores';
+	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { toast } from 'svelte-french-toast';
+	import { getUserInfo } from '$lib/utils/auth';
+	import { fileService, type FileMetadata } from '$lib/services/fileService';
+	import { ArrowLeft } from 'lucide-svelte';
+	import { fly } from 'svelte/transition';
+	import AuthLayout from '$lib/components/auth/AuthLayout.svelte';
+	import AuthHeader from '$lib/components/auth/AuthHeader.svelte';
+	import FormInput from '$lib/components/auth/FormInput.svelte';
+	import FormSelect from '$lib/components/auth/FormSelect.svelte';
+	import FormButton from '$lib/components/auth/FormButton.svelte';
+	import GoogleOAuthButton from '$lib/components/auth/GoogleOAuthButton.svelte';
+	import FileItem from '$lib/components/files/FileItem.svelte';
+	import FilePreviewModal from '$lib/components/files/FilePreviewModal.svelte';
+	import FileUploadModal from '$lib/components/files/FileUploadModal.svelte';
 	import DeleteConfirmModal from '$lib/components/files/DeleteConfirmModal.svelte';
 	import { userService } from '$lib/services/userService';
 	import PDPAModal from '$lib/components/modals/PDPAModal.svelte';
 	import companyApplicants from '$lib/assets/company-applicants.png';
 
-	let currentStep = 1;
-	let email = '';
-	let companyName = '';
-	let aboutCompany = '';
-	let industry = '';
-	let size = '';
-	let website = '';
-	let companyLogo = '';
-	let foundedYear = '';
-	let headquarters = '';
-	let companyLinkedin = '';
-	let username = '';
-	let avatar = '';
-	let uid = '';
+	let currentStep = $state(1);
+	
+	// Update currentStep reactively when page changes
+	$effect(() => {
+		if ($page.url) {
+			currentStep = +($page.url.searchParams.get('currentStep') || 1);
+		}
+	});
 
-	let files: FileMetadata[] = [];
-	let isUploadModalOpen = false;
-	let selectedFile: FileMetadata | null = null;
-	let isPreviewModalOpen = false;
-	let fileToDelete: FileMetadata | null = null;
-	let isDeleteModalOpen = false;
-	let isDeleting = false;
+	let email = $state('');
+	let companyName = $state('');
+	let aboutCompany = $state('');
+	let industry = $state('');
+	let size = $state('');
+	let website = $state('');
+	let companyLogo = $state('');
+	let foundedYear = $state('');
+	let headquarters = $state('');
+	let companyLinkedin = $state('');
+	let username = $state('');
+	let avatar = $state('');
+	let uid = $state('');
+
+	let files = $state<FileMetadata[]>([]);
+	let isUploadModalOpen = $state(false);
+	let selectedFile = $state<FileMetadata | null>(null);
+	let isPreviewModalOpen = $state(false);
+	let fileToDelete = $state<FileMetadata | null>(null);
+	let isDeleteModalOpen = $state(false);
+	let isDeleting = $state(false);
 
 	let userInfo = getUserInfo();
 	let userID = userInfo?.userID || '';
 	const userRole = userInfo?.role || 'company';
 
-	let showPDPA = false;
+	let showPDPA = $state(false);
+	let acceptedPDPA = $state(false);
 
 	function goBackToEmailStep() {
 		currentStep = 1;
@@ -157,32 +165,33 @@
 	}
 
 	onMount(async () => {
-		const stepFromUrl = Number(get(page).url.searchParams.get('currentStep'));
-		if (stepFromUrl === 2) currentStep = 2;
-
 		if (currentStep === 2) {
-			userInfo = getUserInfo();
-			userID = userInfo?.userID;
-			let retries = 0;
-			while (!userInfo && retries < 10) {
-				await new Promise((resolve) => setTimeout(resolve, 50));
+			// Ensure we have user info from server or auth store
+			if (!userInfo) {
+				await new Promise((resolve) => setTimeout(resolve, 200));
 				userInfo = getUserInfo();
-				userID = userInfo?.userID;
-				retries++;
+				userID = userInfo?.userID || '';
 			}
+			
 			if (!userID) {
-				console.error('Failed to load userID after login!');
-				toast.error('Unable to load user session. Try reloading the page.');
+				// No user session - redirect back to step 1 to start OAuth flow
+				toast.error('Please complete the OAuth step first.');
+				currentStep = 1;
 				return;
 			}
-			// if (user?.role === 'company') goto('/company/dashboard');
-			// else goto('/app/jobs');
-		}
-
-		// Load files when Step 2 is active
-		if (currentStep === 2) {
-			await loadFiles();
-			await loadCompanyDetails();
+			
+			// Load user details and files
+			try {
+				await loadFiles();
+				await loadCompanyDetails();
+			} catch (error) {
+				if ((error as any)?.status === 401) {
+					toast.error('Authentication failed. Please log in again.');
+					setTimeout(() => goto('/login'), 2000);
+				} else {
+					toast.error('Failed to load company information. Please refresh the page.');
+				}
+			}
 		}
 	});
 </script>
@@ -214,19 +223,40 @@
 			<p class="text-sm text-gray-500">Register as a recruiter to start hiring talents</p>
 		</div>
 
-		<GoogleOAuthButton text="Continue with Google" userType="company" isSignup={true} />
-
-		<p class="mt-8 text-center text-sm text-gray-500">
-			By using our service, you consent to the processing of your Personal Data as described in our
-
-			<button
-				type="button"
-				on:click={() => (showPDPA = true)}
-				class="font-medium text-blue-600 hover:text-blue-700"
-			>
-				Privacy Notice
-			</button>
+		<div class="mb-6">
+			<label class="flex items-start space-x-3">
+				<input
+					type="checkbox"
+					bind:checked={acceptedPDPA}
+					class="mt-1 h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+				/>
+				<span class="text-sm text-gray-600">
+					I have read and agree to the
+					<button
+						type="button"
+						on:click={() => (showPDPA = true)}
+						class="font-medium text-blue-600 hover:text-blue-700 underline"
+					>
+						Privacy Notice
+					</button>
+					and consent to the processing of my company's data
+				</span>
+			</label>
+		</div>
+		
+		<div class:opacity-50={!acceptedPDPA} class:pointer-events-none={!acceptedPDPA}>
+			<GoogleOAuthButton 
+				text="Continue with Google" 
+				userType="company" 
+				isSignup={true}
+				disabled={!acceptedPDPA}
+			/>
+		</div>
+		
+		<p class="mt-2 text-center text-xs text-gray-500">
+			Please accept the Privacy Notice to continue
 		</p>
+		
 		<p class="mt-8 text-center text-sm text-gray-500">
 			Already have an account?
 			<a href="/login" class="font-medium text-green-600 hover:text-green-700">Log in</a>

@@ -22,6 +22,7 @@ func NewRouter() *gin.Engine {
 		os.Getenv("FRONTEND"),
 	}
 
+	router.Use(middleware.SecurityHeaders())
 	router.Use(middleware.RejectUnknownOriginsMiddleware(allowedOrigins))
 	router.Use(func(c *gin.Context) {
 			middleware.RateLimiterMiddleware(c.Request.Method)(c)

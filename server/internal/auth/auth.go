@@ -140,18 +140,33 @@ func Login(c *gin.Context) {
 
 func Logout(c *gin.Context) {
 	addProvider(c)
-	// Try to log which user is logging out, if available in context.
-	cookie, _ := c.Cookie("access_token")
+	
+	// Get tokens from cookies
+	accessToken, _ := c.Cookie("access_token")
+	refreshToken, _ := c.Cookie("refresh_token")
 
-	decodedClaims, _ := ParseJWT(cookie)
-	userID := decodedClaims.UserID
-	role := decodedClaims.Role
-
-	fmt.Println("Hello")
+	// Parse claims for logging
+	var userID, role string
+	if decodedClaims, _ := ParseJWT(accessToken); decodedClaims != nil {
+		userID = decodedClaims.UserID
+		role = decodedClaims.Role
+		
+		// Add access token to blacklist
+		if decodedClaims.ExpiresAt != nil {
+			AddToBlacklist(accessToken, decodedClaims.ExpiresAt.Time)
+		}
+	}
+	
+	// Add refresh token to blacklist
+	if refreshToken != "" {
+		if refreshClaims, _ := ParseJWT(refreshToken); refreshClaims != nil && refreshClaims.ExpiresAt != nil {
+			AddToBlacklist(refreshToken, refreshClaims.ExpiresAt.Time)
+		}
+	}
 
 	slog.Info("User logged out",
-		slog.String("userID", fmt.Sprint(userID)),
-		slog.String("role", fmt.Sprint(role)),
+		slog.String("userID", userID),
+		slog.String("role", role),
 		slog.String("ip", c.ClientIP()),
 	)
 
@@ -161,7 +176,12 @@ func Logout(c *gin.Context) {
 	}
 
 	c.SetCookie("refresh_token", "", -1, "/", c.Request.URL.Hostname(), false, true)
-	c.Redirect(http.StatusPermanentRedirect, config.LoadEnv("FRONTEND"))
+	
+	// Return JSON response instead of redirect for CORS compatibility
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Logout successful",
+		"redirect": config.LoadEnv("FRONTEND"),
+	})
 }
 
 // Me returns the current authenticated user's information from JWT
