@@ -228,7 +228,7 @@
   {#if currentStep === 1}
     <div class="mb-8" in:fly={{ x: -20, duration: 200 }}>
       <h1 class="text-3xl font-semibold text-gray-900 mb-2">Sign up</h1>
-      <p class="text-sm text-gray-500">Register as a job seekeer to start finding your dream job</p>
+      <p class="text-sm text-gray-500">Register as a job seeker to start finding your dream job</p>
     </div>
     
     <div class="mb-6">
