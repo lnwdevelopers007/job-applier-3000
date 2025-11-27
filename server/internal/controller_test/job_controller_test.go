@@ -27,12 +27,12 @@ func rawJob(title string, companyID ...string) map[string]any {
 		"minSalary":       2000.34,
 		"maxSalary":       300000.213213,
 
-		// description
-		"jobDescription": "long",
-		"jobSummary":     "longer",
+	// description
+	"jobDescription": "This is a detailed job description used in controller tests and is intentionally long to meet the minimum requirement.",
+	"jobSummary":     "Controller test job summary with sufficient length.",
 
-		// requirements
-		"requiredSkills":  "none",
+	// requirements
+	"requiredSkills":  "skill-a, skill-b, skill-c",
 		"experienceLevel": "a lot",
 		"education":       "maybe",
 		"niceToHave":      "noting",

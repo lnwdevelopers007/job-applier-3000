@@ -12,24 +12,24 @@ type Job struct {
 	Title               string             `bson:"title" json:"title" binding:"required,min=3,max=200"`
 	CompanyID           primitive.ObjectID `bson:"companyID" json:"companyID" binding:"required"`
 	Location            string             `bson:"location" json:"location" binding:"required,min=2,max=200"`
-	WorkType            string             `bson:"workType" json:"workType" binding:"required,gte=0"`
-	WorkArrangement     string             `bson:"workArrangement" json:"workArrangement" binding:"required,gte=0"`
+	WorkType            string             `bson:"workType" json:"workType" binding:"required,min=1,max=200"`
+	WorkArrangement     string             `bson:"workArrangement" json:"workArrangement" binding:"required,min=1,max=200"`
 	Currency            string             `bson:"currency" json:"currency" binding:"required,len=3"`
 	MinSalary           float64            `bson:"minSalary" json:"minSalary" binding:"required,gte=0,lte=1000000000"`
 	MaxSalary           float64            `bson:"maxSalary" json:"maxSalary" binding:"required,gte=0,lte=1000000000"`
 	JobDescription      string             `bson:"jobDescription" json:"jobDescription" binding:"required,min=50,max=10000"`
 	JobSummary          string             `bson:"jobSummary" json:"jobSummary" binding:"required,min=20,max=500"`
 	RequiredSkills      string             `bson:"requiredSkills" json:"requiredSkills" binding:"required,min=5,max=2000"`
-	ExperienceLevel     string             `bson:"experienceLevel" json:"experienceLevel" binding:"required,,gte=0"`
+	ExperienceLevel     string             `bson:"experienceLevel" json:"experienceLevel" binding:"required,min=1,max=200"`
 	Education           string             `bson:"education" json:"education" binding:"required,min=2,max=200"`
 	NiceToHave          string             `bson:"niceToHave" json:"niceToHave" binding:"omitempty,max=2000"`
 	Questions           string             `bson:"questions" json:"questions" binding:"omitempty,max=2000"`
 	PostOpenDate        time.Time          `bson:"postOpenDate" json:"postOpenDate" binding:"required"`
 	ApplicationDeadline time.Time          `bson:"applicationDeadline" json:"applicationDeadline" binding:"required"`
 	NumberOfPositions   int                `bson:"numberOfPositions" json:"numberOfPositions" binding:"required,gte=1,lte=1000"`
-	Visibility          string             `bson:"visibility" json:"visibility" binding:"required,gte=0"`
-	EmailNotifications  bool               `bson:"emailNotifications" json:"emailNotifications" binding:"boolean"`
-	AutoReject          bool               `bson:"autoReject" json:"autoReject" binding:"boolean"`
+	Visibility          string             `bson:"visibility" json:"visibility" binding:"required,min=1,max=50"`
+	EmailNotifications  bool               `bson:"emailNotifications" json:"emailNotifications"`
+	AutoReject          bool               `bson:"autoReject" json:"autoReject"`
 }
 
 func (j Job) GetCollectionName() string {
